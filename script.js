@@ -1,4 +1,4 @@
-const SUPABASE_URL = "https://rvygarzpdacnhxwxsgxo.supabase.co/rest/v1/";
+const SUPABASE_URL = "https://rvygarzpdacnhxwxsgxo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_KF9seUu_5VZWQVhhR27dYw_kyB_ewVY";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const WHATSAPP_NUMBER = "916367561630";
