@@ -51,6 +51,7 @@ $("checkoutBtn").addEventListener("click",()=>{
 renderProducts(); renderCart();
 // Admin login
 async function adminLogin() {
+  alert("Login button clicked");
   const email = document.getElementById("adminEmail").value;
   const password = document.getElementById("adminPassword").value;
 
