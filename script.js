@@ -1,3 +1,5 @@
+const SUPABASE_URL = "https://rvvgarzpdacnhxwxsgxo.supabase.co";
+const SUPABASE_KEY = "sb_publishable_KF9seUu_5VZWQVhhR27dYw_kyB_ewVY";
 const WHATSAPP_NUMBER = "916367561630";
 const UPI_ID = "6367561630@fam";
 const products = [
