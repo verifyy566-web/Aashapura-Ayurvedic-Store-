@@ -86,7 +86,7 @@
     <input id="pStock" type="number" min="0" step="1" placeholder="Stock" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
     <input id="pVideo" type="url" placeholder="Video URL (optional)" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
     <button type="button" onclick="addAdminProduct()" style="padding:12px;width:100%;">Save Product</button>
-    <button type="button" onclick="supabaseClient.auth.signOut().then(()=>location.reload())" style="padding:12px;width:100%;margin-top:8px;">Logout</button>
+    <button type="button" onclick="adminLogout()" style="padding:12px;width:100%;margin-top:8px;">Logout</button>
   </div>
 </section>
 </body>
