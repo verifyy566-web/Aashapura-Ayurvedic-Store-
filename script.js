@@ -48,3 +48,59 @@ $("checkoutBtn").addEventListener("click",()=>{
   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`,"_blank","noopener");
 });
 renderProducts(); renderCart();
+// Admin login
+async function adminLogin() {
+  const email = document.getElementById("adminEmail").value;
+  const password = document.getElementById("adminPassword").value;
+
+  const { error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    alert("Login failed: " + error.message);
+    return;
+  }
+
+  document.getElementById("adminLoginBox").style.display = "none";
+  document.getElementById("adminProductBox").style.display = "block";
+}
+
+// Add product
+async function addAdminProduct() {
+  const { data: { user }, error: authError } =
+    await supabaseClient.auth.getUser();
+
+  if (authError || !user) {
+    alert("Pehle Admin login karo.");
+    return;
+  }
+
+  const product = {
+    name: document.getElementById("pName").value.trim(),
+    description: document.getElementById("pDescription").value.trim(),
+    price: Number(document.getElementById("pPrice").value),
+    category: document.getElementById("pCategory").value.trim(),
+    weight: document.getElementById("pWeight").value.trim(),
+    stock: Number(document.getElementById("pStock").value),
+    video_url: document.getElementById("pVideo").value.trim()
+  };
+
+  if (!product.name || product.price < 0 || product.stock < 0) {
+    alert("Product name, price aur stock check karo.");
+    return;
+  }
+
+  const { error } = await supabaseClient
+    .from("products")
+    .insert(product);
+
+  if (error) {
+    alert("Product save nahi hua: " + error.message);
+    return;
+  }
+
+  alert("Product add ho gaya!");
+  location.reload();
+}
