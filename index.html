@@ -67,5 +67,27 @@
   </aside>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
+<section id="adminPanel" style="max-width:500px;margin:30px auto;padding:20px;border:1px solid #ccc;border-radius:12px;">
+  <h2>🔐 Admin Login</h2>
+
+  <div id="adminLoginBox">
+    <input id="adminEmail" type="email" placeholder="Admin Email" style="width:100%;padding:10px;margin:6px 0;box-sizing:border-box;">
+    <input id="adminPassword" type="password" placeholder="Password" style="width:100%;padding:10px;margin:6px 0;box-sizing:border-box;">
+    <button type="button" onclick="adminLogin()" style="padding:12px;width:100%;">Login</button>
+  </div>
+
+  <div id="adminProductBox" style="display:none;">
+    <h3>➕ Add Product</h3>
+    <input id="pName" placeholder="Product Name" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
+    <textarea id="pDescription" placeholder="Description" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;"></textarea>
+    <input id="pPrice" type="number" min="0" step="0.01" placeholder="Price ₹" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
+    <input id="pCategory" placeholder="Category" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
+    <input id="pWeight" placeholder="Weight (e.g. 100 g)" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
+    <input id="pStock" type="number" min="0" step="1" placeholder="Stock" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
+    <input id="pVideo" type="url" placeholder="Video URL (optional)" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
+    <button type="button" onclick="addAdminProduct()" style="padding:12px;width:100%;">Save Product</button>
+    <button type="button" onclick="supabaseClient.auth.signOut().then(()=>location.reload())" style="padding:12px;width:100%;margin-top:8px;">Logout</button>
+  </div>
+</section>
 </body>
 </html>
