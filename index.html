@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aashapura Ayurvedic Store</title>
+  <meta name="description" content="Aashapura Ayurvedic Store — रोज़मर्रा की ज़रूरतों के लिए आयुर्वेदिक उत्पाद।" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="topbar">प्राकृतिक देखभाल • भरोसेमंद खरीदारी</div>
+  <header class="header">
+    <a class="brand" href="#"><span class="brand-mark">✿</span><span><strong>Aashapura</strong><small>AYURVEDIC STORE</small></span></a>
+    <button class="menu-toggle" id="menuToggle" aria-label="मेन्यू खोलें">☰</button>
+    <nav id="nav">
+      <a href="#home">होम</a><a href="#shop">दुकान</a><a href="#about">हमारे बारे में</a><a href="#contact">संपर्क</a>
+    </nav>
+    <button class="cart-button" id="cartOpen">कार्ट <span id="cartCount">0</span></button>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-copy">
+        <p class="eyebrow">प्रकृति से प्रेरित</p>
+        <h1>सेहत और देखभाल,<br><em>प्रकृति के साथ।</em></h1>
+        <p class="hero-text">Aashapura Ayurvedic Store पर अपने पसंदीदा आयुर्वेदिक और हर्बल उत्पाद खोजें।</p>
+        <a class="primary-btn" href="#shop">उत्पाद देखें <span>↗</span></a>
+        <div class="trust-row"><span>✓ आसान ब्राउज़िंग</span><span>✓ मोबाइल-फ्रेंडली</span><span>✓ साफ़ कीमतें</span></div>
+      </div>
+      <div class="hero-art" aria-label="हर्बल पत्तियों की सजावटी आकृति">
+        <div class="sun"></div><div class="leaf leaf-one"></div><div class="leaf leaf-two"></div><div class="leaf leaf-three"></div>
+        <div class="hero-card"><span>नैचुरल चॉइस</span><strong>Everyday<br>Wellness</strong><small>ASHAPURA • HERBAL CARE</small></div>
+      </div>
+    </section>
+
+    <section class="benefits">
+      <div><span>❋</span><strong>हर्बल पसंद</strong><small>अपनी ज़रूरत के अनुसार चुनें</small></div>
+      <div><span>♧</span><strong>सिंपल शॉपिंग</strong><small>खोजें, चुनें और कार्ट में जोड़ें</small></div>
+      <div><span>♡</span><strong>आपकी सुविधा</strong><small>मोबाइल और डेस्कटॉप पर उपयोग करें</small></div>
+    </section>
+
+    <section class="shop-section" id="shop">
+      <div class="section-heading"><div><p class="eyebrow">हमारा कलेक्शन</p><h2>दुकान <em>से चुनें</em></h2></div><p>अपनी पसंद के उत्पाद खोजें</p></div>
+      <div class="shop-tools">
+        <input id="searchInput" type="search" placeholder="उत्पाद खोजें…" aria-label="उत्पाद खोजें" />
+        <select id="categoryFilter" aria-label="कैटेगरी फ़िल्टर"><option value="all">सभी कैटेगरी</option><option value="powder">पाउडर</option><option value="herbal">हर्बल</option><option value="wellness">वेलनेस</option></select>
+        <select id="sortFilter" aria-label="कीमत के अनुसार छाँटें"><option value="featured">फीचर्ड</option><option value="low">कीमत: कम से ज़्यादा</option><option value="high">कीमत: ज़्यादा से कम</option></select>
+      </div>
+      <div class="product-grid" id="productGrid"></div>
+      <p class="demo-note">यह शुरुआती डेमो है। नीचे दिए गए उत्पाद उदाहरण के लिए हैं—बेचने से पहले असली उत्पाद, कीमत, लेबल और विवरण अपडेट करें।</p>
+    </section>
+
+    <section class="about-section" id="about"><div class="about-icon">✿</div><div><p class="eyebrow">हमारा उद्देश्य</p><h2>खरीदारी को <em>आसान बनाना।</em></h2><p>यह Aashapura Ayurvedic Store की शुरुआती वेबसाइट है। यहाँ से आप प्रोडक्ट कैटलॉग दिखा सकते हैं। वास्तविक ऑनलाइन भुगतान, लॉगिन और ऑर्डर मैनेजमेंट के लिए सुरक्षित बैकएंड और पेमेंट गेटवे जोड़ना होगा।</p></div></section>
+
+    <section class="contact-section" id="contact"><div><p class="eyebrow">संपर्क</p><h2>हमसे <em>बात करें</em></h2><p>अपना असली फोन नंबर, ईमेल और बिज़नेस पता यहाँ जोड़ें।</p></div><div class="contact-card"><strong>Aashapura Ayurvedic Store</strong><p>फोन: अपना नंबर जोड़ें</p><p>ईमेल: अपना ईमेल जोड़ें</p><small>अभी डेमो — संपर्क विवरण प्रकाशित करने से पहले बदलें।</small></div></section>
+  </main>
+
+  <footer><a class="brand footer-brand" href="#"><span class="brand-mark">✿</span><span><strong>Aashapura</strong><small>AYURVEDIC STORE</small></span></a><span>© <span id="year"></span> Aashapura Ayurvedic Store</span></footer>
+
+  <div class="cart-backdrop" id="cartBackdrop"></div>
+  <aside class="cart-drawer" id="cartDrawer" aria-label="शॉपिंग कार्ट">
+    <div class="cart-head"><h2>आपका कार्ट</h2><button id="cartClose" aria-label="कार्ट बंद करें">✕</button></div>
+    <div id="cartItems" class="cart-items"><p class="empty-cart">आपका कार्ट अभी खाली है।</p></div>
+    <div class="cart-bottom"><div><span>कुल</span><strong id="cartTotal">₹0</strong></div><button class="primary-btn" id="checkoutBtn">ऑर्डर पूछें</button><small>डेमो: यह बटन WhatsApp/पेमेंट ऑर्डर नहीं भेजता। लाइव ऑर्डर के लिए सेटअप आवश्यक है।</small></div>
+  </aside>
+  <script src="script.js"></script>
+</body>
+</html>
