@@ -67,7 +67,11 @@ function renderProducts() {
 
   $("productGrid").innerHTML = list.map(p => `
     <article class="product-card">
-      <div class="product-art">${p.emoji}</div>
+      <div class="product-art">
+  ${p.image_url
+    ? `<img src="${escapeHTML(p.image_url)}" alt="${escapeHTML(p.name)}" style="width:100%;height:100%;object-fit:contain;">`
+    : p.emoji}
+</div>
       <div class="product-info">
         <span class="product-tag">${escapeHTML(p.weight)}</span>
         <h3>${escapeHTML(p.name)}</h3>
