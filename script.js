@@ -732,11 +732,14 @@ async function openAccountModal() {
   $("accountEmail").textContent = signedInUser.email || "";
   const { data, error } = await supabaseClient.from("customer_profiles")
     .select("full_name, phone, address").eq("user_id", signedInUser.id).maybeSingle();
-  if (!error && data) {
-    $("profileName").value = data.full_name || "";
-    $("profilePhone").value = data.phone || "";
-    $("profileAddress").value = data.address || "";
-  }
+  if (error) {
+  accountNotice("प्रोफ़ाइल लोड नहीं हुई: " + error.message, true);
+  return;
+}
+
+$("profileName").value = data?.full_name || "";
+$("profilePhone").value = data?.phone || "";
+$("profileAddress").value = data?.address || "";
 }
 async function saveCustomerProfile() {
   if (!signedInUser) return alert("पहले Google Login करें।");
@@ -946,4 +949,59 @@ function openPremiumCheckout() {
     close();
     showStoreToast("ऑर्डर WhatsApp में तैयार है।", "success");
   };
+}
+async function loadMyOrders() {
+  const list = document.getElementById("myOrdersList");
+  const message = document.getElementById("myOrdersMessage");
+
+  if (!signedInUser) {
+    list.innerHTML = "<p>अपने ऑर्डर देखने के लिए Google Login करें।</p>";
+    return;
+  }
+
+  list.textContent = "ऑर्डर लोड हो रहे हैं...";
+
+  const { data, error } = await supabaseClient
+    .from("store_orders")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    list.textContent = "ऑर्डर लोड नहीं हुए।";
+    message.textContent = error.message;
+    return;
+  }
+
+  const myOrders = (data || []).filter(order =>
+    order.user_id === signedInUser.id
+  );
+
+  if (!myOrders.length) {
+    list.innerHTML = "<p>अभी आपका कोई ऑर्डर नहीं है।</p>";
+    return;
+  }
+
+  list.replaceChildren();
+
+  myOrders.forEach(order => {
+    const card = document.createElement("article");
+    card.className = "profile-card";
+
+    const title = document.createElement("h3");
+    title.textContent = "ऑर्डर #" + (order.id ?? "");
+
+    const status = document.createElement("p");
+    status.textContent = "स्टेटस: " + (order.status || "Pending");
+
+    const amount = document.createElement("p");
+    amount.textContent = "कुल राशि: ₹" + (order.total_amount ?? order.total ?? "—");
+
+    const date = document.createElement("p");
+    date.textContent = order.created_at
+      ? "तारीख: " + new Date(order.created_at).toLocaleDateString("hi-IN")
+      : "";
+
+    card.append(title, status, amount, date);
+    list.appendChild(card);
+  });
 }
