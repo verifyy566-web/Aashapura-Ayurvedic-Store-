@@ -381,50 +381,50 @@ function showProduct(id) {
   if (!p) return;
 
   let modal = document.getElementById("productModal");
-
   if (!modal) {
     modal = document.createElement("div");
     modal.id = "productModal";
-    modal.style.cssText = `
-      position:fixed; inset:0; z-index:99999;
-      background:#0009; display:flex;
-      align-items:center; justify-content:center;
-      padding:16px; overflow:auto;
-    `;
     document.body.appendChild(modal);
   }
 
   const image = p.image_url
-    ? `<img src="${escapeHTML(p.image_url)}"
-       style="width:100%;max-height:280px;object-fit:contain;border-radius:14px">`
-    : `<div style="font-size:80px;text-align:center">🌿</div>`;
+    ? `<img src="${escapeHTML(p.image_url)}" style="width:100%;height:260px;object-fit:contain;background:#f0f5ed;border-radius:16px">`
+    : `<div style="font-size:70px;text-align:center;padding:40px">🌿</div>`;
 
   const video = p.video_url
-    ? `<a href="${escapeHTML(p.video_url)}"
-       target="_blank" rel="noopener"
-       style="display:block;margin:12px 0;color:#176b48">▶ Product Video dekhein</a>`
+    ? `<a href="${escapeHTML(p.video_url)}" target="_blank" rel="noopener" style="display:block;margin:14px 0;color:#176b48">▶ Product video dekhein</a>`
     : "";
 
+  modal.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(10,30,20,.65);display:flex;align-items:center;justify-content:center;padding:16px;";
+
   modal.innerHTML = `
-    <div style="background:white;width:100%;max-width:450px;
-      max-height:90vh;overflow:auto;border-radius:22px;padding:20px;
-      box-sizing:border-box;color:#173d2e">
-      <button onclick="document.getElementById('productModal').remove()"
-        style="float:right;border:0;background:#edf4ee;padding:10px 15px;
-        border-radius:50%;font-size:18px">✕</button>
+    <div style="background:#fff;width:100%;max-width:440px;max-height:90vh;overflow:auto;border-radius:24px;padding:20px;box-sizing:border-box;color:#173d2e;box-shadow:0 15px 50px #0003">
+      <button id="closeProductModal" style="float:right;border:0;background:#edf5ee;border-radius:50%;width:40px;height:40px;font-size:24px;cursor:pointer">×</button>
       ${image}
-      <h2>${escapeHTML(p.name)}</h2>
-      <div style="font-size:26px;font-weight:bold">₹${p.price}</div>
-      <p>📦 ${escapeHTML(p.weight)}</p>
-      <p>${escapeHTML(p.desc)}</p>
+      <h2 style="font-size:25px;margin:18px 0 8px">${escapeHTML(p.name)}</h2>
+      <div style="font-size:28px;font-weight:bold;color:#176b48">₹${p.price}</div>
+      <p style="background:#edf5ee;padding:9px 12px;border-radius:10px;display:inline-block">📦 ${escapeHTML(p.weight)}</p>
+      <p style="font-size:16px;line-height:1.6">${escapeHTML(p.desc)}</p>
       ${video}
-      <button onclick="addToCartFromDetails(${p.id})"
-        style="width:100%;padding:15px;background:#123c2b;color:white;
-        border:0;border-radius:12px;font-size:17px">
-        🛒 कार्ट में जोड़ें
-      </button>
+      <button id="detailAddToCart" style="width:100%;padding:15px;background:#123c2b;color:white;border:0;border-radius:13px;font-size:17px;margin-top:10px;cursor:pointer">🛒 कार्ट में जोड़ें</button>
     </div>
   `;
+
+  modal.style.display = "flex";
+
+  document.getElementById("closeProductModal").onclick = () => {
+    modal.style.display = "none";
+  };
+
+  modal.onclick = e => {
+    if (e.target === modal) modal.style.display = "none";
+  };
+
+  document.getElementById("detailAddToCart").onclick = () => {
+    modal.style.display = "none";
+    const button = document.querySelector(`[data-add="${p.id}"]`);
+    if (button) button.click();
+  };
 }
 
 function addToCartFromDetails(id) {
