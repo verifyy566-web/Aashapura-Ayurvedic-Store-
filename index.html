@@ -83,6 +83,22 @@
       <p id="accountMessage" class="small-note" aria-live="polite"></p>
     </div>
   </main>
+  <main id="myOrdersPage" class="profile-page" hidden>
+  <div class="profile-card">
+    <button id="ordersBackBtn" class="secondary-btn" type="button">
+      ← स्टोर पर वापस
+    </button>
+
+    <p class="eyebrow">आपका खाता</p>
+    <h2>मेरे ऑर्डर</h2>
+
+    <div id="myOrdersList">
+      <p>आपके ऑर्डर लोड हो रहे हैं...</p>
+    </div>
+
+    <p id="myOrdersMessage" class="small-note" aria-live="polite"></p>
+  </div>
+  </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js?v=8"></script>
 <section id="adminPanel" style="max-width:500px;margin:30px auto;padding:20px;border:1px solid #ccc;border-radius:12px;">
