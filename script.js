@@ -403,11 +403,21 @@ async function adminLogin() {
 
   showAdminPanel(true);
 }
-
 function showAdminPanel(loggedIn) {
-  $("adminLoginBox").style.display = loggedIn ? "none" : "block";
-  $("adminProductBox").style.display = loggedIn ? "block" : "none";
-  if (loggedIn) renderAdminProducts();
+  const loginBox = $("adminLoginBox");
+  const productBox = $("adminProductBox");
+
+  if (loginBox) {
+    loginBox.style.display = loggedIn ? "none" : "block";
+  }
+
+  if (productBox) {
+    productBox.style.display = loggedIn ? "block" : "none";
+  }
+
+  if (loggedIn) {
+    renderAdminProducts();
+  }
 }
 
 // Restore login session after page reload
