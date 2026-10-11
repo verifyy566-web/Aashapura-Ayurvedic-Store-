@@ -673,15 +673,29 @@ function renderProductPage(p) {
     history.replaceState({}, "", url);
   };
 
-  document.getElementById("fullPageAddCart").onclick = () => {
-    const button = document.querySelector(`[data-add="${p.id}"]`);
-    if (button) button.click();
-    page.remove();
+  document.getElementById("fullPageAddCart").onclick = (e) => {
+  e.preventDefault();
+  e.stopPropagation();
 
-    const url = new URL(window.location.href);
-    url.searchParams.delete("product");
-    history.replaceState({}, "", url);
-  };
+  const id = String(p.id);
+  const product = products.find(item => String(item.id) === id);
+
+  if (!product) {
+    showStoreToast("उत्पाद नहीं मिला। दुकान दोबारा खोलें।", "error");
+    return;
+  }
+
+  cart[id] = (Number(cart[id]) || 0) + 1;
+
+  renderCart();
+  page.remove();
+
+  const url = new URL(window.location.href);
+  url.searchParams.delete("product");
+  history.replaceState({}, "", url);
+
+  showStoreToast(`${product.name} कार्ट में जोड़ा गया`, "success");
+};
 }
 
 window.showProduct = showProduct;
