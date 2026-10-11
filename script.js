@@ -965,54 +965,94 @@ async function loadMyOrders() {
   const list = document.getElementById("myOrdersList");
   const message = document.getElementById("myOrdersMessage");
 
+  if (!list || !message) return;
+
+  list.replaceChildren();
+  message.textContent = "";
+
   if (!signedInUser) {
-    list.innerHTML = "<p>अपने ऑर्डर देखने के लिए Google Login करें।</p>";
+    list.textContent = "अपने ऑर्डर देखने के लिए Google Login करें।";
     return;
   }
 
-  list.textContent = "ऑर्डर लोड हो रहे हैं...";
+  list.textContent = "आपके ऑर्डर लोड हो रहे हैं...";
 
-  const { data, error } = await supabaseClient
+  const { data: orders, error } = await supabaseClient
     .from("store_orders")
-    .select("*")
+    .select(
+      "id, user_id, customer_name, items, subtotal, discount, total, payment_status, order_status, created_at"
+    )
+    .eq("user_id", signedInUser.id)
     .order("created_at", { ascending: false });
 
   if (error) {
-    list.textContent = "ऑर्डर लोड नहीं हुए।";
+    list.textContent = "ऑर्डर लोड नहीं हो सके।";
     message.textContent = error.message;
-    return;
-  }
-
-  const myOrders = (data || []).filter(order =>
-    order.user_id === signedInUser.id
-  );
-
-  if (!myOrders.length) {
-    list.innerHTML = "<p>अभी आपका कोई ऑर्डर नहीं है।</p>";
     return;
   }
 
   list.replaceChildren();
 
-  myOrders.forEach(order => {
+  if (!orders || orders.length === 0) {
+    list.textContent = "अभी आपका कोई ऑर्डर नहीं है।";
+    return;
+  }
+
+  orders.forEach(order => {
     const card = document.createElement("article");
     card.className = "profile-card";
 
     const title = document.createElement("h3");
-    title.textContent = "ऑर्डर #" + (order.id ?? "");
-
-    const status = document.createElement("p");
-    status.textContent = "स्टेटस: " + (order.status || "Pending");
-
-    const amount = document.createElement("p");
-    amount.textContent = "कुल राशि: ₹" + (order.total_amount ?? order.total ?? "—");
+    title.textContent = `ऑर्डर #${order.id}`;
 
     const date = document.createElement("p");
     date.textContent = order.created_at
-      ? "तारीख: " + new Date(order.created_at).toLocaleDateString("hi-IN")
+      ? "तारीख: " +
+        new Date(order.created_at).toLocaleDateString("hi-IN")
       : "";
 
-    card.append(title, status, amount, date);
+    const status = document.createElement("p");
+    status.textContent = "ऑर्डर स्टेटस: " + (order.order_status || "Pending");
+
+    const payment = document.createElement("p");
+    payment.textContent =
+      "पेमेंट स्टेटस: " + (order.payment_status || "Pending");
+
+    const amount = document.createElement("p");
+    amount.textContent = "कुल राशि: ₹" + Number(order.total || 0).toFixed(2);
+
+    const productsHeading = document.createElement("h4");
+    productsHeading.textContent = "ऑर्डर के प्रोडक्ट";
+
+    const productsList = document.createElement("ul");
+    const items = Array.isArray(order.items) ? order.items : [];
+
+    if (items.length) {
+      items.forEach(item => {
+        const li = document.createElement("li");
+        const name = item.name || item.product_name || "Product";
+        const qty = Number(item.quantity || item.qty || 1);
+        const price = Number(item.price || 0);
+
+        li.textContent = `${name} × ${qty} — ₹${(price * qty).toFixed(2)}`;
+        productsList.appendChild(li);
+      });
+    } else {
+      const li = document.createElement("li");
+      li.textContent = "प्रोडक्ट की जानकारी उपलब्ध नहीं है।";
+      productsList.appendChild(li);
+    }
+
+    card.append(
+      title,
+      date,
+      status,
+      payment,
+      amount,
+      productsHeading,
+      productsList
+    );
+
     list.appendChild(card);
   });
 }
