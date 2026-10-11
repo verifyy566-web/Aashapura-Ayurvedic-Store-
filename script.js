@@ -62,18 +62,29 @@ async function loadProducts() {
 function renderProducts() {
   const q = $("searchInput").value.trim().toLowerCase();
   const cat = $("categoryFilter").value;
+let list = products.filter(p => {
+  const name = String(p.name || "").toLowerCase();
+  const desc = String(p.desc || p.description || "").toLowerCase();
+  const category = String(p.category || "").trim().toLowerCase();
+  const selectedCategory = String(cat || "all").trim().toLowerCase();
 
-  let list = products.filter(p =>
-    (cat === "all" || p.category === cat) &&
-    (p.name.toLowerCase().includes(q) ||
-     p.desc.toLowerCase().includes(q))
-  );
+  const categoryMatch =
+    selectedCategory === "all" ||
+    category === selectedCategory;
 
-  if ($("sortFilter").value === "low")
-    list.sort((a, b) => a.price - b.price);
+  const searchMatch =
+    !q || name.includes(q) || desc.includes(q);
 
-  if ($("sortFilter").value === "high")
-    list.sort((a, b) => b.price - a.price);
+  return categoryMatch && searchMatch;
+});
+  
+  const sort = $("sortFilter").value;
+
+if (sort === "low") {
+  list.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+} else if (sort === "high") {
+  list.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+}
 
   $("productGrid").innerHTML = list.map(p => `
     <article class="product-card" onclick="showProduct(${p.id})">
