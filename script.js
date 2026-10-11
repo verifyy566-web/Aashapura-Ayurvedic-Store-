@@ -24,6 +24,7 @@ function normalizeProduct(p) {
     emoji: p.emoji || "🌿",
     stock: Number(p.stock || 0),
     image_url: p.image_url || "",
+    images: p.images || "",
     video_url: p.video_url || ""
   };
 }
@@ -275,7 +276,34 @@ async function addAdminProduct() {
     alert("Product name, सही price और stock भरें।");
     return;
   }
+const imageFiles = Array.from($("pImages").files).slice(0, 4);
+const imageUrls = [];
 
+for (const file of imageFiles) {
+  if (!file.type.startsWith("image/")) {
+    alert("Sirf image files select karo.");
+    return;
+  }
+
+  const path = `${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+
+  const { error: uploadError } = await supabaseClient
+    .storage
+    .from("product-images")
+    .upload(path, file, { contentType: file.type });
+
+  if (uploadError) {
+    alert("Image upload failed: " + uploadError.message);
+    return;
+  }
+
+  const { data: urlData } = supabaseClient
+    .storage
+    .from("product-images")
+    .getPublicUrl(path);
+
+  imageUrls.push(urlData.publicUrl);
+}
   const product = {
     name,
     description: $("pDescription").value.trim(),
@@ -284,6 +312,8 @@ async function addAdminProduct() {
     weight: $("pWeight").value.trim(),
     stock,
     video_url: $("pVideo").value.trim(),
+    image_url: imageUrls[0] || "",
+images: JSON.stringify(imageUrls),
     is_active: true
   };
 
