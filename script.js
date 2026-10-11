@@ -66,7 +66,7 @@ function renderProducts() {
     list.sort((a, b) => b.price - a.price);
 
   $("productGrid").innerHTML = list.map(p => `
-    <article class="product-card">
+    <article class="product-card" onclick="showProduct(${p.id})">
       <div class="product-art">
   ${p.image_url
     ? `<img src="${escapeHTML(p.image_url)}" alt="${escapeHTML(p.name)}" style="width:100%;height:100%;object-fit:contain;">`
@@ -376,3 +376,16 @@ async function deleteProduct(id) {
 }
 
 window.deleteProduct = deleteProduct;
+function showProduct(id) {
+  const p = products.find(item => item.id === Number(id));
+  if (!p) return;
+
+  alert(
+    "🌿 " + p.name +
+    "\n\n💰 Price: ₹" + p.price +
+    "\n\n📦 Weight: " + p.weight +
+    "\n\n📝 Details: " + p.desc
+  );
+}
+
+window.showProduct = showProduct;
