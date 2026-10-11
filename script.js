@@ -654,28 +654,37 @@ function renderProductPage(p) {
 })();
 
 let currentImage = 0;
-
-const image = imageList.length
+const mediaList = [
+  ...imageList.map(url => ({ type: "image", url })),
+  ...(p.video_url ? [{ type: "video", url: p.video_url }] : [])
+];
+  const image = mediaList.length
   ? `
     <div style="position:relative">
-      <img id="productSlideImage"
-        src="${escapeHTML(imageList[0])}"
-        alt="${escapeHTML(p.name)}"
-        style="width:100%;height:320px;object-fit:contain;background:#eef5ed;border-radius:18px">
+      <div id="productMediaViewer"
+        style="width:100%;height:320px;display:grid;place-items:center;background:#eef5ed;border-radius:18px;overflow:hidden">
+      </div>
 
-      ${imageList.length > 1 ? `
+      ${mediaList.length > 1 ? `
         <button id="slidePrev" type="button"
-          style="position:absolute;left:10px;top:45%;padding:12px;border:0;border-radius:50%">❮</button>
+          style="position:absolute;left:10px;top:130px;padding:12px;border:0;border-radius:50%;background:white">❮</button>
+
         <button id="slideNext" type="button"
-          style="position:absolute;right:10px;top:45%;padding:12px;border:0;border-radius:50%">❯</button>
-        <div id="slideThumbs" style="display:flex;gap:8px;overflow-x:auto;margin-top:10px">
-          ${imageList.map((url, i) => `
-            <img data-slide="${i}" src="${escapeHTML(url)}"
-              alt="Photo ${i + 1}"
-              style="width:60px;height:60px;object-fit:contain;flex-shrink:0;border:2px solid ${i === 0 ? '#246b45' : '#ddd'};border-radius:8px">
+          style="position:absolute;right:10px;top:130px;padding:12px;border:0;border-radius:50%;background:white">❯</button>
+
+        <div id="slideThumbs"
+          style="display:flex;gap:8px;overflow-x:auto;margin-top:10px">
+          ${mediaList.map((item, i) => `
+            <button type="button" data-slide="${i}"
+              style="min-width:65px;height:60px;border:2px solid ${i === 0 ? '#246b45' : '#ddd'};border-radius:8px;background:white">
+              ${item.type === "video" ? "▶ Video" : `📷 ${i + 1}`}
+            </button>
           `).join("")}
         </div>
       ` : ""}
+    </div>
+  `
+  : `<div style="height:250px;display:grid;place-items:center;background:#eef5ed;border-radius:18px;font-size:80px">${escapeHTML(p.emoji)}</div>`;
     </div>
   `
   : `<div style="height:250px;display:grid;place-items:center;background:#eef5ed;border-radius:18px;font-size:80px">${escapeHTML(p.emoji)}</div>`;
@@ -719,36 +728,61 @@ const image = imageList.length
       🛒 कार्ट में जोड़ें
     </button>
   `;
-const slideImage = page.querySelector("#productSlideImage");
+const mediaViewer = page.querySelector("#productMediaViewer");
 
-if (slideImage && imageList.length > 1) {
+if (mediaViewer && mediaList.length > 0) {
   const showSlide = index => {
-    currentImage = (index + imageList.length) % imageList.length;
-    slideImage.src = imageList[currentImage];
+    currentImage = (index + mediaList.length) % mediaList.length;
+    const item = mediaList[currentImage];
+
+    if (item.type === "video") {
+      mediaViewer.innerHTML = `
+        <video controls playsinline
+          style="width:100%;height:320px;object-fit:contain">
+          <source src="${escapeHTML(item.url)}">
+          आपका ब्राउज़र वीडियो नहीं चला सकता।
+        </video>
+      `;
+    } else {
+      mediaViewer.innerHTML = `
+        <img src="${escapeHTML(item.url)}"
+          alt="${escapeHTML(p.name)}"
+          style="width:100%;height:320px;object-fit:contain">
+      `;
+    }
 
     page.querySelectorAll("[data-slide]").forEach((thumb, i) => {
-      thumb.style.borderColor = i === currentImage ? "#246b45" : "#ddd";
+      thumb.style.borderColor =
+        i === currentImage ? "#246b45" : "#ddd";
     });
   };
 
-  page.querySelector("#slidePrev").onclick = () => showSlide(currentImage - 1);
-  page.querySelector("#slideNext").onclick = () => showSlide(currentImage + 1);
+  showSlide(0);
 
-  page.querySelectorAll("[data-slide]").forEach(thumb => {
-    thumb.onclick = () => showSlide(Number(thumb.dataset.slide));
-  });
+  if (mediaList.length > 1) {
+    page.querySelector("#slidePrev").onclick =
+      () => showSlide(currentImage - 1);
 
-  let touchStartX = 0;
-  slideImage.addEventListener("touchstart", e => {
-    touchStartX = e.changedTouches[0].clientX;
-  }, { passive: true });
+    page.querySelector("#slideNext").onclick =
+      () => showSlide(currentImage + 1);
 
-  slideImage.addEventListener("touchend", e => {
-    const diff = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(diff) > 40) {
-      showSlide(currentImage + (diff < 0 ? 1 : -1));
-    }
-  }, { passive: true });
+    page.querySelectorAll("[data-slide]").forEach(thumb => {
+      thumb.onclick = () => showSlide(Number(thumb.dataset.slide));
+    });
+
+    let touchStartX = 0;
+
+    mediaViewer.addEventListener("touchstart", e => {
+      touchStartX = e.changedTouches[0].clientX;
+    }, { passive: true });
+
+    mediaViewer.addEventListener("touchend", e => {
+      const diff = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(diff) > 40) {
+        showSlide(currentImage + (diff < 0 ? 1 : -1));
+      }
+    }, { passive: true });
+  }
 }
   document.body.appendChild(page);
 
