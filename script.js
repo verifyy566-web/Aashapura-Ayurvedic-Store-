@@ -134,13 +134,119 @@ function renderCart() {
 }
 
 function openCart() {
-  $("cartDrawer").classList.add("open");
-  $("cartBackdrop").classList.add("show");
+  history.pushState({ page: "cart" }, "", "?page=cart");
+  renderCartPage();
 }
 
 function closeCart() {
-  $("cartDrawer").classList.remove("open");
-  $("cartBackdrop").classList.remove("show");
+  const page = document.getElementById("cartFullPage");
+  if (page) page.remove();
+
+  const url = new URL(window.location.href);
+  url.searchParams.delete("page");
+  history.replaceState({}, "", url);
+}
+
+function renderCartPage() {
+  let page = document.getElementById("cartFullPage");
+
+  if (!page) {
+    page = document.createElement("main");
+    page.id = "cartFullPage";
+    document.body.appendChild(page);
+  }
+
+  page.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:100001;
+    overflow-y:auto;
+    background:#f7faf6;
+    padding:20px;
+    box-sizing:border-box;
+    font-family:inherit;
+    color:#173d2e;
+  `;
+
+  const items = cartItems();
+
+  page.innerHTML = `
+    <button id="cartBack"
+      style="padding:12px 18px;border:0;border-radius:12px;
+      background:#e8f1e6;font-size:17px">
+      ← वापस दुकान पर
+    </button>
+
+    <h1 style="margin-top:25px">🛒 आपका कार्ट</h1>
+
+    <div id="cartPageItems"></div>
+
+    <div style="background:white;padding:20px;
+      border-radius:16px;margin-top:20px">
+      <h2>कुल: ₹${items.reduce((sum, item) =>
+        sum + item.price * item.qty, 0)}</h2>
+      <button id="cartCheckout"
+        style="width:100%;padding:16px;background:#123c2b;
+        color:white;border:0;border-radius:12px;font-size:18px">
+        ऑर्डर करें
+      </button>
+    </div>
+  `;
+
+  document.getElementById("cartBack").onclick = closeCart;
+
+  const list = document.getElementById("cartPageItems");
+
+  if (!items.length) {
+    list.innerHTML = "<p>आपका कार्ट खाली है।</p>";
+  } else {
+    list.innerHTML = items.map(item => `
+      <article style="background:white;padding:16px;
+        margin-top:12px;border-radius:14px">
+        <h3>${escapeHTML(item.name)}</h3>
+        <p>₹${item.price}</p>
+        <button data-minus="${item.id}">−</button>
+        <strong style="margin:0 15px">${item.qty}</strong>
+        <button data-plus="${item.id}">+</button>
+        <button data-remove="${item.id}"
+          style="float:right;color:#b42318">
+          हटाएँ ✕
+        </button>
+      </article>
+    `).join("");
+  }
+
+  list.querySelectorAll("[data-plus]").forEach(button => {
+    button.onclick = () => {
+      const id = button.dataset.plus;
+      cart[id] = (cart[id] || 0) + 1;
+      renderCart();
+      renderCartPage();
+    };
+  });
+
+  list.querySelectorAll("[data-minus]").forEach(button => {
+    button.onclick = () => {
+      const id = button.dataset.minus;
+      cart[id] = (cart[id] || 0) - 1;
+      if (cart[id] <= 0) delete cart[id];
+      renderCart();
+      renderCartPage();
+    };
+  });
+
+  list.querySelectorAll("[data-remove]").forEach(button => {
+    button.onclick = () => {
+      delete cart[button.dataset.remove];
+      renderCart();
+      renderCartPage();
+    };
+  });
+
+  document.getElementById("cartCheckout").onclick = () => {
+    closeCart();
+    openCart();
+  };
 }
 
 document.addEventListener("click", e => {
