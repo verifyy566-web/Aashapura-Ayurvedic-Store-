@@ -380,53 +380,103 @@ function showProduct(id) {
   const p = products.find(item => item.id === Number(id));
   if (!p) return;
 
-  let modal = document.getElementById("productModal");
-  if (!modal) {
-    modal = document.createElement("div");
-    modal.id = "productModal";
-    document.body.appendChild(modal);
-  }
+  const url = new URL(window.location.href);
+  url.searchParams.set("product", p.id);
+  history.pushState({ productId: p.id }, "", url);
 
-  const image = p.image_url
-    ? `<img src="${escapeHTML(p.image_url)}" style="width:100%;height:260px;object-fit:contain;background:#f0f5ed;border-radius:16px">`
-    : `<div style="font-size:70px;text-align:center;padding:40px">🌿</div>`;
+  renderProductPage(p);
+}
 
-  const video = p.video_url
-    ? `<a href="${escapeHTML(p.video_url)}" target="_blank" rel="noopener" style="display:block;margin:14px 0;color:#176b48">▶ Product video dekhein</a>`
-    : "";
+function renderProductPage(p) {
+  const oldPage = document.getElementById("productFullPage");
+  if (oldPage) oldPage.remove();
 
-  modal.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(10,30,20,.65);display:flex;align-items:center;justify-content:center;padding:16px;";
+  const page = document.createElement("main");
+  page.id = "productFullPage";
 
-  modal.innerHTML = `
-    <div style="background:#fff;width:100%;max-width:440px;max-height:90vh;overflow:auto;border-radius:24px;padding:20px;box-sizing:border-box;color:#173d2e;box-shadow:0 15px 50px #0003">
-      <button id="closeProductModal" style="float:right;border:0;background:#edf5ee;border-radius:50%;width:40px;height:40px;font-size:24px;cursor:pointer">×</button>
-      ${image}
-      <h2 style="font-size:25px;margin:18px 0 8px">${escapeHTML(p.name)}</h2>
-      <div style="font-size:28px;font-weight:bold;color:#176b48">₹${p.price}</div>
-      <p style="background:#edf5ee;padding:9px 12px;border-radius:10px;display:inline-block">📦 ${escapeHTML(p.weight)}</p>
-      <p style="font-size:16px;line-height:1.6">${escapeHTML(p.desc)}</p>
-      ${video}
-      <button id="detailAddToCart" style="width:100%;padding:15px;background:#123c2b;color:white;border:0;border-radius:13px;font-size:17px;margin-top:10px;cursor:pointer">🛒 कार्ट में जोड़ें</button>
-    </div>
+  page.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:100000;
+    overflow-y:auto;
+    background:#fff;
+    padding:20px;
+    box-sizing:border-box;
+    color:#173d2e;
+    font-family:inherit;
   `;
 
-  modal.style.display = "flex";
+  const image = p.image_url
+    ? `<img src="${escapeHTML(p.image_url)}"
+        alt="${escapeHTML(p.name)}"
+        style="width:100%;height:320px;object-fit:contain;
+        background:#eef5ed;border-radius:18px;">`
+    : `<div style="height:250px;display:grid;place-items:center;
+        background:#eef5ed;border-radius:18px;font-size:80px;">
+        ${escapeHTML(p.emoji)}
+       </div>`;
 
-  document.getElementById("closeProductModal").onclick = () => {
-    modal.style.display = "none";
+  page.innerHTML = `
+    <button id="backToProducts"
+      style="padding:12px 18px;border:0;border-radius:12px;
+      background:#edf5ec;font-size:17px;margin-bottom:20px;">
+      ← वापस दुकान पर
+    </button>
+
+    ${image}
+
+    <h1 style="font-size:28px;margin-top:24px;">
+      ${escapeHTML(p.name)}
+    </h1>
+
+    <h2 style="font-size:30px;">₹${p.price}</h2>
+
+    <p style="background:#edf5ec;display:inline-block;
+      padding:12px 16px;border-radius:12px;">
+      📦 ${escapeHTML(p.weight)}
+    </p>
+
+    <p style="font-size:18px;line-height:1.7;">
+      ${escapeHTML(p.desc)}
+    </p>
+
+    ${p.video_url ? `
+      <h3>Product Video</h3>
+      <a href="${escapeHTML(p.video_url)}"
+         target="_blank" rel="noopener">
+        ▶ वीडियो देखें
+      </a>
+    ` : ""}
+
+    <button id="fullPageAddCart"
+      style="width:100%;padding:17px;margin:24px 0;
+      border:0;border-radius:14px;background:#123c2b;
+      color:white;font-size:19px;">
+      🛒 कार्ट में जोड़ें
+    </button>
+  `;
+
+  document.body.appendChild(page);
+
+  document.getElementById("backToProducts").onclick = () => {
+    page.remove();
+    const url = new URL(window.location.href);
+    url.searchParams.delete("product");
+    history.replaceState({}, "", url);
   };
 
-  modal.onclick = e => {
-    if (e.target === modal) modal.style.display = "none";
-  };
-
-  document.getElementById("detailAddToCart").onclick = () => {
-    modal.style.display = "none";
+  document.getElementById("fullPageAddCart").onclick = () => {
     const button = document.querySelector(`[data-add="${p.id}"]`);
     if (button) button.click();
+    page.remove();
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("product");
+    history.replaceState({}, "", url);
   };
 }
 
+window.showProduct = showProduct;
 function addToCartFromDetails(id) {
   document.getElementById("productModal")?.remove();
   const button = document.querySelector(`[data-add="${id}"]`);
