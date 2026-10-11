@@ -99,12 +99,24 @@ function escapeHTML(value) {
 
 function cartItems() {
   return Object.entries(cart)
-    .filter(([, qty]) => qty > 0)
-    .map(([id, qty]) => ({
-      product: products.find(p => p.id === Number(id)),
-      qty
-    }))
-    .filter(x => x.product);
+    .filter(([id, qty]) => Number(qty) > 0)
+    .map(([id, qty]) => {
+      const product = products.find(
+        p => String(p.id) === String(id)
+      );
+
+      if (!product) return null;
+
+      return {
+        id: product.id,
+        name: product.name,
+        price: Number(product.price) || 0,
+        weight: product.weight || "",
+        product: product,
+        qty: Number(qty)
+      };
+    })
+    .filter(Boolean);
 }
 
 function renderCart() {
