@@ -31,10 +31,11 @@ function normalizeProduct(p) {
 
 // Load real products from Supabase
 async function loadProducts() {
+  // Fetch products without filtering on is_active: older/admin-added rows may
+  // have NULL or false in this optional column and otherwise disappear from the shop.
   const { data, error } = await supabaseClient
     .from("products")
     .select("*")
-    .eq("is_active", true)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -146,6 +147,13 @@ function renderCart() {
 }
 
 function openCart() {
+  // Open cart as a real full-page view, not a floating overlay.
+  document.querySelectorAll("body > header, body > main, body > section, body > footer, body > nav").forEach(el => {
+    if (el.id !== "cartFullPage" && el.id !== "profilePage" && !el.dataset.cartHidden) {
+      el.dataset.cartHidden = el.hidden ? "1" : "0";
+      el.hidden = true;
+    }
+  });
   history.pushState({ page: "cart" }, "", "?page=cart");
   renderCartPage();
 }
@@ -153,10 +161,13 @@ function openCart() {
 function closeCart() {
   const page = document.getElementById("cartFullPage");
   if (page) page.remove();
-
+  document.querySelectorAll("[data-cart-hidden]").forEach(el => {
+    el.hidden = el.dataset.cartHidden === "1";
+    delete el.dataset.cartHidden;
+  });
   const url = new URL(window.location.href);
   url.searchParams.delete("page");
-  history.replaceState({}, "", url);
+  history.replaceState({}, "", url.pathname + url.search + url.hash);
 }
 
 function renderCartPage() {
@@ -169,9 +180,9 @@ function renderCartPage() {
   }
 
   page.style.cssText = `
-    position:fixed;
-    inset:0;
-    z-index:100001;
+    position:relative;
+    width:100%;
+    min-height:100vh;
     overflow-y:auto;
     background:#f7faf6;
     padding:20px;
@@ -376,6 +387,7 @@ async function adminLogin() {
 function showAdminPanel(loggedIn) {
   $("adminLoginBox").style.display = loggedIn ? "none" : "block";
   $("adminProductBox").style.display = loggedIn ? "block" : "none";
+  if (loggedIn) renderAdminProducts();
 }
 
 // Restore login session after page reload
@@ -391,7 +403,15 @@ async function restoreAdminSession() {
 }
 
 // Add product to Supabase
+let adminProductSaving = false;
 async function addAdminProduct() {
+  if (adminProductSaving) return;
+  adminProductSaving = true;
+  const saveBtn = document.querySelector('#adminProductBox button[onclick="addAdminProduct()"]');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = "Saving…"; }
+  try { await addAdminProductInternal(); } finally { adminProductSaving = false; if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = "Save Product"; } }
+}
+async function addAdminProductInternal() {
   const { data: { user }, error: authError } =
     await supabaseClient.auth.getUser();
 
@@ -477,6 +497,51 @@ images: JSON.stringify(imageUrls),
   await loadProducts();
 }
 
+// Admin-only product management: delete a database row after confirmation.
+async function renderAdminProducts() {
+  const host = $("adminProductList");
+  if (!host) return;
+  host.innerHTML = '<p>Products लोड हो रहे हैं…</p>';
+  const { data: { user } = {} } = await supabaseClient.auth.getUser();
+  if (!user || user.id !== "6eeb63cc-1cec-4ac5-bc4b-12a0e6f951c3") {
+    host.innerHTML = '';
+    return;
+  }
+  const { data, error } = await supabaseClient.from("products")
+    .select("id,name,price,category,weight").order("created_at", { ascending: false });
+  if (error) {
+    host.innerHTML = '<p style="color:#b42318">Products लोड नहीं हुए: ' + escapeHTML(error.message) + '</p>';
+    return;
+  }
+  if (!data || !data.length) {
+    host.innerHTML = '<p>अभी कोई product नहीं है।</p>';
+    return;
+  }
+  host.innerHTML = data.map(p => `<div style="display:flex;gap:10px;align-items:center;justify-content:space-between;border:1px solid #e5e7eb;border-radius:10px;padding:10px;margin:8px 0;background:#fff">
+    <div style="min-width:0"><strong>${escapeHTML(p.name || 'Unnamed product')}</strong><div style="font-size:12px;color:#666">₹${Number(p.price || 0)} · ${escapeHTML(p.weight || '')}</div></div>
+    <button type="button" data-delete-product="${escapeHTML(String(p.id))}" style="flex-shrink:0;background:#b42318;color:white;border:0;border-radius:8px;padding:9px 11px">Delete</button>
+  </div>`).join('');
+  host.querySelectorAll('[data-delete-product]').forEach(btn => {
+    btn.onclick = async () => {
+      const productId = btn.dataset.deleteProduct;
+      const product = data.find(p => String(p.id) === String(productId));
+      if (!confirm(`“${product?.name || 'Product'}” को स्थायी रूप से हटाएँ?`)) return;
+      btn.disabled = true; btn.textContent = 'Deleting…';
+      const { data: { user: currentUser } = {} } = await supabaseClient.auth.getUser();
+      if (!currentUser || currentUser.id !== "6eeb63cc-1cec-4ac5-bc4b-12a0e6f951c3") {
+        showStoreToast('Admin permission नहीं है।', 'error'); return;
+      }
+      const { error: deleteError } = await supabaseClient.from('products').delete().eq('id', productId);
+      if (deleteError) {
+        showStoreToast('Delete नहीं हुआ: ' + deleteError.message, 'error');
+        btn.disabled = false; btn.textContent = 'Delete'; return;
+      }
+      showStoreToast('Product delete हो गया।', 'success');
+      await loadProducts(); await renderAdminProducts();
+    };
+  });
+}
+
 // Logout
 async function adminLogout() {
   await supabaseClient.auth.signOut();
@@ -487,6 +552,7 @@ async function adminLogout() {
 window.adminLogin = adminLogin;
 window.addAdminProduct = addAdminProduct;
 window.adminLogout = adminLogout;
+window.renderAdminProducts = renderAdminProducts;
 
 // Start the page
 loadProducts();
@@ -708,7 +774,25 @@ function closeProfilePage() {
   if (location.hash === "#profile") history.replaceState({}, "", location.pathname + location.search);
 }
 if ($("profileBackBtn")) $("profileBackBtn").addEventListener("click", closeProfilePage);
-window.addEventListener("popstate", () => { if (location.hash !== "#profile") closeProfilePage(); });
+window.addEventListener("popstate", () => {
+  if (location.search.includes("page=cart")) {
+    openCartFromHistory();
+  } else {
+    if (document.getElementById("cartFullPage")) closeCart();
+    if (location.hash !== "#profile") closeProfilePage();
+  }
+});
+function openCartFromHistory() {
+  if (!document.getElementById("cartFullPage")) {
+    document.querySelectorAll("body > header, body > main, body > section, body > footer, body > nav").forEach(el => {
+      if (el.id !== "cartFullPage" && el.id !== "profilePage" && !el.dataset.cartHidden) {
+        el.dataset.cartHidden = el.hidden ? "1" : "0";
+        el.hidden = true;
+      }
+    });
+    renderCartPage();
+  }
+}
 
 if ($("saveProfileBtn")) $("saveProfileBtn").addEventListener("click", saveCustomerProfile);
 if ($("googleLogoutBtn")) $("googleLogoutBtn").addEventListener("click", async () => {
@@ -799,12 +883,13 @@ function openPremiumCheckout() {
   const profileName = $("profileName")?.value || $("customerName")?.value || signedInUser?.user_metadata?.full_name || "";
   const profilePhone = $("profilePhone")?.value || "";
   const profileAddress = $("profileAddress")?.value || $("customerAddress")?.value || "";
-  const modal = document.createElement("div");
+  const modal = document.createElement("main");
   modal.id = "premiumCheckoutModal";
-  modal.className = "premium-modal-backdrop";
+  modal.className = "premium-checkout-page";
+  modal.style.cssText = "position:fixed;inset:0;z-index:100010;overflow-y:auto;background:#f7faf6;padding:22px;box-sizing:border-box;color:#173d2e;font-family:inherit";
   modal.innerHTML = `
-    <section class="premium-modal" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
-      <button type="button" class="premium-modal-close" aria-label="बंद करें">×</button>
+    <section class="premium-modal" role="region" aria-labelledby="checkoutTitle" style="margin:20px auto;max-height:none;width:min(100%,560px);box-sizing:border-box">
+      <button type="button" class="premium-modal-close" aria-label="वापस जाएँ">×</button>
       <span class="premium-eyebrow">AASHAPURA • CHECKOUT</span>
       <h2 id="checkoutTitle">डिलीवरी जानकारी</h2>
       <p class="checkout-total">ऑर्डर कुल <strong>₹${total.toFixed(2)}</strong></p>
@@ -829,7 +914,11 @@ function openPremiumCheckout() {
     const lines = items.map(item => `• ${item.name} (${item.weight || "standard"}) × ${item.qty} = ₹${(Number(item.price) * Number(item.qty)).toFixed(2)}`).join("\n");
     const message = `नमस्ते Aashapura Ayurvedic Store,\nमुझे यह ऑर्डर करना है:\n${lines}\nकुल: ₹${total.toFixed(2)}\nनाम: ${name}\nमोबाइल: ${phone}\nपता: ${address}\nकृपया उपलब्धता और डिलीवरी चार्ज की पुष्टि करें।`;
     const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-    window.open(url, "_blank", "noopener");
+    const opened = window.open(url, "_blank", "noopener");
+    if (!opened) {
+      window.location.href = url;
+      return;
+    }
     closeCart();
     close();
     showStoreToast("ऑर्डर WhatsApp में तैयार है।", "success");
