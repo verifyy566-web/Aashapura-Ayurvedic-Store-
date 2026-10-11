@@ -358,3 +358,21 @@ window.adminLogout = adminLogout;
 // Start the page
 loadProducts();
 restoreAdminSession();
+async function deleteProduct(id) {
+  if (!confirm("Kya aap ye product delete karna chahte hain?")) return;
+
+  const { error } = await supabaseClient
+    .from("products")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert("Delete nahi hua: " + error.message);
+    return;
+  }
+
+  alert("Product delete ho gaya!");
+  await loadProducts();
+}
+
+window.deleteProduct = deleteProduct;
