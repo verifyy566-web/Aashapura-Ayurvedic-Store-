@@ -637,15 +637,48 @@ function renderProductPage(p) {
     font-family:inherit;
   `;
 
-  const image = p.image_url
-    ? `<img src="${escapeHTML(p.image_url)}"
+  const imageList = (() => {
+  try {
+    const saved = typeof p.images === "string"
+      ? JSON.parse(p.images || "[]")
+      : p.images;
+
+    const urls = Array.isArray(saved) ? saved : [];
+    if (p.image_url && !urls.includes(p.image_url)) {
+      urls.unshift(p.image_url);
+    }
+    return urls.filter(Boolean);
+  } catch {
+    return p.image_url ? [p.image_url] : [];
+  }
+})();
+
+let currentImage = 0;
+
+const image = imageList.length
+  ? `
+    <div style="position:relative">
+      <img id="productSlideImage"
+        src="${escapeHTML(imageList[0])}"
         alt="${escapeHTML(p.name)}"
-        style="width:100%;height:320px;object-fit:contain;
-        background:#eef5ed;border-radius:18px;">`
-    : `<div style="height:250px;display:grid;place-items:center;
-        background:#eef5ed;border-radius:18px;font-size:80px;">
-        ${escapeHTML(p.emoji)}
-       </div>`;
+        style="width:100%;height:320px;object-fit:contain;background:#eef5ed;border-radius:18px">
+
+      ${imageList.length > 1 ? `
+        <button id="slidePrev" type="button"
+          style="position:absolute;left:10px;top:45%;padding:12px;border:0;border-radius:50%">❮</button>
+        <button id="slideNext" type="button"
+          style="position:absolute;right:10px;top:45%;padding:12px;border:0;border-radius:50%">❯</button>
+        <div id="slideThumbs" style="display:flex;gap:8px;overflow-x:auto;margin-top:10px">
+          ${imageList.map((url, i) => `
+            <img data-slide="${i}" src="${escapeHTML(url)}"
+              alt="Photo ${i + 1}"
+              style="width:60px;height:60px;object-fit:contain;flex-shrink:0;border:2px solid ${i === 0 ? '#246b45' : '#ddd'};border-radius:8px">
+          `).join("")}
+        </div>
+      ` : ""}
+    </div>
+  `
+  : `<div style="height:250px;display:grid;place-items:center;background:#eef5ed;border-radius:18px;font-size:80px">${escapeHTML(p.emoji)}</div>`;
 
   page.innerHTML = `
     <button id="backToProducts"
@@ -686,7 +719,37 @@ function renderProductPage(p) {
       🛒 कार्ट में जोड़ें
     </button>
   `;
+const slideImage = page.querySelector("#productSlideImage");
 
+if (slideImage && imageList.length > 1) {
+  const showSlide = index => {
+    currentImage = (index + imageList.length) % imageList.length;
+    slideImage.src = imageList[currentImage];
+
+    page.querySelectorAll("[data-slide]").forEach((thumb, i) => {
+      thumb.style.borderColor = i === currentImage ? "#246b45" : "#ddd";
+    });
+  };
+
+  page.querySelector("#slidePrev").onclick = () => showSlide(currentImage - 1);
+  page.querySelector("#slideNext").onclick = () => showSlide(currentImage + 1);
+
+  page.querySelectorAll("[data-slide]").forEach(thumb => {
+    thumb.onclick = () => showSlide(Number(thumb.dataset.slide));
+  });
+
+  let touchStartX = 0;
+  slideImage.addEventListener("touchstart", e => {
+    touchStartX = e.changedTouches[0].clientX;
+  }, { passive: true });
+
+  slideImage.addEventListener("touchend", e => {
+    const diff = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(diff) > 40) {
+      showSlide(currentImage + (diff < 0 ? 1 : -1));
+    }
+  }, { passive: true });
+}
   document.body.appendChild(page);
 
   document.getElementById("backToProducts").onclick = () => {
