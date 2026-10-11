@@ -13,7 +13,11 @@
     <a class="brand" href="#home"><span class="brand-mark">✿</span><span><strong>Aashapura</strong><small>AYURVEDIC STORE</small></span></a>
     <button class="menu-toggle" id="menuToggle" aria-label="मेन्यू">☰</button>
     <nav id="nav"><a href="#home">होम</a><a href="#shop">दुकान</a><a href="#about">हमारे बारे में</a><a href="#contact">संपर्क</a></nav>
-    <button class="cart-button" id="cartOpen">कार्ट <span id="cartCount">0</span></button>
+    <div class="header-actions">
+      <button class="login-button" id="googleLoginBtn" type="button">Google Login</button>
+      <button class="login-button" id="profileBtn" type="button" hidden>मेरी प्रोफ़ाइल</button>
+      <button class="cart-button" id="cartOpen">कार्ट <span id="cartCount">0</span></button>
+    </div>
   </header>
 
   <main>
@@ -65,8 +69,22 @@
       <small>WhatsApp खुलेगा और ऑर्डर का संदेश तैयार होगा। ऑर्डर तभी भेजा जाएगा जब आप WhatsApp में Send दबाएँगे।</small>
     </div>
   </aside>
+
+  <section id="accountModal" class="account-modal" hidden aria-modal="true" role="dialog">
+    <div class="account-card">
+      <button id="accountClose" class="account-close" aria-label="बंद करें">✕</button>
+      <p class="eyebrow">आपका अकाउंट</p><h2>प्रोफ़ाइल जानकारी</h2>
+      <p id="accountEmail" class="small-note"></p>
+      <label for="profileName">पूरा नाम</label><input id="profileName" autocomplete="name" placeholder="आपका नाम">
+      <label for="profilePhone">मोबाइल नंबर</label><input id="profilePhone" autocomplete="tel" inputmode="tel" placeholder="10 अंकों का मोबाइल नंबर">
+      <label for="profileAddress">डिलीवरी का पता</label><textarea id="profileAddress" autocomplete="street-address" placeholder="मकान, गली, शहर, पिन कोड"></textarea>
+      <button id="saveProfileBtn" class="primary-btn" type="button">प्रोफ़ाइल सेव करें</button>
+      <button id="googleLogoutBtn" class="secondary-btn" type="button">लॉग आउट</button>
+      <p id="accountMessage" class="small-note" aria-live="polite"></p>
+    </div>
+  </section>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="script.js?v=5"></script>
+  <script src="script.js?v=6"></script>
 <section id="adminPanel" style="max-width:500px;margin:30px auto;padding:20px;border:1px solid #ccc;border-radius:12px;">
   <h2>🔐 Admin Login</h2>
 
@@ -85,7 +103,7 @@
     <input id="pWeight" placeholder="Weight (e.g. 100 g)" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
     <input id="pStock" type="number" min="0" step="1" placeholder="Stock" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
     <input id="pVideo" type="url" placeholder="Video URL (optional)" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
-    <input id="pImages" type="file" accept="image/*" multiple
+    <input id="pImages" type="file" accept="image/*,video/mp4" multiple
 style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
     <button type="button" onclick="addAdminProduct()" style="padding:12px;width:100%;">Save Product</button>
     <button type="button" onclick="adminLogout()" style="padding:12px;width:100%;margin-top:8px;">Logout</button>

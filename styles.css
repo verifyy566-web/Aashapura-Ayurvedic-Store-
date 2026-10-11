@@ -133,3 +133,21 @@
   transform: none !important;
   color: #26352e !important;
 }
+
+
+/* Account and checkout enhancements */
+.header-actions{display:flex;align-items:center;gap:8px}
+.login-button,.secondary-btn{border:1px solid #b7c7b5;background:#fff;color:#234b34;border-radius:999px;padding:10px 14px;font:inherit;cursor:pointer}
+.account-modal{position:fixed;inset:0;z-index:9999;background:rgba(15,30,20,.62);display:grid;place-items:center;padding:16px}
+.account-modal[hidden]{display:none}
+.account-card{position:relative;background:#fffdf7;border-radius:20px;padding:26px;width:min(100%,440px);max-height:90vh;overflow:auto;box-shadow:0 20px 70px #0003}
+.account-card h2{margin:0 0 12px}
+.account-card label,.payment-prompt label{display:block;margin:12px 0 5px;font-weight:600}
+.account-card input,.account-card textarea,.payment-prompt input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #d6ded3;border-radius:10px;font:inherit}
+.account-card textarea{min-height:85px}
+.account-card .primary-btn,.account-card .secondary-btn{width:100%;margin-top:12px}
+.account-close{position:absolute;right:16px;top:14px;border:0;background:transparent;font-size:20px;cursor:pointer}
+.payment-prompt{position:fixed;z-index:9998;bottom:18px;left:50%;transform:translateX(-50%);width:min(92vw,440px);box-sizing:border-box;background:#fffdf7;border:1px solid #d8e1d4;border-radius:18px;padding:20px;box-shadow:0 10px 40px #0003}
+.payment-prompt .primary-btn{display:inline-block;margin:8px 0;text-decoration:none}
+.payment-prompt .secondary-btn{margin-top:12px;width:100%}
+@media(max-width:640px){.header-actions{gap:5px}.login-button,.cart-button{padding:9px 10px;font-size:13px}.account-card{padding:22px}}

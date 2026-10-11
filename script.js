@@ -603,3 +603,133 @@ function addToCartFromDetails(id) {
 
 window.showProduct = showProduct;
 window.addToCartFromDetails = addToCartFromDetails;
+
+
+/* AASHAPURA ENHANCEMENTS v6 — keeps existing products and checkout intact */
+const AASHAPURA_ADMIN_UID = "6eeb63cc-1cec-4ac5-bc4b-12a0e6f951c3";
+let signedInUser = null;
+let appliedCoupon = null;
+
+function accountNotice(message, isError=false) {
+  const el = $("accountMessage");
+  if (el) { el.textContent = message; el.style.color = isError ? "#b42318" : "#26734d"; }
+}
+function setAccountButtons(user) {
+  if ($("googleLoginBtn")) $("googleLoginBtn").hidden = !!user;
+  if ($("profileBtn")) $("profileBtn").hidden = !user;
+}
+async function startGoogleLogin() {
+  const redirectTo = window.location.origin + window.location.pathname;
+  const { error } = await supabaseClient.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo }
+  });
+  if (error) alert("Google Login शुरू नहीं हुआ: " + error.message);
+}
+async function openAccountModal() {
+  if (!signedInUser) { await startGoogleLogin(); return; }
+  $("accountModal").hidden = false;
+  $("accountEmail").textContent = signedInUser.email || "";
+  const { data, error } = await supabaseClient.from("customer_profiles")
+    .select("full_name, phone, address").eq("user_id", signedInUser.id).maybeSingle();
+  if (!error && data) {
+    $("profileName").value = data.full_name || "";
+    $("profilePhone").value = data.phone || "";
+    $("profileAddress").value = data.address || "";
+  }
+}
+async function saveCustomerProfile() {
+  if (!signedInUser) return alert("पहले Google Login करें।");
+  const full_name = $("profileName").value.trim();
+  const phone = $("profilePhone").value.trim();
+  const address = $("profileAddress").value.trim();
+  if (!full_name || !phone || !address) return accountNotice("नाम, मोबाइल और पता भरें।", true);
+  if (!/^[0-9+\-\s]{10,15}$/.test(phone)) return accountNotice("मोबाइल नंबर सही भरें।", true);
+  const { error } = await supabaseClient.from("customer_profiles").upsert({
+    user_id: signedInUser.id, full_name, phone, address, updated_at: new Date().toISOString()
+  }, { onConflict: "user_id" });
+  accountNotice(error ? "सेव नहीं हुआ: " + error.message : "प्रोफ़ाइल सेव हो गई।", !!error);
+  if (!error) {
+    if ($("customerName")) $("customerName").value = full_name;
+    if ($("customerAddress")) $("customerAddress").value = address;
+  }
+}
+async function initCustomerAuth() {
+  const { data } = await supabaseClient.auth.getSession();
+  signedInUser = data.session?.user || null;
+  setAccountButtons(signedInUser);
+  if (signedInUser) {
+    const { data: profile } = await supabaseClient.from("customer_profiles")
+      .select("full_name, phone, address").eq("user_id", signedInUser.id).maybeSingle();
+    if (profile) {
+      if ($("customerName") && !$("customerName").value) $("customerName").value = profile.full_name || "";
+      if ($("customerAddress") && !$("customerAddress").value) $("customerAddress").value = profile.address || "";
+    }
+  }
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    signedInUser = session?.user || null;
+    setAccountButtons(signedInUser);
+  });
+}
+if ($("googleLoginBtn")) $("googleLoginBtn").addEventListener("click", startGoogleLogin);
+if ($("profileBtn")) $("profileBtn").addEventListener("click", openAccountModal);
+if ($("accountClose")) $("accountClose").addEventListener("click", () => $("accountModal").hidden = true);
+if ($("accountModal")) $("accountModal").addEventListener("click", e => {
+  if (e.target === $("accountModal")) $("accountModal").hidden = true;
+});
+if ($("saveProfileBtn")) $("saveProfileBtn").addEventListener("click", saveCustomerProfile);
+if ($("googleLogoutBtn")) $("googleLogoutBtn").addEventListener("click", async () => {
+  const { error } = await supabaseClient.auth.signOut();
+  if (error) return accountNotice(error.message, true);
+  signedInUser = null; setAccountButtons(null); $("accountModal").hidden = true;
+});
+
+/* Coupon support: coupons are managed in Supabase; discount is rechecked at checkout. */
+async function validateStoreCoupon(code, subtotal) {
+  const normalized = code.trim().toUpperCase();
+  if (!normalized) return { ok: false, message: "कूपन कोड लिखें।" };
+  const { data, error } = await supabaseClient.from("coupons")
+    .select("code, discount_percent, discount_amount, min_order, is_active, expires_at")
+    .eq("code", normalized).eq("is_active", true).maybeSingle();
+  if (error || !data) return { ok: false, message: "कूपन सही नहीं है।" };
+  if (data.expires_at && new Date(data.expires_at) < new Date()) return { ok: false, message: "कूपन की अवधि समाप्त हो गई।" };
+  if (subtotal < Number(data.min_order || 0)) return { ok: false, message: `न्यूनतम ऑर्डर ₹${data.min_order} होना चाहिए।` };
+  const discount = Math.min(subtotal, data.discount_amount ? Number(data.discount_amount) : subtotal * Number(data.discount_percent || 0) / 100);
+  appliedCoupon = { code: normalized, discount };
+  return { ok: true, discount, message: `कूपन लागू: ₹${discount.toFixed(2)} की छूट` };
+}
+
+/* Dynamic UPI payment link builder. Payment is not automatically verified; admin must verify UTR. */
+function buildDynamicUpiLink(amount, orderNote="Aashapura order") {
+  const params = new URLSearchParams({
+    pa: UPI_ID, pn: "Aashapura Ayurvedic Store", am: Number(amount).toFixed(2),
+    cu: "INR", tn: orderNote
+  });
+  return "upi://pay?" + params.toString();
+}
+function showDynamicPayment(amount) {
+  const link = buildDynamicUpiLink(amount);
+  const box = document.createElement("div");
+  box.className = "payment-prompt";
+  box.innerHTML = `<h3>UPI पेमेंट</h3><p>देय राशि: <strong>₹${Number(amount).toFixed(2)}</strong></p>
+    <a class="primary-btn" href="${link.replace(/&/g, "&amp;")}">UPI ऐप से पेमेंट करें</a>
+    <label for="paymentUtr">पेमेंट UTR / Transaction ID</label>
+    <input id="paymentUtr" placeholder="पेमेंट करने के बाद UTR भरें">
+    <p class="small-note">पेमेंट की पुष्टि अपने-आप नहीं होती। UTR एडमिन द्वारा जाँचा जाएगा।</p>`;
+  document.body.appendChild(box);
+  const close = document.createElement("button"); close.textContent = "बंद करें"; close.className = "secondary-btn";
+  close.onclick = () => box.remove(); box.appendChild(close);
+}
+
+/* Prevent the public page from displaying admin controls unless the signed-in UID is the admin. */
+function secureAdminVisibility() {
+  const panel = $("adminPanel");
+  if (!panel) return;
+  panel.style.display = "none";
+  supabaseClient.auth.getSession().then(({data}) => {
+    const user = data.session?.user;
+    if (user && user.id === AASHAPURA_ADMIN_UID) panel.style.display = "";
+  });
+}
+initCustomerAuth();
+secureAdminVisibility();
