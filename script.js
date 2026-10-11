@@ -33,15 +33,24 @@ function normalizeProduct(p) {
 async function loadProducts() {
   // Fetch products without filtering on is_active: older/admin-added rows may
   // have NULL or false in this optional column and otherwise disappear from the shop.
-  const { data, error } = await supabaseClient
+  let { data, error } = await supabaseClient
     .from("products")
     .select("*")
     .order("created_at", { ascending: false });
 
+  // Some older products tables do not have created_at. Retry without ordering
+  // so one optional column cannot hide the entire storefront.
+  if (error) {
+    console.warn("Product query with created_at failed; retrying:", error.message);
+    const retry = await supabaseClient.from("products").select("*");
+    data = retry.data;
+    error = retry.error;
+  }
+
   if (error) {
     console.error("Product loading error:", error.message);
     $("productGrid").innerHTML =
-      "<p>उत्पाद लोड नहीं हुए। कृपया कुछ देर बाद कोशिश करें।</p>";
+      `<p>उत्पाद लोड नहीं हुए: ${escapeHTML(error.message)}. Supabase की products Read Policy जाँचें।</p>`;
     return;
   }
 
@@ -838,15 +847,29 @@ function showDynamicPayment(amount) {
   close.onclick = () => box.remove(); box.appendChild(close);
 }
 
-/* Prevent the public page from displaying admin controls unless the signed-in UID is the admin. */
+/* Admin controls are only rendered on the private admin route (?page=admin).
+   Customers visiting the normal store never see the admin login or controls. */
 function secureAdminVisibility() {
   const panel = $("adminPanel");
   if (!panel) return;
-  panel.style.display = "none";
-  supabaseClient.auth.getSession().then(({data}) => {
-    const user = data.session?.user;
-    if (user && user.id === AASHAPURA_ADMIN_UID) panel.style.display = "";
-  });
+  const params = new URLSearchParams(window.location.search);
+  const isAdminRoute = params.get("page") === "admin";
+  panel.style.display = isAdminRoute ? "block" : "none";
+  if (isAdminRoute) {
+    document.querySelectorAll("body > header, body > main, body > section, body > footer").forEach(el => {
+      if (el.id !== "adminPanel") el.hidden = true;
+    });
+    panel.style.maxWidth = "760px";
+    panel.style.margin = "24px auto";
+    panel.style.display = "block";
+    const back = document.createElement("a");
+    back.href = window.location.pathname;
+    back.textContent = "← ग्राहक स्टोर";
+    back.className = "secondary-btn";
+    back.style.display = "inline-flex";
+    back.style.marginBottom = "18px";
+    panel.prepend(back);
+  }
 }
 initCustomerAuth();
 secureAdminVisibility();
