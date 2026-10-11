@@ -807,6 +807,17 @@ function openCartFromHistory() {
 }
 
 if ($("saveProfileBtn")) $("saveProfileBtn").addEventListener("click", saveCustomerProfile);
+const openOrdersBtn = $("openMyOrdersBtn");
+
+if (openOrdersBtn) {
+  openOrdersBtn.addEventListener("click", openMyOrdersPage);
+}
+
+const ordersBackBtn = $("ordersBackBtn");
+
+if (ordersBackBtn) {
+  ordersBackBtn.addEventListener("click", closeMyOrdersPage);
+}
 if ($("googleLogoutBtn")) $("googleLogoutBtn").addEventListener("click", async () => {
   const { error } = await supabaseClient.auth.signOut();
   if (error) return accountNotice(error.message, true);
@@ -1004,4 +1015,41 @@ async function loadMyOrders() {
     card.append(title, status, amount, date);
     list.appendChild(card);
   });
+}
+function openMyOrdersPage() {
+  if (!signedInUser) {
+    startGoogleLogin();
+    return;
+  }
+
+  const page = $("myOrdersPage");
+  if (!page) return;
+
+  $("profilePage").hidden = true;
+  page.hidden = false;
+
+  document.querySelectorAll(
+    "body > header, body > main, body > section, body > footer"
+  ).forEach(el => {
+    if (el.id !== "myOrdersPage") {
+      el.dataset.ordersHidden = el.hidden ? "1" : "0";
+      el.hidden = true;
+    }
+  });
+
+  history.pushState({ page: "my-orders" }, "", "#my-orders");
+
+  loadMyOrders();
+}
+
+function closeMyOrdersPage() {
+  const page = $("myOrdersPage");
+  if (page) page.hidden = true;
+
+  document.querySelectorAll("[data-orders-hidden]").forEach(el => {
+    el.hidden = el.dataset.ordersHidden === "1";
+    delete el.dataset.ordersHidden;
+  });
+
+  history.pushState({}, "", location.pathname + location.search);
 }
