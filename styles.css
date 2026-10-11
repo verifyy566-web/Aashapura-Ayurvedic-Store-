@@ -72,3 +72,24 @@
     padding: 14px;
   }
 }
+.product-art {
+  height: 220px;
+  overflow: hidden;
+  background: #e5efdf;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.product-info {
+  position: relative;
+  background: #fff;
+  z-index: 1;
+}
