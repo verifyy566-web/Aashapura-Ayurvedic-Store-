@@ -453,7 +453,9 @@ async function addAdminProductInternal() {
     alert("Product name, सही price और stock भरें।");
     return;
   }
-const imageFiles = Array.from($("pImages").files).slice(0, 4);
+const imageFiles = Array.from($("pImages").files)
+  .filter(file => file.type.startsWith("image/"))
+  .slice(0, 10);
 const imageUrls = [];
 
 for (const file of imageFiles) {
