@@ -380,12 +380,58 @@ function showProduct(id) {
   const p = products.find(item => item.id === Number(id));
   if (!p) return;
 
-  alert(
-    "🌿 " + p.name +
-    "\n\n💰 Price: ₹" + p.price +
-    "\n\n📦 Weight: " + p.weight +
-    "\n\n📝 Details: " + p.desc
-  );
+  let modal = document.getElementById("productModal");
+
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "productModal";
+    modal.style.cssText = `
+      position:fixed; inset:0; z-index:99999;
+      background:#0009; display:flex;
+      align-items:center; justify-content:center;
+      padding:16px; overflow:auto;
+    `;
+    document.body.appendChild(modal);
+  }
+
+  const image = p.image_url
+    ? `<img src="${escapeHTML(p.image_url)}"
+       style="width:100%;max-height:280px;object-fit:contain;border-radius:14px">`
+    : `<div style="font-size:80px;text-align:center">🌿</div>`;
+
+  const video = p.video_url
+    ? `<a href="${escapeHTML(p.video_url)}"
+       target="_blank" rel="noopener"
+       style="display:block;margin:12px 0;color:#176b48">▶ Product Video dekhein</a>`
+    : "";
+
+  modal.innerHTML = `
+    <div style="background:white;width:100%;max-width:450px;
+      max-height:90vh;overflow:auto;border-radius:22px;padding:20px;
+      box-sizing:border-box;color:#173d2e">
+      <button onclick="document.getElementById('productModal').remove()"
+        style="float:right;border:0;background:#edf4ee;padding:10px 15px;
+        border-radius:50%;font-size:18px">✕</button>
+      ${image}
+      <h2>${escapeHTML(p.name)}</h2>
+      <div style="font-size:26px;font-weight:bold">₹${p.price}</div>
+      <p>📦 ${escapeHTML(p.weight)}</p>
+      <p>${escapeHTML(p.desc)}</p>
+      ${video}
+      <button onclick="addToCartFromDetails(${p.id})"
+        style="width:100%;padding:15px;background:#123c2b;color:white;
+        border:0;border-radius:12px;font-size:17px">
+        🛒 कार्ट में जोड़ें
+      </button>
+    </div>
+  `;
+}
+
+function addToCartFromDetails(id) {
+  document.getElementById("productModal")?.remove();
+  const button = document.querySelector(`[data-add="${id}"]`);
+  if (button) button.click();
 }
 
 window.showProduct = showProduct;
+window.addToCartFromDetails = addToCartFromDetails;
