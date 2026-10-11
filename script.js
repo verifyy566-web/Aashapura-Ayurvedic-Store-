@@ -256,8 +256,7 @@ function renderCartPage() {
   });
 
   document.getElementById("cartCheckout").onclick = () => {
-    closeCart();
-    openCart();
+    openPremiumCheckout();
   };
 }
 
@@ -266,16 +265,32 @@ document.addEventListener("click", e => {
   const inc = e.target.closest("[data-inc]");
   const dec = e.target.closest("[data-dec]");
 
-  if (add || inc) {
-    const id = Number((add || inc).dataset[add ? "add" : "inc"]);
-    cart[id] = (cart[id] || 0) + 1;
+  // Prevent the card click handler from triggering a second add.
+  if (add) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = String(add.dataset.add);
+    const product = products.find(p => String(p.id) === id);
+    if (!product) return;
+    cart[id] = (Number(cart[id]) || 0) + 1;
     renderCart();
-    if (add) openCart();
+    showStoreToast(`${product.name} कार्ट में जोड़ा गया`, "success");
+    return;
   }
-
+  if (inc) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = String(inc.dataset.inc);
+    cart[id] = (Number(cart[id]) || 0) + 1;
+    renderCart();
+    return;
+  }
   if (dec) {
-    const id = Number(dec.dataset.dec);
-    cart[id] = Math.max(0, (cart[id] || 0) - 1);
+    e.preventDefault();
+    e.stopPropagation();
+    const id = String(dec.dataset.dec);
+    cart[id] = Math.max(0, (Number(cart[id]) || 0) - 1);
+    if (!cart[id]) delete cart[id];
     renderCart();
   }
 });
@@ -450,7 +465,7 @@ images: JSON.stringify(imageUrls),
     return;
   }
 
-  alert("Product सफलतापूर्वक सेव हुआ!");
+  showStoreToast("Product सफलतापूर्वक सेव हुआ!", "success");
   $("pName").value = "";
   $("pDescription").value = "";
   $("pPrice").value = "";
@@ -628,7 +643,17 @@ async function startGoogleLogin() {
 }
 async function openAccountModal() {
   if (!signedInUser) { await startGoogleLogin(); return; }
-  $("accountModal").hidden = false;
+  const profilePage = $("profilePage");
+  if (profilePage) {
+    profilePage.hidden = false;
+    document.querySelectorAll("body > header, body > main, body > section").forEach(el => {
+      if (el.id !== "profilePage" && el.id !== "adminPanel") {
+        el.dataset.profileHidden = el.hidden ? "1" : "0";
+        el.hidden = true;
+      }
+    });
+    history.pushState({page:"profile"}, "", "#profile");
+  }
   $("accountEmail").textContent = signedInUser.email || "";
   const { data, error } = await supabaseClient.from("customer_profiles")
     .select("full_name, phone, address").eq("user_id", signedInUser.id).maybeSingle();
@@ -673,15 +698,23 @@ async function initCustomerAuth() {
 }
 if ($("googleLoginBtn")) $("googleLoginBtn").addEventListener("click", startGoogleLogin);
 if ($("profileBtn")) $("profileBtn").addEventListener("click", openAccountModal);
-if ($("accountClose")) $("accountClose").addEventListener("click", () => $("accountModal").hidden = true);
-if ($("accountModal")) $("accountModal").addEventListener("click", e => {
-  if (e.target === $("accountModal")) $("accountModal").hidden = true;
-});
+function closeProfilePage() {
+  const profilePage = $("profilePage");
+  if (profilePage) profilePage.hidden = true;
+  document.querySelectorAll("[data-profile-hidden]").forEach(el => {
+    el.hidden = el.dataset.profileHidden === "1";
+    delete el.dataset.profileHidden;
+  });
+  if (location.hash === "#profile") history.replaceState({}, "", location.pathname + location.search);
+}
+if ($("profileBackBtn")) $("profileBackBtn").addEventListener("click", closeProfilePage);
+window.addEventListener("popstate", () => { if (location.hash !== "#profile") closeProfilePage(); });
+
 if ($("saveProfileBtn")) $("saveProfileBtn").addEventListener("click", saveCustomerProfile);
 if ($("googleLogoutBtn")) $("googleLogoutBtn").addEventListener("click", async () => {
   const { error } = await supabaseClient.auth.signOut();
   if (error) return accountNotice(error.message, true);
-  signedInUser = null; setAccountButtons(null); $("accountModal").hidden = true;
+  signedInUser = null; setAccountButtons(null); closeProfilePage();
 });
 
 /* Coupon support: coupons are managed in Supabase; discount is rechecked at checkout. */
@@ -733,3 +766,72 @@ function secureAdminVisibility() {
 }
 initCustomerAuth();
 secureAdminVisibility();
+
+
+/* Premium in-page feedback and checkout; avoids Chrome's native alert popup. */
+function showStoreToast(message, type="success") {
+  let host = document.getElementById("storeToastHost");
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "storeToastHost";
+    host.setAttribute("aria-live", "polite");
+    document.body.appendChild(host);
+  }
+  const toast = document.createElement("div");
+  toast.className = `store-toast ${type === "error" ? "is-error" : "is-success"}`;
+  toast.textContent = message;
+  host.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("show"));
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+function openPremiumCheckout() {
+  const items = cartItems();
+  if (!items.length) {
+    showStoreToast("पहले कार्ट में उत्पाद जोड़ें।", "error");
+    return;
+  }
+  document.getElementById("premiumCheckoutModal")?.remove();
+  const total = items.reduce((sum, item) => sum + Number(item.price) * Number(item.qty), 0);
+  const profileName = $("profileName")?.value || $("customerName")?.value || signedInUser?.user_metadata?.full_name || "";
+  const profilePhone = $("profilePhone")?.value || "";
+  const profileAddress = $("profileAddress")?.value || $("customerAddress")?.value || "";
+  const modal = document.createElement("div");
+  modal.id = "premiumCheckoutModal";
+  modal.className = "premium-modal-backdrop";
+  modal.innerHTML = `
+    <section class="premium-modal" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
+      <button type="button" class="premium-modal-close" aria-label="बंद करें">×</button>
+      <span class="premium-eyebrow">AASHAPURA • CHECKOUT</span>
+      <h2 id="checkoutTitle">डिलीवरी जानकारी</h2>
+      <p class="checkout-total">ऑर्डर कुल <strong>₹${total.toFixed(2)}</strong></p>
+      <label>पूरा नाम<input id="checkoutFullName" autocomplete="name" value="${escapeHTML(profileName)}" placeholder="आपका नाम"></label>
+      <label>मोबाइल नंबर<input id="checkoutPhone" inputmode="tel" autocomplete="tel" value="${escapeHTML(profilePhone)}" placeholder="10 अंकों का मोबाइल नंबर"></label>
+      <label>डिलीवरी का पता<textarea id="checkoutAddress" autocomplete="street-address" placeholder="मकान, गाँव/शहर, पिन कोड">${escapeHTML(profileAddress)}</textarea></label>
+      <button type="button" id="confirmPremiumOrder" class="premium-checkout-submit">WhatsApp पर ऑर्डर भेजें</button>
+      <p class="premium-help">ऑर्डर भेजने से पहले अपना पता और मोबाइल नंबर जाँच लें।</p>
+    </section>`;
+  document.body.appendChild(modal);
+  const close = () => modal.remove();
+  modal.querySelector(".premium-modal-close").onclick = close;
+  modal.addEventListener("click", e => { if (e.target === modal) close(); });
+  modal.querySelector("#confirmPremiumOrder").onclick = () => {
+    const name = modal.querySelector("#checkoutFullName").value.trim();
+    const phone = modal.querySelector("#checkoutPhone").value.trim();
+    const address = modal.querySelector("#checkoutAddress").value.trim();
+    if (!name || !phone || !address) {
+      showStoreToast("नाम, मोबाइल और पूरा पता भरें।", "error");
+      return;
+    }
+    const lines = items.map(item => `• ${item.name} (${item.weight || "standard"}) × ${item.qty} = ₹${(Number(item.price) * Number(item.qty)).toFixed(2)}`).join("\n");
+    const message = `नमस्ते Aashapura Ayurvedic Store,\nमुझे यह ऑर्डर करना है:\n${lines}\nकुल: ₹${total.toFixed(2)}\nनाम: ${name}\nमोबाइल: ${phone}\nपता: ${address}\nकृपया उपलब्धता और डिलीवरी चार्ज की पुष्टि करें।`;
+    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank", "noopener");
+    closeCart();
+    close();
+    showStoreToast("ऑर्डर WhatsApp में तैयार है।", "success");
+  };
+}

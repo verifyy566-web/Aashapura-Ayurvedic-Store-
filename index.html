@@ -70,10 +70,10 @@
     </div>
   </aside>
 
-  <section id="accountModal" class="account-modal" hidden aria-modal="true" role="dialog">
-    <div class="account-card">
-      <button id="accountClose" class="account-close" aria-label="बंद करें">✕</button>
-      <p class="eyebrow">आपका अकाउंट</p><h2>प्रोफ़ाइल जानकारी</h2>
+  <main id="profilePage" class="profile-page" hidden>
+    <div class="profile-page-card">
+      <button id="profileBackBtn" class="secondary-btn" type="button">← स्टोर पर वापस</button>
+      <p class="eyebrow">आपका अकाउंट</p><h1>प्रोफ़ाइल जानकारी</h1>
       <p id="accountEmail" class="small-note"></p>
       <label for="profileName">पूरा नाम</label><input id="profileName" autocomplete="name" placeholder="आपका नाम">
       <label for="profilePhone">मोबाइल नंबर</label><input id="profilePhone" autocomplete="tel" inputmode="tel" placeholder="10 अंकों का मोबाइल नंबर">
@@ -82,9 +82,9 @@
       <button id="googleLogoutBtn" class="secondary-btn" type="button">लॉग आउट</button>
       <p id="accountMessage" class="small-note" aria-live="polite"></p>
     </div>
-  </section>
+  </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="script.js?v=6"></script>
+  <script src="script.js?v=7"></script>
 <section id="adminPanel" style="max-width:500px;margin:30px auto;padding:20px;border:1px solid #ccc;border-radius:12px;">
   <h2>🔐 Admin Login</h2>
 
