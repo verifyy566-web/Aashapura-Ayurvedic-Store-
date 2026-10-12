@@ -24,6 +24,7 @@
     const page = document.createElement("main");
     page.id = "productFullPage";
     page.className = "pp";
+    page.style.cssText = "position:fixed;inset:0;z-index:100000;overflow-y:auto;background:#fff;color:#173d2e;font-family:inherit;box-sizing:border-box";
     const imgs = imagesOf(p);
     const variants = products.filter(x => norm(x) === norm(p)).sort((a, b) => ((unit(a.weight)?.v) || a.price) - ((unit(b.weight)?.v) || b.price));
     const rel = [], seen = new Set([norm(p)]);
