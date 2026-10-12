@@ -20,7 +20,6 @@
 .m-bnav button{flex:1;border:0;background:none;padding:8px 0 10px;font:inherit;font-size:11px;color:#444;cursor:pointer}
 .m-bnav b{display:block;font-size:20px;font-weight:400}
 body{padding-bottom:62px}
-@media(min-width:900px){.m-bnav{display:none}body{padding-bottom:0}}
 .m-back{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:none}.m-back.open{display:block}
 .m-side{position:fixed;top:0;right:0;bottom:0;width:min(86vw,330px);background:#fff;z-index:1001;transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column}
 .m-side.open{transform:none}
@@ -32,3 +31,4 @@ body{padding-bottom:62px}
 .m-side-list small{display:block;color:#777;font-size:12px}
 .m-logout{padding:14px 18px;border-top:1px solid #ddd}
 .m-logout button{width:100%;padding:12px;border-radius:8px;border:1px solid #c0392b;background:#fff;color:#c0392b;font-weight:700;font-size:15px;cursor:pointer}
+.header-actions #profileBtn,.header-actions #googleLoginBtn,.header-actions .lang-btn{display:none!important}

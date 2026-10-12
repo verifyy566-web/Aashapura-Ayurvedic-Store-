@@ -39,7 +39,7 @@
     const nm = ($("profileName") && $("profileName").value) || (u && (u.user_metadata?.full_name || u.email.split("@")[0])) || "Guest";
     side.innerHTML = "";
     const head = document.createElement("div"); head.className = "m-side-head";
-    head.innerHTML = `<div class="m-av">${nm[0].toUpperCase()}</div><div><b>${u ? "Hello, " + nm : "Welcome"}</b><small>${u ? u.email : "Log in to see your orders"}</small></div>`;
+    head.innerHTML = `<div class="m-av">${nm[0].toUpperCase()}</div><div><b>${u ? "Hello, " + nm : "Welcome"}</b><small>${u ? u.email : "Sign in to see your orders"}</small></div>`;
     const list = document.createElement("div"); list.className = "m-side-list";
     if (u) {
       list.append(
@@ -50,9 +50,10 @@
         item("🛒", "My Cart", "", () => $("cartOpen").click())
       );
     } else {
-      list.append(item("🔑", "Log in with Google", "To see orders and write reviews", () => $("googleLoginBtn").click()));
+      list.append(item("🔑", "Sign In", "To see your orders and write reviews", () => $("googleLoginBtn").click()));
     }
     list.append(
+      item("🌐", "Language", window.AASHAPURA_LANG === "hi" ? "हिन्दी" : "English", () => { const l = document.querySelector(".lang-btn"); if (l) l.click(); }),
       item("💬", "Help Center", "Chat with us on WhatsApp", () => wa("Hello Aashapura Aurveda, I need help.")),
       item("ℹ️", "About Us", "", () => $("about").scrollIntoView({ behavior: "smooth" })),
       item("📞", "Contact Us", "", () => $("contact").scrollIntoView({ behavior: "smooth" }))
@@ -69,10 +70,6 @@
 
   const pb = $("profileBtn");
   if (pb) pb.addEventListener("click", e => { e.stopImmediatePropagation(); e.preventDefault(); openSide(); }, true);
-  const acc = document.createElement("button");
-  acc.className = "login-button"; acc.type = "button"; acc.textContent = "👤"; acc.setAttribute("aria-label", "Account");
-  acc.onclick = openSide;
-  const host = document.querySelector(".header-actions"); if (host) host.appendChild(acc);
 
   /* Bottom navigation (mobile) */
   const nav = document.createElement("nav"); nav.className = "m-bnav";

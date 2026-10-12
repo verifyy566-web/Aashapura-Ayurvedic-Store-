@@ -31,7 +31,7 @@
         <label>कूपन कोड<span style="display:flex;gap:8px"><input id="coCode" placeholder="जैसे WELCOME10" style="flex:1"><button type="button" id="coApply" class="secondary-btn">लगाएँ</button></span></label>
         <div class="co-sum"><div><span>सबटोटल</span><span id="coSub"></span></div><div><span>छूट</span><span id="coDisc"></span></div><div class="tot"><span>कुल</span><strong id="coTotal"></strong></div></div>
         <button type="button" id="coPlace" class="premium-checkout-submit">ऑर्डर पक्का करें</button>
-        <p class="premium-help">${signedInUser ? "ऑर्डर आपके 'मेरे ऑर्डर' में दिखेगा।" : "Google Login करने पर ऑर्डर 'मेरे ऑर्डर' में भी दिखेगा।"}</p>
+        <p class="premium-help">${signedInUser ? "ऑर्डर आपके 'मेरे ऑर्डर' में दिखेगा।" : "Sign In करने पर ऑर्डर 'मेरे ऑर्डर' में भी दिखेगा।"}</p>
       </div>
       <div id="coStep2" hidden></div></section>`;
     document.body.appendChild(m);
@@ -72,7 +72,7 @@
       const upi = `upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent("Aashapura Aurveda")}&am=${total.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}`.replace(/&/g, "&amp;");
       s2.innerHTML = `<h2>पेमेंट और ऑर्डर भेजें</h2>
         ${orderId ? `<p>ऑर्डर #${escapeHTML(String(orderId))} सेव हो गया।</p>`
-          : `<p class="small-note" style="color:#b42318">${signedInUser ? "ऑर्डर सेव नहीं हुआ: " + escapeHTML(saveErr) : "Google Login नहीं है, इसलिए ऑर्डर 'मेरे ऑर्डर' में सेव नहीं हुआ।"} WhatsApp से ऑर्डर भेज सकते हैं।</p>`}
+          : `<p class="small-note" style="color:#b42318">${signedInUser ? "ऑर्डर सेव नहीं हुआ: " + escapeHTML(saveErr) : "Sign In नहीं है, इसलिए ऑर्डर 'मेरे ऑर्डर' में सेव नहीं हुआ।"} WhatsApp से ऑर्डर भेज सकते हैं।</p>`}
         <p class="checkout-total">देय राशि <strong>${money(total)}</strong></p>
         <a class="primary-btn" href="${upi}">UPI ऐप से पेमेंट करें</a>
         <p class="small-note">ऐप न खुले तो UPI ID कॉपी करके अपने UPI ऐप में खुद पेमेंट करें, या नीचे का QR स्कैन करें।</p>

@@ -55,7 +55,7 @@
         <strong>${mine ? "अपना रिव्यू बदलें" : "अपना रिव्यू लिखें"}</strong>
         <div class="rv-pick" id="rvPick">${[1, 2, 3, 4, 5].map(i => `<button type="button" data-s="${i}">★</button>`).join("")}</div>
         <textarea id="rvText" maxlength="500" placeholder="उत्पाद कैसा लगा? (वैकल्पिक)">${escapeHTML(mine?.comment || "")}</textarea>
-        <button type="button" id="rvSubmit" class="primary-btn">${signedInUser ? "रिव्यू सबमिट करें" : "रिव्यू लिखने के लिए Google Login करें"}</button>
+        <button type="button" id="rvSubmit" class="primary-btn">${signedInUser ? "रिव्यू सबमिट करें" : "रिव्यू लिखने के लिए Sign In करें"}</button>
       </div>
       <div class="rv-list">${data.map(r => `<article class="rv-item">
         <div><strong>${escapeHTML(r.user_name || "ग्राहक")}</strong> <span class="stars">${stars(r.rating)}</span></div>
@@ -81,7 +81,7 @@
       await render(box, pid); loadAgg();
     };
     box.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
-      if (!confirm("यह रिव्यू हटाएँ?")) return;
+      if (!(await confirm("यह रिव्यू हटाएँ?"))) return;
       const { error: err } = await supabaseClient.from("reviews").delete().eq("id", b.dataset.del);
       if (err) return showStoreToast("हट नहीं पाया: " + err.message, "error");
       await render(box, pid); loadAgg();

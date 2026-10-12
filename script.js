@@ -559,7 +559,7 @@ async function renderAdminProducts() {
     btn.onclick = async () => {
       const productId = btn.dataset.deleteProduct;
       const product = data.find(p => String(p.id) === String(productId));
-      if (!confirm(`“${product?.name || 'Product'}” को स्थायी रूप से हटाएँ?`)) return;
+      if (!(await confirm(`“${product?.name || 'Product'}” को स्थायी रूप से हटाएँ?`))) return;
       btn.disabled = true; btn.textContent = 'Deleting…';
       const { data: { user: currentUser } = {} } = await supabaseClient.auth.getUser();
       if (!currentUser || currentUser.id !== "6eeb63cc-1cec-4ac5-bc4b-12a0e6f951c3") {
@@ -592,7 +592,7 @@ window.renderAdminProducts = renderAdminProducts;
 loadProducts();
 restoreAdminSession();
 async function deleteProduct(id) {
-  if (!confirm("Kya aap ye product delete karna chahte hain?")) return;
+  if (!(await confirm("Do you really want to delete this product?"))) return;
 
   const { error } = await supabaseClient
     .from("products")
@@ -796,7 +796,7 @@ async function startGoogleLogin() {
     provider: "google",
     options: { redirectTo }
   });
-  if (error) alert("Google Login शुरू नहीं हुआ: " + error.message);
+  if (error) alert("Sign In शुरू नहीं हुआ: " + error.message);
 }
 async function openAccountModal() {
   if (!signedInUser) { await startGoogleLogin(); return; }
@@ -824,7 +824,7 @@ $("profilePhone").value = data?.phone || "";
 $("profileAddress").value = data?.address || "";
 }
 async function saveCustomerProfile() {
-  if (!signedInUser) return alert("पहले Google Login करें।");
+  if (!signedInUser) return alert("पहले Sign In करें।");
   const full_name = $("profileName").value.trim();
   const phone = $("profilePhone").value.trim();
   const address = $("profileAddress").value.trim();
@@ -1053,7 +1053,7 @@ async function loadMyOrders() {
   message.textContent = "";
 
   if (!signedInUser) {
-    list.textContent = "अपने ऑर्डर देखने के लिए Google Login करें।";
+    list.textContent = "अपने ऑर्डर देखने के लिए Sign In करें।";
     return;
   }
 
