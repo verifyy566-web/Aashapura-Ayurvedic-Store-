@@ -20,14 +20,14 @@
   .ap-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .ap-media{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}
   .ap-m{position:relative;width:78px;height:78px;border-radius:10px;overflow:hidden;border:2px solid #d5dfd1;background:#fff}
-  .ap-m.main{border-color:var(--green2)}
+  .ap-m.main{border-color:#2f6b3a}
   .ap-m img,.ap-m video{width:100%;height:100%;object-fit:cover}
   .ap-m .x{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;border:0;background:#b42318;color:#fff;font-size:13px;line-height:1;cursor:pointer}
   .ap-m .mk{position:absolute;left:0;right:0;bottom:0;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:10px;padding:3px 0;cursor:pointer}
-  .ap-m .tg{position:absolute;left:3px;top:3px;background:var(--green2);color:#fff;font-size:10px;padding:1px 5px;border-radius:99px}
+  .ap-m .tg{position:absolute;left:3px;top:3px;background:#2f6b3a;color:#fff;font-size:10px;padding:1px 5px;border-radius:99px}
   .ap-foot{position:fixed;left:0;right:0;bottom:0;z-index:3;background:#fff;border-top:1px solid #e3eadf;padding:10px 14px;display:flex;gap:10px}
   .ap-foot button{flex:1;padding:13px;border-radius:10px;border:0;font-weight:700;font-size:15px;cursor:pointer}
-  .ap-save{background:var(--green2);color:#fff}.ap-cancel{background:#eef2ec;color:#173d2e}
+  .ap-save{background:#2f6b3a;color:#fff}.ap-cancel{background:#eef2ec;color:#173d2e}
   .ap-btn{padding:9px 12px;border-radius:8px;border:1px solid #888;background:#fff;cursor:pointer}
   .ap-card{border:1px solid #e5e7eb;border-radius:10px;padding:10px;margin:8px 0;background:#fff;display:flex;gap:10px;align-items:center;justify-content:space-between}
   .ap-sec{margin-top:20px;padding-top:12px;border-top:2px solid #e3eadf}
@@ -149,7 +149,7 @@
   window.renderAdminProducts = renderList;
 
   /* ================= HOME BANNERS ================= */
-  const GRAD = { green: "linear-gradient(120deg,var(--green2),#7aa84f)", gold: "linear-gradient(120deg,#b9731f,#e6a93b)", brown: "linear-gradient(120deg,#6a3d1f,#a8683a)", blue: "linear-gradient(120deg,#1e4e8c,#4a90d9)", red: "linear-gradient(120deg,#a4262c,#e0605a)", purple: "linear-gradient(120deg,#5b3a8c,#9b6fd0)" };
+  const GRAD = { green: "linear-gradient(120deg,#2f6b3a,#7aa84f)", gold: "linear-gradient(120deg,#b9731f,#e6a93b)", brown: "linear-gradient(120deg,#6a3d1f,#a8683a)", blue: "linear-gradient(120deg,#1e4e8c,#4a90d9)", red: "linear-gradient(120deg,#a4262c,#e0605a)", purple: "linear-gradient(120deg,#5b3a8c,#9b6fd0)" };
   const GRAD_NAME = { green: "Green", gold: "Gold", brown: "Brown", blue: "Blue", red: "Red (sale)", purple: "Purple" };
 
   function bannerForm(b, done) {
@@ -256,52 +256,19 @@
     });
   }
 
-  /* ================= WEBSITE LOOK (theme colours + announcement) ================= */
-  async function renderLook(host) {
-    const T = window.aashapuraTheme; if (!T) { host.innerHTML = "<p>theme.js upload karo.</p>"; return; }
-    host.innerHTML = "<p>Load ho raha hai…</p>";
-    const r = await supabaseClient.from("site_settings").select("key,value");
-    if (r.error) { host.innerHTML = `<p style="color:#b42318">Table nahi mili: ${esc(r.error.message)}<br>Supabase SQL Editor me <b>supabase_v21.sql</b> run karo.</p>`; return; }
-    const s = {}; (r.data || []).forEach(x => { s[x.key] = x.value; });
-    let th = { green: "#123c2b", green2: "#1e6245" }; try { if (s.theme) th = Object.assign(th, JSON.parse(s.theme)); } catch (e) {}
-    host.innerHTML = `
-      <label style="font-size:13px;color:#4b6455">Top ki patti ka text (khali = default)</label>
-      <input id="apAnn" value="${esc(s.announce || "")}" placeholder="Natural care • Easy ordering" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid #cfd9cb;border-radius:8px;font:inherit">
-      <label style="display:block;font-size:13px;color:#4b6455;margin:12px 0 6px">Theme rang (ek tap me)</label>
-      <div id="apPre" style="display:flex;flex-wrap:wrap;gap:8px">${Object.entries(T.PRESETS).map(([k, p]) => `<button type="button" data-pk="${k}" class="ap-btn" style="display:flex;align-items:center;gap:6px;font-size:13px"><span style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,${p.green} 50%,${p.green2} 50%)"></span>${esc(p.name)}</button>`).join("")}</div>
-      <div class="ap-row" style="margin-top:10px">
-        <div><label style="display:block;font-size:13px;color:#4b6455">Gehra rang (header, buttons)</label><input id="apC1" type="color" value="${esc(th.green)}" style="height:44px;padding:2px"></div>
-        <div><label style="display:block;font-size:13px;color:#4b6455">Halka rang (accent)</label><input id="apC2" type="color" value="${esc(th.green2)}" style="height:44px;padding:2px"></div>
-      </div>
-      <div style="margin-top:10px;padding:12px;border-radius:10px;background:#fff;border:1px solid #e5e7eb"><div id="apPrev" style="font-family:Georgia,serif;font-weight:700;font-size:20px">Aashapura</div><div id="apPrev2" style="font-size:10px;letter-spacing:3px;font-weight:700">AYURVEDA</div></div>
-      <div style="display:flex;gap:8px;margin-top:10px"><button type="button" class="ap-btn" id="apLookSave" style="flex:1;background:#2f6b3a;background:var(--green2);color:#fff;border:0;padding:12px;font-weight:700">Save Look</button><button type="button" class="ap-btn" id="apLookReset">Default</button></div>`;
-    const c1 = host.querySelector("#apC1"), c2 = host.querySelector("#apC2");
-    const prev = () => { host.querySelector("#apPrev").style.color = c1.value; host.querySelector("#apPrev2").style.color = c2.value; };
-    prev(); c1.oninput = c2.oninput = prev;
-    host.querySelectorAll("[data-pk]").forEach(b => b.onclick = () => { const p = T.PRESETS[b.dataset.pk]; c1.value = p.green; c2.value = p.green2; prev(); });
-    const save = async (theme, ann) => {
-      if (!(await isAdmin())) { alert("Admin login karo."); return; }
-      const rows = [{ key: "theme", value: JSON.stringify(theme), updated_at: new Date().toISOString() }, { key: "announce", value: ann, updated_at: new Date().toISOString() }];
-      const { error } = await supabaseClient.from("site_settings").upsert(rows);
-      if (error) { alert("Save nahi hua: " + error.message + "\n\n(Pehle supabase_v21.sql run karo.)"); return; }
-      T.clearCache(); await T.load(); toast("Website ka look save ho gaya!"); renderLook(host);
-    };
-    host.querySelector("#apLookSave").onclick = () => save({ green: c1.value, green2: c2.value }, host.querySelector("#apAnn").value.trim());
-    host.querySelector("#apLookReset").onclick = async () => { if (await confirm("Default green rang aur default text wapas?")) save({ green: "#123c2b", green2: "#1e6245" }, ""); };
-  }
-
   /* ---- mount sections into admin panel ---- */
   let mounted = false;
   async function mount() {
     const list = $("adminProductList"); if (!list || mounted) return;
     mounted = true;
     const sec = document.createElement("div"); sec.className = "ap-sec";
-    sec.innerHTML = `<h3>🖼️ Home Banners</h3><div id="apBanners"></div><h3 style="margin-top:22px">🔘 Category Photos (home ke gol icons)</h3><div id="apCatImgs"></div><h3 style="margin-top:22px">🎨 Website Look (rang + top text)</h3><div id="apLook"></div>`;
+    sec.innerHTML = `<h3>🎨 Website Look (rang + top text)</h3><div id="apTheme"></div><h3 style="margin-top:22px">🖼️ Home Banners</h3><div id="apBanners"></div><h3 style="margin-top:22px">🔘 Category Photos (home ke gol icons)</h3><div id="apCatImgs"></div>`;
     list.before(sec);
     const refresh = async () => {
       if (!(await isAdmin())) return;
       try { const { data } = await supabaseClient.from("products").select("id,name,category"); window.__apProducts = data || []; } catch (e) { window.__apProducts = []; }
-      renderBanners($("apBanners")); renderCatImgs($("apCatImgs")); renderLook($("apLook"));
+      renderBanners($("apBanners")); renderCatImgs($("apCatImgs"));
+      if (window.aashapuraTheme) window.aashapuraTheme.renderAdmin($("apTheme")); else $("apTheme").innerHTML = "<p style='color:#b42318'>theme.js GitHub par upload karo.</p>";
     };
     window.__apRefreshBanners = refresh;
     refresh();
