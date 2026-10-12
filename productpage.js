@@ -67,7 +67,7 @@
           <table class="pp-table">
             ${p.weight ? `<tr><th>वज़न / साइज़</th><td>${escapeHTML(p.weight)}</td></tr>` : ""}
             <tr><th>कैटेगरी</th><td>${escapeHTML(CATS[String(p.category).toLowerCase()] || p.category)}</td></tr>
-            <tr><th>ब्रांड</th><td>Aashapura Aurveda</td></tr>
+            <tr><th>ब्रांड</th><td>Aashapura Ayurveda</td></tr>
           </table>
           ${p.desc ? `<h3>विवरण</h3><p class="pp-desc">${escapeHTML(p.desc)}</p>` : ""}
           ${p.video_url ? `<p><a href="${escapeHTML(p.video_url)}" target="_blank" rel="noopener">▶ प्रोडक्ट वीडियो देखें</a></p>` : ""}

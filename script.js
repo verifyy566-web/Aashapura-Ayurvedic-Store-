@@ -230,7 +230,7 @@ function renderCartPage() {
       <h2>कुल: ₹${items.reduce((sum, item) =>
         sum + item.price * item.qty, 0)}</h2>
       <button id="cartCheckout"
-        style="width:100%;padding:16px;background:#123c2b;
+        style="width:100%;padding:16px;background:var(--green);
         color:white;border:0;border-radius:12px;font-size:18px">
         ऑर्डर करें
       </button>
@@ -364,7 +364,7 @@ $("checkoutBtn").addEventListener("click", () => {
   ).join("\n");
 
   const msg =
-    `नमस्ते Aashapura Aurveda,\n` +
+    `नमस्ते Aashapura Ayurveda,\n` +
     `मुझे यह ऑर्डर करना है:\n${lines}\n` +
     `कुल: ₹${total}\nनाम: ${name}\nपता: ${address}\n` +
     `कृपया उपलब्धता और डिलीवरी चार्ज की पुष्टि करें।`;
@@ -703,7 +703,7 @@ let currentImage = 0;
 
     <button id="fullPageAddCart"
       style="width:100%;padding:17px;margin:24px 0;
-      border:0;border-radius:14px;background:#123c2b;
+      border:0;border-radius:14px;background:var(--green);
       color:white;font-size:19px;">
       🛒 कार्ट में जोड़ें
     </button>
@@ -926,7 +926,7 @@ async function validateStoreCoupon(code, subtotal) {
 /* Dynamic UPI payment link builder. Payment is not automatically verified; admin must verify UTR. */
 function buildDynamicUpiLink(amount, orderNote="Aashapura order") {
   const params = new URLSearchParams({
-    pa: UPI_ID, pn: "Aashapura Aurveda", am: Number(amount).toFixed(2),
+    pa: UPI_ID, pn: "Aashapura Ayurveda", am: Number(amount).toFixed(2),
     cu: "INR", tn: orderNote
   });
   return "upi://pay?" + params.toString();
@@ -1033,7 +1033,7 @@ function openPremiumCheckout() {
       return;
     }
     const lines = items.map(item => `• ${item.name} (${item.weight || "standard"}) × ${item.qty} = ₹${(Number(item.price) * Number(item.qty)).toFixed(2)}`).join("\n");
-    const message = `नमस्ते Aashapura Aurveda,\nमुझे यह ऑर्डर करना है:\n${lines}\nकुल: ₹${total.toFixed(2)}\nनाम: ${name}\nमोबाइल: ${phone}\nपता: ${address}\nकृपया उपलब्धता और डिलीवरी चार्ज की पुष्टि करें।`;
+    const message = `नमस्ते Aashapura Ayurveda,\nमुझे यह ऑर्डर करना है:\n${lines}\nकुल: ₹${total.toFixed(2)}\nनाम: ${name}\nमोबाइल: ${phone}\nपता: ${address}\nकृपया उपलब्धता और डिलीवरी चार्ज की पुष्टि करें।`;
     const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
     const opened = window.open(url, "_blank", "noopener");
     if (!opened) {

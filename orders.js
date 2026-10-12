@@ -13,8 +13,8 @@
   .od-b{padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;white-space:nowrap}
   .od-items{margin:8px 0;padding:8px 0;border-top:1px dashed #ddd;border-bottom:1px dashed #ddd}.od-items div{display:flex;justify-content:space-between;gap:8px;padding:2px 0}
   .od-tl{display:flex;gap:4px;margin:8px 0}.od-tl span{flex:1;text-align:center;font-size:11px;padding:5px 2px;border-radius:6px;background:#eee;color:#777}.od-tl span.on{background:#dcfce7;color:#166534;font-weight:700}
-  .od-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.od-acts button{flex:1 1 30%;padding:10px 6px;border-radius:10px;border:1px solid #2f6b3a;background:#fff;color:#2f6b3a;font-weight:600;font-size:13px}
-  .od-acts button.p{background:#2f6b3a;color:#fff}.od-acts button.d{border-color:#b42318;color:#b42318}`;
+  .od-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.od-acts button{flex:1 1 30%;padding:10px 6px;border-radius:10px;border:1px solid var(--green2);background:#fff;color:var(--green2);font-weight:600;font-size:13px}
+  .od-acts button.p{background:var(--green2);color:#fff}.od-acts button.d{border-color:#b42318;color:#b42318}`;
   document.head.appendChild(st);
 
   const OB = { pending: ["Pending", "#b45309", "#fef3c7"], confirmed: ["Confirmed", "#1d4ed8", "#dbeafe"], shipped: ["Shipped", "#6d28d9", "#ede9fe"], delivered: ["Delivered", "#166534", "#dcfce7"], cancelled: ["Cancelled", "#b42318", "#fee4e2"] };
@@ -26,11 +26,11 @@
     const w = window.open("", "_blank"); if (!w) return toast(T("Allow pop-ups to open the invoice.", "इनवॉइस खोलने के लिए पॉप-अप की अनुमति दें।"), "error");
     const rows = (o.items || []).map(i => `<tr><td>${esc(i.name)}${i.weight ? " (" + esc(i.weight) + ")" : ""}</td><td>${Number(i.qty || i.quantity || 1)}</td><td>${money(i.price)}</td><td>${money(i.price * (i.qty || i.quantity || 1))}</td></tr>`).join("");
     w.document.write(`<!doctype html><meta name=viewport content="width=device-width,initial-scale=1"><title>Invoice ${esc(o.order_no || o.id)}</title><style>body{font-family:sans-serif;padding:16px;color:#222}table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #ddd;padding:6px;text-align:left}h2{color:#2f6b3a;margin:0}</style>
-      <h2>Aashapura Aurveda</h2><p>Invoice / Order <b>${esc(o.order_no || o.id)}</b><br>${esc(dt(o.created_at))}</p>
+      <h2>Aashapura Ayurveda</h2><p>Invoice / Order <b>${esc(o.order_no || o.id)}</b><br>${esc(dt(o.created_at))}</p>
       <p><b>${esc(o.customer_name || "")}</b><br>${esc(o.phone || "")}<br>${esc(o.address || o.delivery_address || "")}</p>
       <table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>${rows}</table>
       <p>Subtotal: ${money(o.subtotal)}<br>${Number(o.discount) ? "Discount" + (o.coupon_code ? " (" + esc(o.coupon_code) + ")" : "") + ": −" + money(o.discount) + "<br>" : ""}${Number(o.delivery_charge) ? "Delivery: " + money(o.delivery_charge) + "<br>" : "Delivery: FREE<br>"}<b>Total: ${money(o.total)}</b><br>Payment: ${esc(o.payment_status || "pending")}</p>
-      <p style="color:#777;font-size:12px">Thank you for shopping with Aashapura Aurveda.</p><script>setTimeout(function(){print()},400)<\/script>`);
+      <p style="color:#777;font-size:12px">Thank you for shopping with Aashapura Ayurveda.</p><script>setTimeout(function(){print()},400)<\/script>`);
     w.document.close();
   }
 
@@ -54,13 +54,13 @@
   cst.textContent = `.cf-wrap{position:fixed;inset:0;z-index:100020;background:#f5f5f6;display:flex;flex-direction:column;color:#222}
   .cf-head{display:flex;gap:12px;align-items:center;padding:14px;background:#fff;border-bottom:1px solid #eee;font-size:17px}.cf-head button{border:0;background:none;font-size:22px}
   .cf-body{flex:1;overflow:auto;padding:14px;-webkit-overflow-scrolling:touch}.cf-card{background:#fff;border-radius:12px;padding:12px;margin-bottom:12px}
-  .cf-r{display:flex;gap:10px;align-items:flex-start;padding:11px 0;font-size:15px}.cf-r i{flex:none;width:20px;height:20px;border:2px solid #999;border-radius:50%;margin-top:1px}.cf-r.on i{border-color:#2f6b3a;background:radial-gradient(#2f6b3a 45%,#fff 50%)}
+  .cf-r{display:flex;gap:10px;align-items:flex-start;padding:11px 0;font-size:15px}.cf-r i{flex:none;width:20px;height:20px;border:2px solid #999;border-radius:50%;margin-top:1px}.cf-r.on i{border-color:var(--green2);background:radial-gradient(var(--green2) 45%,#fff 50%)}
   .cf-wrap textarea,.cf-wrap input{width:100%;box-sizing:border-box;border:1px solid #ccc;border-radius:8px;padding:11px;font-size:16px;background:#fff}
-  .cf-bar{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 14px;background:#fff;border-top:1px solid #eee}.cf-bar small{display:block;color:#2f6b3a;font-weight:700}.cf-bar b{font-size:19px}
-  .cf-go{min-width:140px;padding:14px;border:0;border-radius:6px;background:#2f6b3a;color:#fff;font-weight:700;font-size:15px}.cf-go.off{background:#c8c8c8}
+  .cf-bar{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 14px;background:#fff;border-top:1px solid #eee}.cf-bar small{display:block;color:var(--green2);font-weight:700}.cf-bar b{font-size:19px}
+  .cf-go{min-width:140px;padding:14px;border:0;border-radius:6px;background:var(--green2);color:#fff;font-weight:700;font-size:15px}.cf-go.off{background:#c8c8c8}
   .cf-sheet{position:fixed;left:0;right:0;bottom:0;z-index:100030;background:#fff;border-radius:14px 14px 0 0;padding:16px;box-shadow:0 -10px 40px #0006}.cf-dim{position:fixed;inset:0;z-index:100025;background:#0008}
-  .cf-sheet .row{display:flex;gap:10px;margin-top:14px}.cf-sheet button{flex:1;padding:13px;border-radius:6px;border:1px solid #2f6b3a;background:#fff;font-weight:700}.cf-sheet button.p{background:#2f6b3a;color:#fff}
-  .cf-ok{width:64px;height:64px;border-radius:50%;background:#2f6b3a;color:#fff;font-size:36px;display:grid;place-items:center;margin:20px auto 8px}`;
+  .cf-sheet .row{display:flex;gap:10px;margin-top:14px}.cf-sheet button{flex:1;padding:13px;border-radius:6px;border:1px solid var(--green2);background:#fff;font-weight:700}.cf-sheet button.p{background:var(--green2);color:#fff}
+  .cf-ok{width:64px;height:64px;border-radius:50%;background:var(--green2);color:#fff;font-size:36px;display:grid;place-items:center;margin:20px auto 8px}`;
   document.head.appendChild(cst);
   const CANCEL_REASONS = [["Ordered by mistake", "गलती से ऑर्डर हो गया"], ["Product not required anymore", "अब प्रोडक्ट की ज़रूरत नहीं"], ["Wants to change product / quantity", "प्रोडक्ट / मात्रा बदलनी है"], ["Delayed delivery", "डिलीवरी में देरी"], ["Found a better price", "कहीं सस्ता मिला"], ["Duplicate order", "डुप्लिकेट ऑर्डर"], ["Payment problem", "पेमेंट की समस्या"], ["Other", "अन्य"]];
 
@@ -167,7 +167,7 @@
       const add = (label, fn, cls) => { const b = document.createElement("button"); b.type = "button"; b.textContent = label; if (cls) b.className = cls; b.onclick = fn; acts.appendChild(b); };
       if (ps !== "paid" && os !== "cancelled") add("📷 " + T("Send payment screenshot", "पेमेंट स्क्रीनशॉट भेजें"), async () => {
         try { await supabaseClient.rpc("submit_order_utr", { p_id: String(od.id), p_utr: "WA-SCREENSHOT" }); } catch (e) {}
-        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hello Aashapura Aurveda, order " + (od.order_no || od.id) + " (" + money(od.total) + "). I have paid. My payment screenshot is below.")}`, "_blank", "noopener");
+        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hello Aashapura Ayurveda, order " + (od.order_no || od.id) + " (" + money(od.total) + "). I have paid. My payment screenshot is below.")}`, "_blank", "noopener");
         loadMyOrders();
       }, "p");
       add("📍 " + T("Track order", "ऑर्डर ट्रैक करें"), () => window.openOrderTrack && window.openOrderTrack(od), "p");
@@ -177,7 +177,7 @@
       if (!active && (ps === "paid" || os === "delivered")) add("↩️ " + T("Return / Refund", "रिटर्न / रिफंड"), () => window.openRefunds && window.openRefunds());
       if (os === "delivered") add("⭐ " + T("Rate", "रेटिंग दें"), () => { const i = (od.items || [])[0]; if (i) { try { closeMyOrdersPage(); } catch (e) {} showProduct(i.id); } });
       add("🧾 " + T("Invoice", "इनवॉइस"), () => invoice(od));
-      add("💬 " + T("Help", "मदद"), () => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hello Aashapura Aurveda, help with order " + (od.order_no || od.id))}`, "_blank", "noopener"));
+      add("💬 " + T("Help", "मदद"), () => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hello Aashapura Ayurveda, help with order " + (od.order_no || od.id))}`, "_blank", "noopener"));
       list.appendChild(c);
     });
   };

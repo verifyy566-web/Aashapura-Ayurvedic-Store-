@@ -9,7 +9,7 @@
     ".pp-card h3{margin:0 0 8px;font-size:20px;color:#14301f}.pp-card p{margin:0 0 20px;color:#555;line-height:1.5;word-break:break-word;white-space:pre-line}" +
     ".pp-card input{width:100%;box-sizing:border-box;padding:12px 14px;margin:-8px 0 18px;border:1px solid #cdd8cf;border-radius:12px;font:inherit}" +
     ".pp-row{display:flex;gap:10px}.pp-row button{flex:1;padding:13px;border-radius:999px;font:inherit;font-weight:700;cursor:pointer;border:1px solid #cdd8cf;background:#fff;color:#14301f}" +
-    ".pp-row .pp-ok{background:#14402b;border-color:#14402b;color:#fff}.pp-row .pp-danger{background:#b42318;border-color:#b42318;color:#fff}" +
+    ".pp-row .pp-ok{background:var(--green);border-color:var(--green);color:#fff}.pp-row .pp-danger{background:#b42318;border-color:#b42318;color:#fff}" +
     "@keyframes ppf{from{opacity:0}}@keyframes ppu{from{opacity:0;transform:translateY(16px) scale(.94)}}";
   document.head.appendChild(css);
 

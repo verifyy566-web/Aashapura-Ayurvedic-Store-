@@ -70,7 +70,7 @@
   #cartFullPage{position:fixed!important;inset:0;z-index:99000;overflow-y:auto;background:#f3f6f2;color:#173d2e;font-family:inherit;-webkit-overflow-scrolling:touch;padding:0!important}
   .ct-in{max-width:640px;margin:0 auto;padding:0 12px 120px}
   .ct-head{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:14px 12px;margin:0 -12px 10px;background:#fff;border-bottom:1px solid #e3eadf}
-  .ct-head button{border:0;background:none;font-size:24px;line-height:1;padding:2px 8px;color:#123c2b}
+  .ct-head button{border:0;background:none;font-size:24px;line-height:1;padding:2px 8px;color:var(--green)}
   .ct-head b{font-size:18px}.ct-head small{color:#6b7f74;margin-left:auto}
   .ct-save{display:flex;gap:8px;align-items:center;background:#e4f4e8;color:#17653a;border-radius:12px;padding:11px 14px;font-weight:700;margin-bottom:10px}
   .ct-card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid #e6ece3}
@@ -83,7 +83,7 @@
   .ct-price{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin:6px 0}.ct-price b{font-size:18px}.ct-price s{color:#8a998f;font-size:14px}.ct-price em{font-style:normal;color:#17853f;font-weight:700;font-size:13px}
   .ct-x{position:absolute;top:-4px;right:-4px;border:0;background:none;font-size:20px;color:#6b7f74;padding:6px 8px}
   .ct-qty{display:inline-flex;align-items:center;border:1.5px solid #cfdacb;border-radius:10px;overflow:hidden;background:#fff}
-  .ct-qty button{width:38px;height:36px;border:0;background:#f3f7f1;font-size:20px;color:#123c2b}
+  .ct-qty button{width:38px;height:36px;border:0;background:#f3f7f1;font-size:20px;color:var(--green)}
   .ct-qty button:disabled{color:#b8c2bb;background:#f1f1f1}
   .ct-qty span{min-width:38px;text-align:center;font-weight:700}
   .ct-note{font-size:12.5px;margin-top:6px;font-weight:600}.ct-low{color:#b42318}.ct-max{color:#9a6a00}
@@ -93,13 +93,13 @@
   .ct-bar2{position:fixed;left:0;right:0;bottom:0;z-index:5;background:#fff;border-top:1px solid #dfe8dc;box-shadow:0 -6px 24px #123c2b1a}
   .ct-bar2 div{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px))}
   .ct-bar2 small{display:block;color:#6b7f74;font-size:12px}.ct-bar2 strong{font-size:21px}
-  .ct-bar2 button{flex:1;margin-left:auto;max-width:230px;padding:15px;border:0;border-radius:12px;background:#123c2b;color:#fff;font-size:17px;font-weight:700}
+  .ct-bar2 button{flex:1;margin-left:auto;max-width:230px;padding:15px;border:0;border-radius:12px;background:var(--green);color:#fff;font-size:17px;font-weight:700}
   .ct-oos{background:#fee4e2;color:#8a1c12;border-radius:12px;padding:11px 14px;margin-bottom:10px;font-weight:600;display:flex;gap:10px;align-items:center;justify-content:space-between}
   .ct-oos button{border:1px solid #b42318;background:#fff;color:#b42318;border-radius:8px;padding:6px 10px;font-weight:700;flex:none}
   .ct-item.out .ct-img img,.ct-item.out .ct-img{filter:grayscale(1);opacity:.55}.ct-item.out h3,.ct-item.out .ct-price{opacity:.55}
   .ct-tag{display:inline-block;background:#b42318;color:#fff;border-radius:6px;padding:3px 8px;font-size:12.5px;font-weight:700;margin-top:4px}
   .ct-bar2 button.off{background:#9aa8a0}
-  .ct-empty{text-align:center;padding:60px 20px}.ct-empty div{font-size:64px}.ct-empty button{margin-top:14px;padding:13px 26px;border:0;border-radius:12px;background:#123c2b;color:#fff;font-size:16px;font-weight:700}`;
+  .ct-empty{text-align:center;padding:60px 20px}.ct-empty div{font-size:64px}.ct-empty button{margin-top:14px;padding:13px 26px;border:0;border-radius:12px;background:var(--green);color:#fff;font-size:16px;font-weight:700}`;
   document.head.appendChild(st);
 
   const imgOf = p => {

@@ -4,7 +4,7 @@
   const BUCKET = "store-media", MAX_VIDEO = 20 * 1024 * 1024;
   const toast = (m, t) => { try { showStoreToast(m, t || "error"); } catch (e) { alert(m); } };
   const st = document.createElement("style");
-  st.textContent = `.md-box{margin:8px 0}.md-add{display:inline-block;padding:10px 14px;border:1px dashed #2f6b3a;border-radius:10px;color:#2f6b3a;font-weight:600;font-size:14px;background:#fff}
+  st.textContent = `.md-box{margin:8px 0}.md-add{display:inline-block;padding:10px 14px;border:1px dashed var(--green2);border-radius:10px;color:var(--green2);font-weight:600;font-size:14px;background:#fff}
   .md-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.md-th{position:relative;width:72px;height:72px;border-radius:10px;overflow:hidden;background:#eee;border:1px solid #ddd}
   .md-th img,.md-th video{width:100%;height:100%;object-fit:cover;display:block}.md-th b{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;text-align:center;line-height:22px;font-size:13px}
   .md-th i{position:absolute;left:4px;bottom:2px;color:#fff;font-style:normal;font-size:16px;text-shadow:0 0 3px #000}

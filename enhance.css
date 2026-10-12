@@ -31,7 +31,7 @@
 .rv-del{border:0;background:none;color:#b42318;float:right;cursor:pointer}
 /* ---- Amazon-style product page ---- */
 .pp{position:fixed;inset:0;z-index:100000;overflow-y:auto;background:#fff;color:#173d2e;font-family:inherit}
-.pp-top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;background:#123c2b;color:#fff;padding:10px 14px;font-weight:600}
+.pp-top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;background:var(--green);color:#fff;padding:10px 14px;font-weight:600}
 .pp-top button{border:0;background:rgba(255,255,255,.15);color:#fff;border-radius:50%;width:38px;height:38px;font-size:20px;cursor:pointer}
 .pp-top span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pp-wrap{max-width:1000px;margin:0 auto;display:grid;gap:18px;padding:0 0 20px}
@@ -43,15 +43,15 @@
 .pp-slides img{flex:0 0 100%;scroll-snap-align:center;width:100%;aspect-ratio:1/1;object-fit:contain;background:#fff}
 .pp-dots{display:flex;justify-content:center;gap:7px;padding:10px 0}
 .pp-dots i{width:8px;height:8px;border-radius:50%;background:#c9d2c6}
-.pp-dots i.on{background:#123c2b}
+.pp-dots i.on{background:var(--green)}
 .pp-emoji{height:300px;display:grid;place-items:center;font-size:90px}.pp-emoji.sm{height:110px;font-size:46px}
 .pp-info{padding:0 16px}
 .pp-title{font-size:20px;line-height:1.35;margin:4px 0 6px;font-weight:600}
-.pp-rate{font-size:14px;margin-bottom:10px}.pp-rate a{color:#1e6245}
+.pp-rate{font-size:14px;margin-bottom:10px}.pp-rate a{color:var(--green2)}
 .pp-label{margin:10px 0 8px;font-size:15px}
 .pp-sizes{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
 .pp-size{flex:0 0 auto;min-width:130px;text-align:left;background:#fff;border:1px solid #cfd6cc;border-radius:12px;padding:10px 12px;display:grid;gap:2px;font:inherit;cursor:pointer}
-.pp-size.sel{border:2px solid #1e6245;background:#f1f8ee}
+.pp-size.sel{border:2px solid var(--green2);background:#f1f8ee}
 .pp-size b{font-size:14px}.pp-size span{font-size:18px;font-weight:700}.pp-size small,.pp-size s{font-size:12px;color:#68736c}
 .pp-size em{font-style:normal;font-size:12px;font-weight:600}
 .pp-size.out{opacity:.65}
@@ -63,9 +63,9 @@ em.ok,.pp-stock.ok{color:#18794e}em.low,.pp-stock.low{color:#b45309}em.out,.pp-s
 .pp-stock{font-size:18px;font-weight:600;margin:8px 0}
 .pp-qty{display:block;margin:10px 0}.pp-qty select{padding:9px 12px;border:1px solid #cfd6cc;border-radius:10px;font:inherit;margin-left:6px}
 .pp-btn{display:block;width:100%;border:0;border-radius:999px;padding:15px;font:inherit;font-size:17px;font-weight:600;margin:10px 0;cursor:pointer}
-.pp-btn.add{background:#f7ca3d;color:#1b1b1b}.pp-btn.buy{background:#123c2b;color:#fff}.pp-btn:disabled{background:#ddd;color:#777}
+.pp-btn.add{background:#f7ca3d;color:#1b1b1b}.pp-btn.buy{background:var(--green);color:#fff}.pp-btn:disabled{background:#ddd;color:#777}
 .pp-trust{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;font-size:12px;margin:16px 0;padding:14px 0;border-top:1px solid #e3e8e1;border-bottom:1px solid #e3e8e1}
-.pp-trust div{display:grid;gap:4px;font-size:22px}.pp-trust span{font-size:12px;color:#1e6245}
+.pp-trust div{display:grid;gap:4px;font-size:22px}.pp-trust span{font-size:12px;color:var(--green2)}
 .pp-info h3,.pp-rel h3{font-size:18px;margin:20px 0 8px}
 .pp-table{width:100%;border-collapse:collapse}.pp-table th{text-align:left;width:40%;color:#68736c;font-weight:500}.pp-table th,.pp-table td{padding:9px 0;border-bottom:1px solid #eef1ec}
 .pp-desc{line-height:1.7;white-space:pre-line}
