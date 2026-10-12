@@ -11,12 +11,14 @@
   };
   const stockLine = p => p.stock <= 0 ? ["out", "स्टॉक खत्म"] : p.stock <= 5 ? ["low", `सिर्फ़ ${p.stock} बचे`] : ["ok", "स्टॉक में"];
   const off = p => p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : 0;
-  const imagesOf = p => {
+  const isVid = u => /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(String(u || ""));
+  const allMedia = p => {
     let urls = [];
     try { const s = typeof p.images === "string" ? JSON.parse(p.images || "[]") : p.images; urls = Array.isArray(s) ? s.slice() : []; } catch (e) {}
     if (p.image_url && !urls.includes(p.image_url)) urls.unshift(p.image_url);
     return urls.filter(Boolean);
   };
+  const imagesOf = p => allMedia(p).filter(u => !isVid(u));
   const resetUrl = id => { const u = new URL(location.href); id ? u.searchParams.set("product", id) : u.searchParams.delete("product"); history.replaceState({}, "", u); };
 
   window.renderProductPage = function (p) {
@@ -25,7 +27,7 @@
     page.id = "productFullPage";
     page.className = "pp";
     page.style.cssText = "position:fixed;inset:0;z-index:100000;overflow-y:auto;background:#fff;color:#173d2e;font-family:inherit;box-sizing:border-box";
-    const imgs = imagesOf(p);
+    const imgs = allMedia(p);
     const variants = products.filter(x => norm(x) === norm(p)).sort((a, b) => ((unit(a.weight)?.v) || a.price) - ((unit(b.weight)?.v) || b.price));
     const rel = [], seen = new Set([norm(p)]);
     products.filter(x => x.category === p.category).forEach(x => { if (!seen.has(norm(x)) && rel.length < 8) { seen.add(norm(x)); rel.push(x); } });
@@ -38,7 +40,7 @@
       <div class="pp-wrap">
         <div class="pp-gallery">
           ${d ? `<span class="pp-badge">${d}% छूट</span>` : ""}
-          ${imgs.length ? `<div class="pp-slides" id="ppSlides">${imgs.map(u => `<img src="${escapeHTML(u)}" alt="${escapeHTML(p.name)}">`).join("")}</div>
+          ${imgs.length ? `<div class="pp-slides" id="ppSlides">${imgs.map(u => isVid(u) ? `<div class="pp-vid"><video src="${escapeHTML(u)}#t=0.1" controls playsinline preload="metadata"></video><span class="pp-vtag">▶ Video</span></div>` : `<img src="${escapeHTML(u)}" alt="${escapeHTML(p.name)}">`).join("")}</div>
             ${imgs.length > 1 ? `<div class="pp-dots" id="ppDots">${imgs.map((_, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}</div>` : ""}`
             : `<div class="pp-emoji">${escapeHTML(p.emoji)}</div>`}
         </div>
@@ -81,6 +83,7 @@
     if (slides && dots.length) slides.addEventListener("scroll", () => {
       const i = Math.round(slides.scrollLeft / slides.clientWidth);
       dots.forEach((x, j) => x.classList.toggle("on", i === j));
+      slides.querySelectorAll("video").forEach(v => { const k = Array.prototype.indexOf.call(slides.children, v.parentNode); if (k !== i) v.pause(); });
     }, { passive: true });
 
     page.querySelector("#ppBack").onclick = () => { page.remove(); resetUrl(null); };

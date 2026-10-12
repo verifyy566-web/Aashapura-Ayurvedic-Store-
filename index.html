@@ -8,7 +8,7 @@
   <script src="i18n.js?v=2"></script>
   <script src="popup.js?v=2"></script>
   <link rel="stylesheet" href="styles.css?v=2">
-  <link rel="stylesheet" href="enhance.css?v=3">
+  <link rel="stylesheet" href="enhance.css?v=4">
   <link rel="stylesheet" href="home.css?v=4">
 </head>
 <body>
@@ -147,23 +147,24 @@
     <input id="pWeight" placeholder="Weight (e.g. 100 g)" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
     <input id="pStock" type="number" min="0" step="1" placeholder="Stock" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
     <input id="pVideo" type="url" placeholder="Video URL (optional)" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
-    <input id="pImages" type="file" accept="image/*,video/mp4" multiple
+    <input id="pImages" type="file" accept="image/*,video/mp4,video/webm" multiple
 style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
+    <small style="display:block;color:#5d7266;margin:2px 0 6px">Photos (max 10) + video (max 2, har ek 50 MB tak) ek saath select kar sakte ho.</small>
     <button type="button" onclick="addAdminProduct()" style="padding:12px;width:100%;">Save Product</button>
     <div id="adminProductList" style="margin-top:18px;"></div>
     <button type="button" onclick="adminLogout()" style="padding:12px;width:100%;margin-top:8px;">Logout</button>
   </div>
 </section>
-<script src="script.js?v=13"></script>
+<script src="script.js?v=14"></script>
 <script src="enhance.js?v=3"></script>
 <script src="checkout.js?v=14"></script>
 <script src="delivery.js?v=1"></script>
 <script src="address.js?v=1"></script>
-<script src="cart2.js?v=4"></script>
+<script src="cart2.js?v=5"></script>
 <script src="offers.js?v=1"></script>
 <script src="media.js?v=1"></script>
 <script src="reviews.js?v=6"></script>
-<script src="productpage.js?v=3"></script>
+<script src="productpage.js?v=4"></script>
 <script src="home.js?v=5"></script>
 <script src="refunds.js?v=4"></script>
 <script src="orders.js?v=8"></script>

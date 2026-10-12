@@ -464,17 +464,18 @@ async function addAdminProductInternal() {
     alert("Product name, सही price और stock भरें।");
     return;
   }
-const imageFiles = Array.from($("pImages").files)
-  .filter(file => file.type.startsWith("image/"))
-  .slice(0, 10);
+const allFiles = Array.from($("pImages").files).slice(0, 12);
+const isVidF = f => f.type.startsWith("video/");
+const imageFiles = allFiles.filter(f => f.type.startsWith("image/")).slice(0, 10);
+const videoFiles = allFiles.filter(isVidF).slice(0, 2);
+if (allFiles.length && !imageFiles.length && !videoFiles.length) { alert("Sirf photo ya video select karo."); return; }
+const tooBig = videoFiles.find(f => f.size > 50 * 1024 * 1024);
+if (tooBig) { alert("Video 50 MB se chhota hona chahiye: " + tooBig.name); return; }
 const imageUrls = [];
+const videoUrls = [];
 
-for (const file of imageFiles) {
-  if (!file.type.startsWith("image/")) {
-    alert("Sirf image files select karo.");
-    return;
-  }
-
+/* photos pehle, videos baad me (taaki image_url hamesha photo ho) */
+for (const file of imageFiles.concat(videoFiles)) {
   const path = `${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
 
   const { error: uploadError } = await supabaseClient
@@ -483,7 +484,7 @@ for (const file of imageFiles) {
     .upload(path, file, { contentType: file.type });
 
   if (uploadError) {
-    alert("Image upload failed: " + uploadError.message);
+    alert((isVidF(file) ? "Video" : "Image") + " upload failed: " + uploadError.message);
     return;
   }
 
@@ -492,7 +493,7 @@ for (const file of imageFiles) {
     .from("product-images")
     .getPublicUrl(path);
 
-  imageUrls.push(urlData.publicUrl);
+  (isVidF(file) ? videoUrls : imageUrls).push(urlData.publicUrl);
 }
   const product = {
     name,
@@ -503,7 +504,7 @@ for (const file of imageFiles) {
     stock,
     video_url: $("pVideo").value.trim(),
     image_url: imageUrls[0] || "",
-images: JSON.stringify(imageUrls),
+images: JSON.stringify(imageUrls.concat(videoUrls)),
     is_active: true,
     ...(Number($("pMrp")?.value) > 0 ? { mrp: Number($("pMrp").value) } : {})
   };

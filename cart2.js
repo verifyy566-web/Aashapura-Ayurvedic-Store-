@@ -106,7 +106,7 @@
     let urls = [];
     try { const s = typeof p.images === "string" ? JSON.parse(p.images || "[]") : p.images; urls = Array.isArray(s) ? s.slice() : []; } catch (e) {}
     if (p.image_url && !urls.includes(p.image_url)) urls.unshift(p.image_url);
-    return urls.filter(Boolean)[0] || "";
+    return urls.filter(u => u && !/\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(u))[0] || "";
   };
 
   /* ---------- premium cart page ---------- */
