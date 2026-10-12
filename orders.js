@@ -65,15 +65,21 @@
       const ob = OB[os] || OB.pending, active = ["requested", "approved", "refunded"].includes(ret[od.id]);
       const c = document.createElement("article"); c.className = "od-card";
       const idx = STEPS.indexOf(os);
-      c.innerHTML = `<div class="od-top"><div><b>#${esc(od.order_no || od.id)}</b><small>${esc(dt(od.created_at))}</small></div><div style="text-align:right">${badge(ob[0], ob[1], ob[2])}<br>${ps === "paid" ? badge(T("Paid", "पेमेंट हुआ"), "#166534", "#dcfce7") : badge(T("Payment pending", "पेमेंट बाकी"), "#b45309", "#fef3c7")}</div></div>
+      c.innerHTML = `<div class="od-top"><div><b>#${esc(od.order_no || od.id)}</b><small>${esc(dt(od.created_at))}</small></div><div style="text-align:right">${badge(ob[0], ob[1], ob[2])}<br>${ps === "paid" ? badge(T("Paid", "पेमेंट हुआ"), "#166534", "#dcfce7") : od.utr ? badge(T("Payment verifying", "पेमेंट जाँच में"), "#1d4ed8", "#dbeafe") : badge(T("Payment pending", "पेमेंट बाकी"), "#b45309", "#fef3c7")}</div></div>
         ${os === "cancelled" ? `<p style="color:#b42318;margin:6px 0">${T("Order cancelled", "ऑर्डर रद्द")}${od.cancel_reason ? ": " + esc(od.cancel_reason) : ""}</p>` : `<div class="od-tl">${STEPS.map((s, i) => `<span class="${i <= idx ? "on" : ""}">${esc(OB[s][0])}</span>`).join("")}</div>`}
         <div class="od-items">${(od.items || []).map(i => `<div><span>${esc(i.name)}${i.weight ? " (" + esc(i.weight) + ")" : ""} × ${Number(i.qty || i.quantity || 1)}</span><span>${money(i.price * (i.qty || i.quantity || 1))}</span></div>`).join("")}</div>
         <div class="od-top"><span>${Number(od.discount) ? T("Discount", "छूट") + (od.coupon_code ? " (" + esc(od.coupon_code) + ")" : "") + " −" + money(od.discount) : ""}</span><b>${T("Total", "कुल")} ${money(od.total)}</b></div>
+        ${ps !== "paid" && os !== "cancelled" ? (od.utr ? `<p style="margin:6px 0;color:#1d4ed8">✅ ${T("⏳ Verification will take a few minutes. Your order will be confirmed shortly.", "⏳ वेरिफिकेशन में कुछ मिनट लगेंगे। ऑर्डर जल्दी कन्फर्म होगा।")}</p>` : `<p style="margin:6px 0;color:#b45309">${T("Paid already? Send your payment screenshot on WhatsApp so we can confirm.", "पेमेंट कर दिया? कन्फर्म के लिए WhatsApp पर पेमेंट स्क्रीनशॉट भेजें।")}</p>`) : ""}
         <small style="color:#666">📍 ${esc(od.address || "")}</small>
         ${active ? `<p style="margin:6px 0">↩️ ${T("Return/refund", "रिटर्न/रिफंड")}: <b>${esc(ret[od.id])}</b></p>` : ""}
         <div class="od-acts"></div>`;
       const acts = c.querySelector(".od-acts");
       const add = (label, fn, cls) => { const b = document.createElement("button"); b.type = "button"; b.textContent = label; if (cls) b.className = cls; b.onclick = fn; acts.appendChild(b); };
+      if (ps !== "paid" && os !== "cancelled") add("📷 " + T("Send payment screenshot", "पेमेंट स्क्रीनशॉट भेजें"), async () => {
+        try { await supabaseClient.rpc("submit_order_utr", { p_id: String(od.id), p_utr: "WA-SCREENSHOT" }); } catch (e) {}
+        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hello Aashapura Aurveda, order " + (od.order_no || od.id) + " (" + money(od.total) + "). I have paid. My payment screenshot is below.")}`, "_blank", "noopener");
+        loadMyOrders();
+      }, "p");
       add("🔁 " + T("Buy Again", "दोबारा खरीदें"), () => buyAgain(od), "p");
       if (["pending", "confirmed"].includes(os)) add("✕ " + T("Cancel Order", "ऑर्डर रद्द करें"), async () => {
         if (!(await confirm(T("Cancel this order?", "यह ऑर्डर रद्द करें?")))) return;

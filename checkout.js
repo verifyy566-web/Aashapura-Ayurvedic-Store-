@@ -8,6 +8,7 @@
     try { localStorage.setItem(CK, JSON.stringify(cart)); } catch (e) {}
   };
   const clearCart = () => { Object.keys(cart).forEach(k => delete cart[k]); renderCart(); };
+  const L = (en, hi) => (window.AASHAPURA_LANG === "hi" ? hi : en);
   const money = n => "₹" + Number(n).toFixed(2);
 
   window.openPremiumCheckout = function () {
@@ -78,22 +79,20 @@
         <p class="small-note">ऐप न खुले तो UPI ID कॉपी करके अपने UPI ऐप में खुद पेमेंट करें, या नीचे का QR स्कैन करें।</p>
         <p><strong>${escapeHTML(UPI_ID)}</strong> <button type="button" id="coCopy" class="secondary-btn">कॉपी करें</button></p>
         <img src="upi-qr.jpg" alt="UPI QR" style="width:min(100%,240px);border-radius:12px;display:block;margin:8px 0">
-        <label>UTR / Transaction ID (पेमेंट के बाद)<input id="coUtr"></label>
-        <button type="button" id="coWa" class="premium-checkout-submit">WhatsApp पर ऑर्डर भेजें</button>
-        <p class="premium-help">पेमेंट अपने-आप वेरिफाई नहीं होता; दुकान UTR जाँचकर कन्फर्म करेगी।</p>`;
+        <button type="button" id="coWa" class="premium-checkout-submit">${L("Send order & payment screenshot on WhatsApp","WhatsApp पर ऑर्डर और पेमेंट स्क्रीनशॉट भेजें")}</button>
+        <p class="premium-help">${L("After paying, tap the button below and send your payment screenshot in the WhatsApp chat. ⏳ Verification will take a few minutes. Your order will be confirmed after we check the payment. Status shows in My Orders.","पेमेंट के बाद नीचे बटन दबाकर WhatsApp चैट में पेमेंट का स्क्रीनशॉट भेजें। ⏳ वेरिफिकेशन में कुछ मिनट लगेंगे। पेमेंट जाँचकर ऑर्डर कन्फर्म होगा। स्टेटस 'मेरे ऑर्डर' में दिखेगा।")}</p>`;
       s2.querySelector("#coCopy").onclick = async () => {
         try { await navigator.clipboard.writeText(UPI_ID); showStoreToast("UPI ID कॉपी हो गई।", "success"); }
         catch (e) { showStoreToast("कॉपी नहीं हुई: " + UPI_ID, "error"); }
       };
       s2.querySelector("#coWa").onclick = () => {
-        const utr = s2.querySelector("#coUtr").value.trim();
         const lines = items.map(i => `• ${i.name} (${i.weight || "standard"}) × ${i.qty} = ${money(i.price * i.qty)}`).join("\n");
         const msg = `नमस्ते Aashapura Aurveda,\n${orderId ? "ऑर्डर #" + orderNo + "\n" : ""}${lines}\n` +
           `सबटोटल: ${money(subtotal)}\n${d ? "छूट (" + appliedCoupon.code + "): −" + money(d) + "\n" : ""}कुल: ${money(total)}\n` +
-          `नाम: ${name}\nमोबाइल: ${phone}\nपता: ${address}\n${utr ? "UTR: " + utr + "\n" : ""}कृपया ऑर्डर कन्फर्म करें।`;
+          `नाम: ${name}\nमोबाइल: ${phone}\nपता: ${address}\n${L("I have paid. My payment screenshot is below.", "मैंने पेमेंट कर दिया है। पेमेंट का स्क्रीनशॉट नीचे भेज रहा/रही हूँ।")}\n${L("Please confirm my order.", "कृपया ऑर्डर कन्फर्म करें।")}`;
         const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
         if (!orderId) clearCart();
-        else if (utr) { try { supabaseClient.rpc("submit_order_utr", { p_id: String(orderId), p_utr: utr }); } catch (e) {} }
+        else { try { supabaseClient.rpc("submit_order_utr", { p_id: String(orderId), p_utr: "WA-SCREENSHOT" }); } catch (e) {} }
         if (!window.open(url, "_blank", "noopener")) { window.location.href = url; return; }
         close(); closeCart();
       };

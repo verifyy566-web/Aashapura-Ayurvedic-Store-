@@ -45,10 +45,11 @@
 
   const match = o => {
     const os = lc(o.order_status) || "pending";
+    if (tab === "utr" && !(!isPaid(o) && !isCan(o) && o.utr)) return false;
     if (tab === "unpaid" && !(!isPaid(o) && !isCan(o))) return false;
     if (["confirmed", "shipped", "delivered", "cancelled"].includes(tab) && os !== tab) return false;
     if (tab === "returns" && !REF.some(r => String(r.order_id) === String(o.id))) return false;
-    if (q) { const p = PROF[o.user_id] || {}; const hay = [o.order_no, o.id, o.customer_name, o.phone, o.customer_email, o.address, o.utr, p.full_name, p.phone].join(" ").toLowerCase(); if (!hay.includes(q)) return false; }
+    if (q) { const p = PROF[o.user_id] || {}; const hay = [o.order_no, o.id, o.customer_name, o.phone, o.customer_email, o.address, p.full_name, p.phone].join(" ").toLowerCase(); if (!hay.includes(q)) return false; }
     return true;
   };
 
@@ -63,21 +64,25 @@
     const items = Array.isArray(o.items) ? o.items : [];
     const refs = REF.filter(r => String(r.order_id) === String(o.id));
     const d = document.createElement("details"); d.className = "ad-o";
-    d.innerHTML = `<summary><b>#${num(o)}</b> · ${esc(o.customer_name || p.full_name || "Customer")} · <b>${money(o.total)}</b><br><small>${esc(dt(o.created_at))}</small> ${bd(o.order_status)} ${bd(isPaid(o) ? "paid" : "unpaid")}${refs.length ? ` <span class="ad-b" style="background:#fee4e2;color:#b42318">return: ${esc(refs[0].status)}</span>` : ""}</summary>
+    d.innerHTML = `<summary><b>#${num(o)}</b> · ${esc(o.customer_name || p.full_name || "Customer")} · <b>${money(o.total)}</b><br><small>${esc(dt(o.created_at))}</small> ${bd(o.order_status)} ${bd(isPaid(o) ? "paid" : "unpaid")}${!isPaid(o) && !isCan(o) && o.utr ? ` <span class="ad-b" style="background:#fff3cd;color:#8a5a00">📷 screenshot sent · check &amp; confirm</span>` : ""}${refs.length ? ` <span class="ad-b" style="background:#fee4e2;color:#b42318">return: ${esc(refs[0].status)}</span>` : ""}</summary>
       <div class="ad-in"><div class="ad-grid">
         <div><b>Customer</b><br>${esc(o.customer_name || "")}<br>📞 ${esc(o.phone || "—")}<br>✉️ ${esc(o.customer_email || "—")}<br>📍 ${esc(o.address || "—")}</div>
         <div><b>Profile (login)</b><br>${p.full_name ? esc(p.full_name) + "<br>📞 " + esc(p.phone || "") + "<br>📍 " + esc(p.address || "") : "—"}<br><small>User ID: ${esc(o.user_id)}<br>Orders by this customer: ${nOrd}${nOrd > 1 ? " (repeat)" : ""}</small></div>
       </div>
       <table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>${items.map(i => `<tr><td>${esc(i.name)}${i.weight ? " (" + esc(i.weight) + ")" : ""}</td><td>${Number(i.qty || i.quantity || 1)}</td><td>${money(i.price)}</td><td>${money(i.price * (i.qty || i.quantity || 1))}</td></tr>`).join("")}</table>
       <div>Subtotal ${money(o.subtotal)}${Number(o.discount) ? " · Discount −" + money(o.discount) + (o.coupon_code ? " (" + esc(o.coupon_code) + ")" : "") : ""} · <b>Total ${money(o.total)}</b></div>
-      <div>Order No: <b>${num(o)}</b> · DB ID: ${esc(o.id)} · UTR: <b>${esc(o.utr || "not given")}</b></div>
+      <div>Order No: <b>${num(o)}</b> · DB ID: ${esc(o.id)} · Payment screenshot: <b>${o.utr ? "sent on WhatsApp (check chat)" : "not yet"}</b></div>
       ${o.cancel_reason ? `<div style="color:#b42318">Cancel reason: ${esc(o.cancel_reason)}</div>` : ""}
       <div class="ad-acts"></div></div>`;
     const acts = d.querySelector(".ad-acts");
     const add = (t, fn) => { const b = document.createElement("button"); b.type = "button"; b.textContent = t; b.onclick = fn; acts.appendChild(b); };
     const os = lc(o.order_status) || "pending";
     if (!isCan(o)) {
-      if (!isPaid(o)) add("✅ Mark Paid", () => setO(o, { payment_status: "paid", order_status: os === "pending" ? "confirmed" : o.order_status }, "Marked paid"));
+      if (!isPaid(o)) add("✅ Payment mila – Confirm Order", async () => {
+        await setO(o, { payment_status: "paid", order_status: os === "pending" ? "confirmed" : o.order_status }, "Order confirmed");
+        const ph2 = String(o.phone || "").replace(/\D/g, "").slice(-10);
+        if (ph2 && await confirm("Customer ko WhatsApp par confirmation bhejein?")) window.open(`https://wa.me/91${ph2}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", aapka payment mil gaya. Aapka order " + (o.order_no || o.id) + " (" + money(o.total) + ") confirm ho gaya hai. Dhanyavaad - Aashapura Aurveda")}`, "_blank", "noopener");
+      });
       if (os === "pending") add("Confirm", () => setO(o, { order_status: "confirmed" }));
       if (["pending", "confirmed"].includes(os)) add("🚚 Shipped", () => setO(o, { order_status: "shipped" }));
       if (["confirmed", "shipped"].includes(os)) add("📦 Delivered", () => setO(o, { order_status: "delivered" }));
@@ -89,17 +94,17 @@
   }
 
   function csv() {
-    const h = ["Order No", "Date", "Customer", "Phone", "Email", "Address", "Items", "Subtotal", "Discount", "Coupon", "Total", "Payment", "Status", "UTR"];
-    const rows = ORD.map(o => [o.order_no || o.id, o.created_at, o.customer_name, o.phone, o.customer_email, o.address, (o.items || []).map(i => `${i.name} x${i.qty || i.quantity || 1}`).join("; "), o.subtotal, o.discount, o.coupon_code, o.total, o.payment_status, o.order_status, o.utr]);
+    const h = ["Order No", "Date", "Customer", "Phone", "Email", "Address", "Items", "Subtotal", "Discount", "Coupon", "Total", "Payment", "Status", "Screenshot sent"];
+    const rows = ORD.map(o => [o.order_no || o.id, o.created_at, o.customer_name, o.phone, o.customer_email, o.address, (o.items || []).map(i => `${i.name} x${i.qty || i.quantity || 1}`).join("; "), o.subtotal, o.discount, o.coupon_code, o.total, o.payment_status, o.order_status, o.utr ? "yes" : ""]);
     const t = [h, ...rows].map(r => r.map(v => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`).join(",")).join("\n");
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + t], { type: "text/csv" })); a.download = "aashapura-orders.csv"; a.click();
   }
 
   function paint(host) {
-    const tabs = [["all", "All"], ["unpaid", "Payment pending"], ["confirmed", "Confirmed"], ["shipped", "Shipped"], ["delivered", "Delivered"], ["cancelled", "Cancelled"], ["returns", "Returns"]];
+    const tabs = [["all", "All"], ["utr", "Screenshot sent"], ["unpaid", "Payment pending"], ["confirmed", "Confirmed"], ["shipped", "Shipped"], ["delivered", "Delivered"], ["cancelled", "Cancelled"], ["returns", "Returns"]];
     host.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">📊 Sales &amp; Orders</h3><span><button type="button" id="adCsv">⬇ CSV</button> <button type="button" id="adReload">↻</button></span></div>
       <div class="ad-stats">${stats()}</div><div id="adLow"></div>
-      <input id="adSearch" placeholder="Search order no, name, phone, email, UTR…" value="${esc(q)}" style="width:100%;padding:10px;box-sizing:border-box;margin:6px 0">
+      <input id="adSearch" placeholder="Search order no, name, phone, email…" value="${esc(q)}" style="width:100%;padding:10px;box-sizing:border-box;margin:6px 0">
       <div class="ad-tabs">${tabs.map(t => `<button type="button" data-t="${t[0]}" class="${tab === t[0] ? "on" : ""}">${t[1]}</button>`).join("")}</div><div id="adList"></div>`;
     host.querySelector("#adCsv").onclick = csv; host.querySelector("#adReload").onclick = load;
     host.querySelector(".ad-tabs").onclick = e => { const b = e.target.closest("[data-t]"); if (b) { tab = b.dataset.t; paint(host); } };
