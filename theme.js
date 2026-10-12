@@ -21,7 +21,16 @@
       bar.style.display = t.show_top === false ? "none" : "";
       if (t.top_text && t.top_text.trim()) { if (bar.textContent !== t.top_text) bar.textContent = t.top_text; }
     };
-    if (document.body) paint(); else document.addEventListener("DOMContentLoaded", paint);
+    const paintAbout = () => {
+      const sec = document.getElementById("about"); if (!sec) return;
+      const hi = (window.I18N && window.I18N.lang) === "hi", k = hi ? "_hi" : "_en";
+      const h = sec.querySelector("h2"), em = h && h.querySelector("em"), p = sec.querySelector("p:not(.eyebrow)");
+      const a = (t["about_title" + k] || "").trim(), b = (t["about_em" + k] || "").trim(), c = (t["about_text" + k] || "").trim();
+      if (h && (a || b)) { h.textContent = a ? a + " " : ""; if (b) { const e = document.createElement("em"); e.textContent = b; h.appendChild(e); } }
+      if (p && c && p.textContent !== c) p.textContent = c;
+    };
+    const run = () => { paint(); paintAbout(); };
+    if (document.body) run(); else document.addEventListener("DOMContentLoaded", run);
   }
   const cached = () => { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) { return null; } };
   const save = t => { try { t ? localStorage.setItem(KEY, JSON.stringify(t)) : localStorage.removeItem(KEY); } catch (e) {} };
@@ -53,22 +62,29 @@
       <label style="display:block;font-size:13px;margin:8px 0 4px">Top text (hari patti)</label>
       <input id="thTxt" placeholder="Natural care • Easy ordering" value="${esc(t.top_text || "")}" style="width:100%;padding:10px;box-sizing:border-box">
       <label style="display:flex;gap:8px;align-items:center;margin:10px 0;font-size:13px"><input id="thShow" type="checkbox" style="width:auto"${t.show_top === false ? "" : " checked"}> Top text dikhao</label>
-      <div style="display:flex;gap:8px"><button type="button" id="thSave" style="flex:1;padding:12px">Save Look</button><button type="button" id="thReset" style="padding:12px">Reset</button></div>`;
+      <h4 style="margin:16px 0 4px">📝 "Our Purpose" section ka text</h4>
+      <small style="color:#667">Khali chhodoge to default text rahega.</small>
+      ${["en", "hi"].map(l => `<div style="border:1px solid #d9e2dc;border-radius:10px;padding:10px;margin-top:8px"><b style="font-size:13px">${l === "en" ? "English" : "हिन्दी"}</b>
+        <input data-ab="about_title_${l}" placeholder="${l === "en" ? "Heading (e.g. Nature's power,)" : "हेडिंग (जैसे प्रकृति की शक्ति,)"}" value="${esc(t["about_title_" + l] || "")}" style="width:100%;padding:10px;box-sizing:border-box;margin-top:6px">
+        <input data-ab="about_em_${l}" placeholder="${l === "en" ? "Highlighted part (green)" : "रंगीन हिस्सा (हरा)"}" value="${esc(t["about_em_" + l] || "")}" style="width:100%;padding:10px;box-sizing:border-box;margin-top:6px">
+        <textarea data-ab="about_text_${l}" rows="3" placeholder="${l === "en" ? "Short paragraph" : "छोटा पैराग्राफ"}" style="width:100%;padding:10px;box-sizing:border-box;margin-top:6px">${esc(t["about_text_" + l] || "")}</textarea></div>`).join("")}
+      <div style="display:flex;gap:8px;margin-top:12px"><button type="button" id="thSave" style="flex:1;padding:12px">Save Look</button><button type="button" id="thReset" style="padding:12px">Reset</button></div>`;
     const col = host.querySelector("#thCol");
     host.querySelectorAll("[data-c]").forEach(b => b.onclick = () => { col.value = b.dataset.c; host.querySelectorAll("[data-c]").forEach(x => x.style.borderColor = "transparent"); b.style.borderColor = "#e6a93b"; apply({ color: col.value, show_top: true }); });
     col.oninput = () => apply({ color: col.value, show_top: true });
     host.querySelector("#thSave").onclick = async () => {
       if (!(await isAdmin())) { alert("Admin login karo."); return; }
       const row = { id: 1, color: col.value, top_text: host.querySelector("#thTxt").value.trim(), show_top: host.querySelector("#thShow").checked, updated_at: new Date().toISOString() };
+      host.querySelectorAll("[data-ab]").forEach(i => { row[i.dataset.ab] = i.value.trim() || null; });
       const { error } = await supabaseClient.from("site_theme").upsert(row);
-      if (error) { alert("Save nahi hua: " + error.message + "\n\n(Pehle supabase_v21.sql Supabase me run karo.)"); return; }
+      if (error) { alert("Save nahi hua: " + error.message + "\n\n(Pehle supabase_v21.sql aur supabase_v22.sql Supabase me run karo.)"); return; }
       save(row); apply(row); toast("Website look save ho gaya!");
     };
     host.querySelector("#thReset").onclick = async () => {
       if (!(await isAdmin())) { alert("Admin login karo."); return; }
       const { error } = await supabaseClient.from("site_theme").delete().eq("id", 1);
       if (error) { alert("Reset nahi hua: " + error.message); return; }
-      save(null); apply(null); const bar = document.querySelector(".topbar"); if (bar && bar.hasAttribute("data-orig")) bar.textContent = bar.getAttribute("data-orig");
+      save(null); apply(null); const bar = document.querySelector(".topbar"); if (bar && bar.hasAttribute("data-orig")) bar.textContent = bar.getAttribute("data-orig"); location.reload();
       toast("Purana look wapas aa gaya."); renderAdmin(host);
     };
   }
