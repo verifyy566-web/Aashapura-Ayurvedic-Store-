@@ -170,7 +170,7 @@
       ${mrpOff + cpd > 0 ? `<div class="ct-save">🎉 ${L("You're saving", "आप बचा रहे हैं")} ${rs(mrpOff + cpd)} ${L("on this order", "इस ऑर्डर पर")}</div>` : ""}
       ${D.freeAbove ? `<div class="ct-card ct-free"><p>${del ? L(`Add ${rs(D.freeAbove - after)} more for FREE delivery`, `${rs(D.freeAbove - after)} और जोड़ें, डिलीवरी फ्री पाएँ`) : L("🎉 You get FREE delivery on this order", "🎉 इस ऑर्डर पर डिलीवरी फ्री है")}</p><div class="ct-bar"><i style="width:${pct}%"></i></div></div>` : ""}
       ${rows}
-      ${items.length ? `<div class="ct-card ct-cp"><b>🏷️ ${L("Coupons", "कूपन")}</b>${appliedCoupon && cpd > 0 ? `<div class="cp-on"><span>✅ ${esc(appliedCoupon.code)} ${L("applied", "लागू")} · −${rs(cpd)}</span><button type="button" id="ctCpRm">${L("Remove", "हटाएँ")}</button></div>` : `<div class="dl-row"><input id="ctCpIn" placeholder="${L("Enter coupon code (e.g. WELCOME10)", "कूपन कोड भरें (जैसे WELCOME10)")}" autocapitalize="characters" autocomplete="off"><button type="button" id="ctCpGo">${L("Apply", "लगाएँ")}</button></div>`}</div>` : ""}
+      ${items.length ? `<div class="ct-card ct-offers"><h4>${L("Offers & Benefits", "ऑफ़र और लाभ")}</h4><div class="of-row" id="ctOffers"><span class="of-ic">🏷️</span><div class="tx"><b>${appliedCoupon && cpd > 0 ? esc(appliedCoupon.code) + " " + L("applied", "लागू") : L("Apply Coupon", "कूपन लगाएँ")}</b><small class="${appliedCoupon && cpd > 0 ? "g" : ""}">${appliedCoupon && cpd > 0 ? L("You save", "आप बचा रहे हैं") + " " + rs(cpd) : L("Tap to see available offers", "उपलब्ध ऑफ़र देखें")}</small></div>${appliedCoupon && cpd > 0 ? `<button type="button" class="of-rm" id="ctCpRm">${L("Remove", "हटाएँ")}</button>` : `<span class="ar">›</span>`}</div></div>` : ""}
       ${items.length ? `<div class="ct-card ct-pd"><h4>${L("Price Details", "प्राइस डिटेल")} (${count} ${L(count === 1 ? "item" : "items", "आइटम")})</h4>
         <div class="ct-r"><span>${L("Total MRP", "कुल MRP")}</span><span>${rs(mrpTotal)}</span></div>
         ${mrpOff > 0 ? `<div class="ct-r"><span>${L("Discount on MRP", "MRP पर छूट")}</span><span class="g">−${rs(mrpOff)}</span></div>` : ""}
@@ -188,16 +188,9 @@
       bar.onclick = () => AD.openSheet({ onChange: () => renderCartPage(true) });
       if (!AD.cached()) AD.load().then(() => { const b = page.querySelector("#ctAddr"); if (b) b.innerHTML = addrBar(); }).catch(() => {});
     }
-    const cpGo = page.querySelector("#ctCpGo"), cpIn = page.querySelector("#ctCpIn"), cpRm = page.querySelector("#ctCpRm");
-    if (cpGo) {
-      const apply = async () => {
-        const r = await validateStoreCoupon(cpIn.value, sub);
-        if (!r.ok) { appliedCoupon = null; toast(r.message, "error"); } else { appliedCoupon.forSub = sub; toast(r.message); }
-        renderCartPage(true);
-      };
-      cpGo.onclick = apply; cpIn.onkeydown = e => { if (e.key === "Enter") apply(); };
-    }
-    if (cpRm) cpRm.onclick = () => { appliedCoupon = null; renderCartPage(true); };
+    const cpRm = page.querySelector("#ctCpRm"), ofRow = page.querySelector("#ctOffers");
+    if (ofRow) ofRow.onclick = () => { if (window.aashapuraOffers) window.aashapuraOffers.open({ sub, onDone: () => renderCartPage(true) }); };
+    if (cpRm) cpRm.onclick = e => { e.stopPropagation(); appliedCoupon = null; renderCartPage(true); };
     page.querySelector("#ctBack").onclick = closeCart;
     const rmOos = page.querySelector("#ctRmOos"); if (rmOos) rmOos.onclick = () => { oos.forEach(i => delete cart[i.id]); refresh(); };
     page.querySelector("#ctPlace").onclick = () => { if (oos.length || !items.length) return toast(L("Please remove out-of-stock items first.", "पहले स्टॉक खत्म वाले आइटम हटाएँ।"), "error"); if (window.aashapuraClampCart && window.aashapuraClampCart().length) return renderCartPage(); openPremiumCheckout(); };
