@@ -60,7 +60,7 @@
       let orderId = null, orderNo = null, saveErr = "";
       if (signedInUser) {
         const { data, error } = await supabaseClient.from("store_orders").insert({
-          user_id: signedInUser.id, customer_name: name, customer_email: signedInUser.email || null, phone, address, items: orderItems,
+          user_id: signedInUser.id, customer_name: name, customer_email: signedInUser.email || null, phone, address, delivery_address: address, items: orderItems,
           subtotal, discount: d, total, coupon_code: appliedCoupon?.code || null,
           payment_status: "pending", order_status: "pending"
         }).select("id,order_no").single();

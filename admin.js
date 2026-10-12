@@ -66,7 +66,7 @@
     const d = document.createElement("details"); d.className = "ad-o";
     d.innerHTML = `<summary><b>#${num(o)}</b> · ${esc(o.customer_name || p.full_name || "Customer")} · <b>${money(o.total)}</b><br><small>${esc(dt(o.created_at))}</small> ${bd(o.order_status)} ${bd(isPaid(o) ? "paid" : "unpaid")}${!isPaid(o) && !isCan(o) && o.utr ? ` <span class="ad-b" style="background:#fff3cd;color:#8a5a00">📷 screenshot sent · check &amp; confirm</span>` : ""}${refs.length ? ` <span class="ad-b" style="background:#fee4e2;color:#b42318">return: ${esc(refs[0].status)}</span>` : ""}</summary>
       <div class="ad-in"><div class="ad-grid">
-        <div><b>Customer</b><br>${esc(o.customer_name || "")}<br>📞 ${esc(o.phone || "—")}<br>✉️ ${esc(o.customer_email || "—")}<br>📍 ${esc(o.address || "—")}</div>
+        <div><b>Customer</b><br>${esc(o.customer_name || "")}<br>📞 ${esc(o.phone || "—")}<br>✉️ ${esc(o.customer_email || "—")}<br>📍 ${esc((o.address || o.delivery_address || "—"))}</div>
         <div><b>Profile (login)</b><br>${p.full_name ? esc(p.full_name) + "<br>📞 " + esc(p.phone || "") + "<br>📍 " + esc(p.address || "") : "—"}<br><small>User ID: ${esc(o.user_id)}<br>Orders by this customer: ${nOrd}${nOrd > 1 ? " (repeat)" : ""}</small></div>
       </div>
       <table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>${items.map(i => `<tr><td>${esc(i.name)}${i.weight ? " (" + esc(i.weight) + ")" : ""}</td><td>${Number(i.qty || i.quantity || 1)}</td><td>${money(i.price)}</td><td>${money(i.price * (i.qty || i.quantity || 1))}</td></tr>`).join("")}</table>
@@ -95,7 +95,7 @@
 
   function csv() {
     const h = ["Order No", "Date", "Customer", "Phone", "Email", "Address", "Items", "Subtotal", "Discount", "Coupon", "Total", "Payment", "Status", "Screenshot sent"];
-    const rows = ORD.map(o => [o.order_no || o.id, o.created_at, o.customer_name, o.phone, o.customer_email, o.address, (o.items || []).map(i => `${i.name} x${i.qty || i.quantity || 1}`).join("; "), o.subtotal, o.discount, o.coupon_code, o.total, o.payment_status, o.order_status, o.utr ? "yes" : ""]);
+    const rows = ORD.map(o => [o.order_no || o.id, o.created_at, o.customer_name, o.phone, o.customer_email, (o.address || o.delivery_address), (o.items || []).map(i => `${i.name} x${i.qty || i.quantity || 1}`).join("; "), o.subtotal, o.discount, o.coupon_code, o.total, o.payment_status, o.order_status, o.utr ? "yes" : ""]);
     const t = [h, ...rows].map(r => r.map(v => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`).join(",")).join("\n");
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + t], { type: "text/csv" })); a.download = "aashapura-orders.csv"; a.click();
   }

@@ -26,7 +26,7 @@
     const rows = (o.items || []).map(i => `<tr><td>${esc(i.name)}${i.weight ? " (" + esc(i.weight) + ")" : ""}</td><td>${Number(i.qty || i.quantity || 1)}</td><td>${money(i.price)}</td><td>${money(i.price * (i.qty || i.quantity || 1))}</td></tr>`).join("");
     w.document.write(`<!doctype html><meta name=viewport content="width=device-width,initial-scale=1"><title>Invoice ${esc(o.order_no || o.id)}</title><style>body{font-family:sans-serif;padding:16px;color:#222}table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #ddd;padding:6px;text-align:left}h2{color:#2f6b3a;margin:0}</style>
       <h2>Aashapura Aurveda</h2><p>Invoice / Order <b>${esc(o.order_no || o.id)}</b><br>${esc(dt(o.created_at))}</p>
-      <p><b>${esc(o.customer_name || "")}</b><br>${esc(o.phone || "")}<br>${esc(o.address || "")}</p>
+      <p><b>${esc(o.customer_name || "")}</b><br>${esc(o.phone || "")}<br>${esc(o.address || o.delivery_address || "")}</p>
       <table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>${rows}</table>
       <p>Subtotal: ${money(o.subtotal)}<br>${Number(o.discount) ? "Discount" + (o.coupon_code ? " (" + esc(o.coupon_code) + ")" : "") + ": −" + money(o.discount) + "<br>" : ""}<b>Total: ${money(o.total)}</b><br>Payment: ${esc(o.payment_status || "pending")}</p>
       <p style="color:#777;font-size:12px">Thank you for shopping with Aashapura Aurveda.</p><script>setTimeout(function(){print()},400)<\/script>`);
@@ -70,7 +70,7 @@
         <div class="od-items">${(od.items || []).map(i => `<div><span>${esc(i.name)}${i.weight ? " (" + esc(i.weight) + ")" : ""} × ${Number(i.qty || i.quantity || 1)}</span><span>${money(i.price * (i.qty || i.quantity || 1))}</span></div>`).join("")}</div>
         <div class="od-top"><span>${Number(od.discount) ? T("Discount", "छूट") + (od.coupon_code ? " (" + esc(od.coupon_code) + ")" : "") + " −" + money(od.discount) : ""}</span><b>${T("Total", "कुल")} ${money(od.total)}</b></div>
         ${ps !== "paid" && os !== "cancelled" ? (od.utr ? `<p style="margin:6px 0;color:#1d4ed8">✅ ${T("⏳ Verification will take a few minutes. Your order will be confirmed shortly.", "⏳ वेरिफिकेशन में कुछ मिनट लगेंगे। ऑर्डर जल्दी कन्फर्म होगा।")}</p>` : `<p style="margin:6px 0;color:#b45309">${T("Paid already? Send your payment screenshot on WhatsApp so we can confirm.", "पेमेंट कर दिया? कन्फर्म के लिए WhatsApp पर पेमेंट स्क्रीनशॉट भेजें।")}</p>`) : ""}
-        <small style="color:#666">📍 ${esc(od.address || "")}</small>
+        <small style="color:#666">📍 ${esc(od.address || od.delivery_address || "")}</small>
         ${active ? `<p style="margin:6px 0">↩️ ${T("Return/refund", "रिटर्न/रिफंड")}: <b>${esc(ret[od.id])}</b></p>` : ""}
         <div class="od-acts"></div>`;
       const acts = c.querySelector(".od-acts");
