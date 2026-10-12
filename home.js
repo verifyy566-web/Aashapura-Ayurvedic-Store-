@@ -3,6 +3,7 @@
   const WA = "916367561630";
   const go = q => {
     const s = $("searchInput");
+    if ($("homeSearch")) $("homeSearch").value = q || "";
     if (s) { s.value = q || ""; s.dispatchEvent(new Event("input", { bubbles: true })); }
     const shop = $("shop"); if (shop) shop.scrollIntoView({ behavior: "smooth" });
   };
@@ -10,7 +11,10 @@
   /* Home page: search, categories, concerns */
   document.querySelectorAll("[data-q]").forEach(b => b.addEventListener("click", () => go(b.dataset.q)));
   const hs = $("homeSearch");
-  if (hs) hs.addEventListener("keydown", e => { if (e.key === "Enter") go(hs.value.trim()); });
+  if (hs) {
+    hs.addEventListener("input", () => { const s = $("searchInput"); if (s) { s.value = hs.value; s.dispatchEvent(new Event("input", { bubbles: true })); } });
+    hs.addEventListener("keydown", e => { if (e.key === "Enter") { hs.blur(); $("shop").scrollIntoView({ behavior: "smooth" }); } });
+  }
   const ban = document.querySelector(".m-banners");
   if (ban) setInterval(() => {
     const n = ban.children.length, w = ban.clientWidth;
@@ -70,6 +74,43 @@
 
   const pb = $("profileBtn");
   if (pb) pb.addEventListener("click", e => { e.stopImmediatePropagation(); e.preventDefault(); openSide(); }, true);
+
+
+  /* Filter bar (Category, Sort, Price, Stock, Favourites, View) */
+  const bar = document.createElement("div"); bar.className = "m-filters";
+  let wishOn = false, listOn = false;
+  const fire = (el, type) => el && el.dispatchEvent(new Event(type, { bubbles: true }));
+  const pill = (label, fn) => { const b = document.createElement("button"); b.type = "button"; b.className = "m-pill"; b.innerHTML = label; b.onclick = fn; bar.appendChild(b); return b; };
+  function sheet(title, opts, cur, apply) {
+    let pick = cur;
+    const bk = document.createElement("div"); bk.className = "m-sheet-back";
+    const sh = document.createElement("div"); sh.className = "m-sheet";
+    sh.innerHTML = `<div class="m-sheet-head"><b>${title}</b><button type="button" aria-label="Close">✕</button></div><div class="m-sheet-chips"></div><div class="m-sheet-foot"><button type="button" class="clr">Clear All</button><button type="button" class="app">Apply Filters</button></div>`;
+    const box = sh.querySelector(".m-sheet-chips");
+    const paint = () => { box.innerHTML = ""; opts.forEach(o => { const c = document.createElement("button"); c.type = "button"; c.textContent = o.t; if (o.v === pick) c.className = "on"; c.onclick = () => { pick = o.v; paint(); }; box.appendChild(c); }); };
+    paint();
+    const shut = () => { bk.remove(); sh.remove(); };
+    bk.onclick = shut; sh.querySelector(".m-sheet-head button").onclick = shut;
+    sh.querySelector(".clr").onclick = () => { pick = opts[0].v; paint(); };
+    sh.querySelector(".app").onclick = () => { apply(pick); shut(); refresh(); };
+    document.body.append(bk, sh);
+  }
+  const optsOf = id => [...$(id).options].map(o => ({ v: o.value, t: o.textContent }));
+  const setSel = (id, v) => { const s = $(id); s.value = v; fire(s, "change"); };
+  const pCat = pill("Category ▾", () => sheet("Categories", optsOf("categoryFilter"), $("categoryFilter").value, v => setSel("categoryFilter", v)));
+  const pSort = pill("⇅ Sort", () => sheet("Sort by", optsOf("sortFilter"), $("sortFilter").value, v => setSel("sortFilter", v)));
+  const price = (label, max) => pill(label, () => { const m = $("maxPrice"); m.value = m.value === max ? "" : max; fire(m, "input"); refresh(); });
+  const p1 = price("Under ₹199", "199"), p2 = price("Under ₹499", "499");
+  const pStock = pill("In stock", () => { const c = $("inStockOnly"); c.checked = !c.checked; fire(c, "input"); refresh(); });
+  const pFav = pill("❤ Favourites", () => { wishOn = !wishOn; $("wishToggle").click(); refresh(); });
+  const pView = pill("☷ View", () => { listOn = !listOn; $("viewToggle").click(); refresh(); });
+  function refresh() {
+    const on = (b, v) => b.classList.toggle("on", !!v);
+    on(pCat, $("categoryFilter").selectedIndex > 0); on(pSort, $("sortFilter").selectedIndex > 0);
+    on(p1, $("maxPrice").value === "199"); on(p2, $("maxPrice").value === "499");
+    on(pStock, $("inStockOnly").checked); on(pFav, wishOn); on(pView, listOn);
+  }
+  const grid = $("productGrid"); if (grid) grid.before(bar);
 
   /* Bottom navigation (mobile) */
   const nav = document.createElement("nav"); nav.className = "m-bnav";

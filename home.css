@@ -32,3 +32,29 @@ body{padding-bottom:62px}
 .m-logout{padding:14px 18px;border-top:1px solid #ddd}
 .m-logout button{width:100%;padding:12px;border-radius:8px;border:1px solid #c0392b;background:#fff;color:#c0392b;font-weight:700;font-size:15px;cursor:pointer}
 .header-actions #profileBtn,.header-actions #googleLoginBtn,.header-actions .lang-btn{display:none!important}
+/* one brand name only: hide the footer while Profile / My Orders / Cart pages are open */
+body:has(#profilePage:not([hidden])) footer,body:has(#myOrdersPage:not([hidden])) footer,body:has(#cartFullPage:not([hidden])) footer{display:none!important}
+/* mobile header: menu on the left, brand in the centre, cart on the right */
+@media(max-width:760px){
+.header{display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
+.header .menu-toggle{grid-column:1;grid-row:1;margin:0;justify-self:start}
+.header .brand{grid-column:2;grid-row:1;justify-self:center}
+.header .header-actions{grid-column:3;grid-row:1;justify-self:end}
+}
+
+/* single search bar (top) + Myntra-style filter row */
+.shop-tools,.store-filters{display:none!important}
+.m-filters{position:sticky;top:0;z-index:50;display:flex;gap:8px;overflow-x:auto;padding:10px 4px;background:#fff;scrollbar-width:none}
+.m-filters::-webkit-scrollbar{display:none}
+.m-pill{flex:0 0 auto;padding:9px 16px;border:1px solid #ccd5cc;border-radius:999px;background:#fff;font:inherit;font-size:14px;color:#222;cursor:pointer;white-space:nowrap}
+.m-pill.on{background:#14402b;border-color:#14402b;color:#fff}
+.m-sheet-back{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000}
+.m-sheet{position:fixed;left:0;right:0;bottom:0;z-index:2001;background:#fff;border-radius:20px 20px 0 0;padding:18px 16px 14px;animation:mshu .22s ease}
+@keyframes mshu{from{transform:translateY(100%)}}
+.m-sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:17px}
+.m-sheet-head button{border:0;background:none;font-size:20px;cursor:pointer}
+.m-sheet-chips{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px}
+.m-sheet-chips button{padding:9px 16px;border:1px solid #bbb;border-radius:999px;background:#fff;font:inherit;cursor:pointer}
+.m-sheet-chips button.on{border-color:#14402b;background:#e8f3e6;color:#14402b;font-weight:700}
+.m-sheet-foot{display:flex;gap:10px}.m-sheet-foot button{flex:1;padding:14px;border-radius:10px;font:inherit;font-weight:700;cursor:pointer;border:1px solid #14402b;background:#fff;color:#14402b}
+.m-sheet-foot .app{background:#14402b;color:#fff}
