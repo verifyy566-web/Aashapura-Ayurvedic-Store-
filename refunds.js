@@ -232,7 +232,7 @@
     });
     const help = document.createElement("button");
     help.type = "button"; help.className = "rf-btn alt"; help.textContent = T("💬 Chat with us on WhatsApp", "💬 WhatsApp पर बात करें");
-    help.onclick = () => wa("Hello Aashapura Aurveda, I need help with a refund.");
+    help.onclick = () => wa("Hello Aashapura Ayurveda, I need help with a refund.");
     body.appendChild(help);
   }
 

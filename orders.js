@@ -26,11 +26,11 @@
     const w = window.open("", "_blank"); if (!w) return toast(T("Allow pop-ups to open the invoice.", "इनवॉइस खोलने के लिए पॉप-अप की अनुमति दें।"), "error");
     const rows = (o.items || []).map(i => `<tr><td>${esc(i.name)}${i.weight ? " (" + esc(i.weight) + ")" : ""}</td><td>${Number(i.qty || i.quantity || 1)}</td><td>${money(i.price)}</td><td>${money(i.price * (i.qty || i.quantity || 1))}</td></tr>`).join("");
     w.document.write(`<!doctype html><meta name=viewport content="width=device-width,initial-scale=1"><title>Invoice ${esc(o.order_no || o.id)}</title><style>body{font-family:sans-serif;padding:16px;color:#222}table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #ddd;padding:6px;text-align:left}h2{color:#2f6b3a;margin:0}</style>
-      <h2>Aashapura Aurveda</h2><p>Invoice / Order <b>${esc(o.order_no || o.id)}</b><br>${esc(dt(o.created_at))}</p>
+      <h2>Aashapura Ayurveda</h2><p>Invoice / Order <b>${esc(o.order_no || o.id)}</b><br>${esc(dt(o.created_at))}</p>
       <p><b>${esc(o.customer_name || "")}</b><br>${esc(o.phone || "")}<br>${esc(o.address || o.delivery_address || "")}</p>
       <table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>${rows}</table>
       <p>Subtotal: ${money(o.subtotal)}<br>${Number(o.discount) ? "Discount" + (o.coupon_code ? " (" + esc(o.coupon_code) + ")" : "") + ": −" + money(o.discount) + "<br>" : ""}${Number(o.delivery_charge) ? "Delivery: " + money(o.delivery_charge) + "<br>" : "Delivery: FREE<br>"}<b>Total: ${money(o.total)}</b><br>Payment: ${esc(o.payment_status || "pending")}</p>
-      <p style="color:#777;font-size:12px">Thank you for shopping with Aashapura Aurveda.</p><script>setTimeout(function(){print()},400)<\/script>`);
+      <p style="color:#777;font-size:12px">Thank you for shopping with Aashapura Ayurveda.</p><script>setTimeout(function(){print()},400)<\/script>`);
     w.document.close();
   }
 
@@ -167,7 +167,7 @@
       const add = (label, fn, cls) => { const b = document.createElement("button"); b.type = "button"; b.textContent = label; if (cls) b.className = cls; b.onclick = fn; acts.appendChild(b); };
       if (ps !== "paid" && os !== "cancelled") add("📷 " + T("Send payment screenshot", "पेमेंट स्क्रीनशॉट भेजें"), async () => {
         try { await supabaseClient.rpc("submit_order_utr", { p_id: String(od.id), p_utr: "WA-SCREENSHOT" }); } catch (e) {}
-        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hello Aashapura Aurveda, order " + (od.order_no || od.id) + " (" + money(od.total) + "). I have paid. My payment screenshot is below.")}`, "_blank", "noopener");
+        window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hello Aashapura Ayurveda, order " + (od.order_no || od.id) + " (" + money(od.total) + "). I have paid. My payment screenshot is below.")}`, "_blank", "noopener");
         loadMyOrders();
       }, "p");
       add("📍 " + T("Track order", "ऑर्डर ट्रैक करें"), () => window.openOrderTrack && window.openOrderTrack(od), "p");
@@ -177,7 +177,7 @@
       if (!active && (ps === "paid" || os === "delivered")) add("↩️ " + T("Return / Refund", "रिटर्न / रिफंड"), () => window.openRefunds && window.openRefunds());
       if (os === "delivered") add("⭐ " + T("Rate", "रेटिंग दें"), () => { const i = (od.items || [])[0]; if (i) { try { closeMyOrdersPage(); } catch (e) {} showProduct(i.id); } });
       add("🧾 " + T("Invoice", "इनवॉइस"), () => invoice(od));
-      add("💬 " + T("Help", "मदद"), () => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hello Aashapura Aurveda, help with order " + (od.order_no || od.id))}`, "_blank", "noopener"));
+      add("💬 " + T("Help", "मदद"), () => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hello Aashapura Ayurveda, help with order " + (od.order_no || od.id))}`, "_blank", "noopener"));
       list.appendChild(c);
     });
   };

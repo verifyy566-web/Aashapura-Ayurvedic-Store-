@@ -100,7 +100,7 @@
       if (!isPaid(o)) add("✅ Payment mila – Confirm Order", async () => {
         await setO(o, { payment_status: "paid", order_status: os === "pending" ? "confirmed" : o.order_status }, "Order confirmed");
         const ph2 = String(o.phone || "").replace(/\D/g, "").slice(-10);
-        if (ph2 && await confirm("Customer ko WhatsApp par confirmation bhejein?")) window.open(`https://wa.me/91${ph2}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", aapka payment mil gaya. Aapka order " + (o.order_no || o.id) + " (" + money(o.total) + ") confirm ho gaya hai. Dhanyavaad - Aashapura Aurveda")}`, "_blank", "noopener");
+        if (ph2 && await confirm("Customer ko WhatsApp par confirmation bhejein?")) window.open(`https://wa.me/91${ph2}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", aapka payment mil gaya. Aapka order " + (o.order_no || o.id) + " (" + money(o.total) + ") confirm ho gaya hai. Dhanyavaad - Aashapura Ayurveda")}`, "_blank", "noopener");
       });
       if (os === "pending") add("Confirm", () => setO(o, { order_status: "confirmed" }));
       if (["pending", "confirmed"].includes(os)) add("🚚 Shipped", () => setO(o, { order_status: "shipped" }));
@@ -108,7 +108,7 @@
       if (os !== "delivered") add("✕ Cancel", () => { const r = window.prompt("Cancel reason:", ""); if (r !== null) setO(o, { order_status: "cancelled", cancel_reason: r, cancelled_at: new Date().toISOString() }, "Cancelled"); });
     }
     const ph = String(o.phone || p.phone || "").replace(/\D/g, "").slice(-10);
-    if (ph) add("💬 WhatsApp", () => window.open(`https://wa.me/91${ph}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", Aashapura Aurveda order " + (o.order_no || o.id) + " (" + money(o.total) + "): ")}`, "_blank", "noopener"));
+    if (ph) add("💬 WhatsApp", () => window.open(`https://wa.me/91${ph}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", Aashapura Ayurveda order " + (o.order_no || o.id) + " (" + money(o.total) + "): ")}`, "_blank", "noopener"));
     if (["confirmed", "shipped"].includes(os)) {
       const box = document.createElement("div"); box.className = "ad-trk";
       box.innerHTML = `<b>📍 Live tracking (customer ko dikhega)</b>

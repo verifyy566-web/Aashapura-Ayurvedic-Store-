@@ -148,7 +148,7 @@
       list.append(
         item("✏️", "Edit Profile", "Name, mobile and address", () => openAccountModal()),
         item("📦", "My Orders", "Track and view your orders", () => $("openMyOrdersBtn").click()),
-        item("↩️", "Returns & Refunds", "Return, cancel and track requests", () => (window.openRefunds ? window.openRefunds() : wa("Hello Aashapura Aurveda, I need help with a refund for my order. Order ID: "))),
+        item("↩️", "Returns & Refunds", "Return, cancel and track requests", () => (window.openRefunds ? window.openRefunds() : wa("Hello Aashapura Ayurveda, I need help with a refund for my order. Order ID: "))),
         item("📍", "Saved Address", "Delivery address", () => openAccountModal()),
         item("🛒", "My Cart", "", () => $("cartOpen").click())
       );
@@ -157,7 +157,7 @@
     }
     list.append(
       item("🌐", "Language", window.AASHAPURA_LANG === "hi" ? "हिन्दी" : "English", () => { const l = document.querySelector(".lang-btn"); if (l) l.click(); }),
-      item("💬", "Help Center", "Chat with us on WhatsApp", () => wa("Hello Aashapura Aurveda, I need help.")),
+      item("💬", "Help Center", "Chat with us on WhatsApp", () => wa("Hello Aashapura Ayurveda, I need help.")),
       item("ℹ️", "About Us", "", () => $("about").scrollIntoView({ behavior: "smooth" })),
       item("📞", "Contact Us", "", () => $("contact").scrollIntoView({ behavior: "smooth" }))
     );
