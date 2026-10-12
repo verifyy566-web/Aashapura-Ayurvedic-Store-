@@ -19,6 +19,7 @@
     blockedPrefix: []    // jin pincode ke shuruaat par delivery nahi: e.g. ["19"] (Kashmir) 
   };
   const delFor = amt => (amt >= DELIVERY.freeAbove ? 0 : DELIVERY.charge);
+  window.AASHAPURA_DELIVERY = DELIVERY;
   const pinLookup = async pin => {
     if (DELIVERY.blocked.includes(pin) || DELIVERY.blockedPrefix.some(x => pin.startsWith(x))) return { ok: false, msg: L("Sorry, we can't deliver to this pincode yet.", "माफ़ कीजिए, इस पिनकोड पर अभी डिलीवरी नहीं होती।") };
     try {
@@ -33,6 +34,7 @@
   };
 
   window.openPremiumCheckout = function () {
+    if (window.aashapuraClampCart) window.aashapuraClampCart();
     const items = cartItems();
     if (!items.length) { showStoreToast("पहले कार्ट में उत्पाद जोड़ें।", "error"); return; }
     document.getElementById("premiumCheckoutModal")?.remove();

@@ -29,7 +29,7 @@
 
   function stats() {
     const sold = ORD.filter(o => isPaid(o) && !isCan(o)), can = ORD.filter(isCan);
-    const refd = REF.filter(r => r.status === "refunded"), reqd = REF.filter(r => r.status === "requested");
+    const refd = REF.filter(r => r.status === "refunded"), reqd = REF.filter(r => ["requested", "approved", "picked_up"].includes(r.status));
     const sum = a => a.reduce((s, o) => s + Number(o.total || o.amount || 0), 0);
     const today = new Date().toDateString();
     const todays = sold.filter(o => new Date(o.created_at).toDateString() === today);
@@ -54,7 +54,14 @@
   };
 
   async function setO(o, patch, okMsg) {
-    const { error } = await sb().from("store_orders").update(Object.assign({ updated_at: new Date().toISOString() }, patch)).eq("id", o.id);
+    const now = new Date().toISOString(), ts = {};
+    if (patch.payment_status === "paid") ts.paid_at = now;
+    if (patch.order_status === "confirmed") ts.confirmed_at = now;
+    if (patch.order_status === "shipped") ts.shipped_at = now;
+    if (patch.order_status === "delivered") ts.delivered_at = now;
+    const base = Object.assign({ updated_at: now }, patch);
+    let { error } = await sb().from("store_orders").update(Object.assign({}, base, ts)).eq("id", o.id);
+    if (error && /column|schema/i.test(error.message || "")) ({ error } = await sb().from("store_orders").update(base).eq("id", o.id));
     if (error) return toast(error.message, "error");
     toast(okMsg || "Updated"); load();
   }
