@@ -17,7 +17,7 @@
     document.querySelectorAll("#productGrid .product-card").forEach(card => {
       const id = card.querySelector("[data-wish]")?.dataset.wish;
       if (!id) return;
-      const a = agg[id];
+      const a = agg[primaryId(id)];
       let el = card.querySelector(".rating-line");
       if (!a) { el?.remove(); return; }
       if (!el) { el = document.createElement("div"); el.className = "rating-line"; card.querySelector(".product-buy").before(el); }
@@ -32,7 +32,7 @@
   }).observe(document.body, { childList: true });
 
   async function mount(page) {
-    const pid = Number(new URL(location.href).searchParams.get("product"));
+    const pid = primaryId(Number(new URL(location.href).searchParams.get("product")));
     if (!pid) return;
     const box = document.createElement("section");
     box.className = "reviews-box";
@@ -63,6 +63,8 @@
         <small>${new Date(r.created_at).toLocaleDateString("hi-IN")}</small>
         ${signedInUser && (signedInUser.id === r.user_id || signedInUser.id === ADMIN) ? `<button type="button" class="rv-del" data-del="${r.id}">हटाएँ</button>` : ""}
       </article>`).join("")}</div>`;
+    const rt = document.getElementById("ppRate");
+    if (rt) rt.innerHTML = n ? `<span class="stars">${stars(avg)}</span> <strong>${avg.toFixed(1)}</strong> <a href="#" onclick="document.querySelector('.reviews-box').scrollIntoView({behavior:'smooth'});return false">(${n} रिव्यू)</a>` : "<small>अभी कोई रिव्यू नहीं</small>";
     const paint = () => box.querySelectorAll("#rvPick button").forEach(b => b.classList.toggle("on", Number(b.dataset.s) <= pick));
     paint();
     box.querySelector("#rvPick").onclick = e => { const b = e.target.closest("[data-s]"); if (b) { pick = Number(b.dataset.s); paint(); } };

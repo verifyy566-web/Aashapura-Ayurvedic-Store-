@@ -25,7 +25,8 @@ function normalizeProduct(p) {
     stock: Number(p.stock || 0),
     image_url: p.image_url || "",
     images: p.images || "",
-    video_url: p.video_url || ""
+    video_url: p.video_url || "",
+    mrp: Number(p.mrp || 0)
   };
 }
 
@@ -503,7 +504,8 @@ for (const file of imageFiles) {
     video_url: $("pVideo").value.trim(),
     image_url: imageUrls[0] || "",
 images: JSON.stringify(imageUrls),
-    is_active: true
+    is_active: true,
+    ...(Number($("pMrp")?.value) > 0 ? { mrp: Number($("pMrp").value) } : {})
   };
 
   const { data, error } = await supabaseClient

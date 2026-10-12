@@ -5,6 +5,11 @@
   try { wish = JSON.parse(localStorage.getItem(WK) || "[]"); } catch (e) { wish = []; }
   const saveWish = () => { try { localStorage.setItem(WK, JSON.stringify(wish)); } catch (e) {} };
   const LABELS = { powder: "पाउडर", herbal: "हर्बल", wellness: "वेलनेस" };
+  const norm = p => String(p.name || "").trim().toLowerCase().replace(/\s+/g, " ");
+  window.primaryId = id => {
+    const p = products.find(x => x.id === Number(id));
+    return p ? Math.min(...products.filter(x => norm(x) === norm(p)).map(x => x.id)) : Number(id);
+  };
   let activeCat = "all", onlyWish = false, view = "grid";
 
   const grid = $("productGrid");
@@ -34,7 +39,7 @@
     sel.value = activeCat;
   }
 
-  function card(p) {
+  function card(p, n = 1, min = p.price) {
     const liked = wish.includes(p.id);
     const out = p.stock <= 0;
     const low = p.stock > 0 && p.stock <= 5;
@@ -48,10 +53,11 @@
         <span class="product-tag">${escapeHTML(p.weight)}</span>
         <h3>${escapeHTML(p.name)}</h3>
         <p>${escapeHTML(p.desc)}</p>
-        ${low ? `<span class="stock-note">सिर्फ़ ${p.stock} बचे!</span>` : ""}
+        ${low && n === 1 ? `<span class="stock-note">सिर्फ़ ${p.stock} बचे!</span>` : ""}
         <div class="product-buy">
-          <strong>₹${p.price}</strong>
-          ${out ? `<button class="add-btn" disabled>स्टॉक खत्म</button>`
+          <strong>${n > 1 ? "₹" + min + " से" : "₹" + p.price}${n === 1 && p.mrp > p.price ? ` <s class="card-mrp">₹${p.mrp}</s>` : ""}</strong>
+          ${n > 1 ? `<button class="add-btn">साइज़ चुनें →</button>`
+            : out ? `<button class="add-btn" disabled>स्टॉक खत्म</button>`
                 : `<button class="add-btn" data-add="${p.id}">कार्ट में जोड़ें +</button>`}
         </div>
       </div>
@@ -76,7 +82,11 @@
     if (sort === "low") list.sort((a, b) => a.price - b.price);
     else if (sort === "high") list.sort((a, b) => b.price - a.price);
     grid.className = "product-grid" + (view === "list" ? " list-view" : "");
-    grid.innerHTML = list.map(card).join("") || "<p>कोई उत्पाद नहीं मिला।</p>";
+    const counts = {}, mins = {};
+    products.forEach(x => { const k = norm(x); counts[k] = (counts[k] || 0) + 1; mins[k] = Math.min(mins[k] ?? Infinity, x.price); });
+    const seen = new Set();
+    list = list.filter(p => { const k = norm(p); if (seen.has(k)) return false; seen.add(k); return true; });
+    grid.innerHTML = list.map(p => card(p, counts[norm(p)], mins[norm(p)])).join("") || "<p>कोई उत्पाद नहीं मिला।</p>";
     $("wishCount").textContent = wish.length;
     $("wishToggle").classList.toggle("active", onlyWish);
     const note = document.querySelector(".demo-note");
