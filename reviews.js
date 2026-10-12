@@ -1,0 +1,89 @@
+/* Reviews & ratings (Supabase table: reviews) */
+(function () {
+  const ADMIN = "6eeb63cc-1cec-4ac5-bc4b-12a0e6f951c3";
+  let agg = {};
+  const stars = n => "★".repeat(Math.round(n)) + "☆".repeat(5 - Math.round(n));
+  const grid = $("productGrid");
+
+  async function loadAgg() {
+    const { data, error } = await supabaseClient.from("reviews").select("product_id,rating");
+    if (error) { console.warn("reviews:", error.message); return; }
+    agg = {};
+    (data || []).forEach(r => { const a = agg[r.product_id] || (agg[r.product_id] = { sum: 0, n: 0 }); a.sum += r.rating; a.n++; });
+    decorate();
+  }
+
+  function decorate() {
+    document.querySelectorAll("#productGrid .product-card").forEach(card => {
+      const id = card.querySelector("[data-wish]")?.dataset.wish;
+      if (!id) return;
+      const a = agg[id];
+      let el = card.querySelector(".rating-line");
+      if (!a) { el?.remove(); return; }
+      if (!el) { el = document.createElement("div"); el.className = "rating-line"; card.querySelector(".product-buy").before(el); }
+      el.innerHTML = `<span class="stars">${stars(a.sum / a.n)}</span> ${(a.sum / a.n).toFixed(1)} (${a.n})`;
+    });
+  }
+  if (grid) new MutationObserver(decorate).observe(grid, { childList: true });
+
+  new MutationObserver(() => {
+    const page = document.getElementById("productFullPage");
+    if (page && !page.querySelector(".reviews-box")) mount(page);
+  }).observe(document.body, { childList: true });
+
+  async function mount(page) {
+    const pid = Number(new URL(location.href).searchParams.get("product"));
+    if (!pid) return;
+    const box = document.createElement("section");
+    box.className = "reviews-box";
+    page.appendChild(box);
+    await render(box, pid);
+  }
+
+  async function render(box, pid) {
+    box.innerHTML = "<p>रिव्यू लोड हो रहे हैं…</p>";
+    const { data, error } = await supabaseClient.from("reviews")
+      .select("id,user_id,user_name,rating,comment,created_at")
+      .eq("product_id", pid).order("created_at", { ascending: false });
+    if (error) { box.innerHTML = `<p class="small-note">रिव्यू लोड नहीं हुए: ${escapeHTML(error.message)}</p>`; return; }
+    const n = data.length, avg = n ? data.reduce((s, r) => s + r.rating, 0) / n : 0;
+    const mine = signedInUser && data.find(r => r.user_id === signedInUser.id);
+    let pick = mine ? mine.rating : 0;
+    box.innerHTML = `<h3>ग्राहक रिव्यू</h3>
+      ${n ? `<p><span class="stars">${stars(avg)}</span> <strong>${avg.toFixed(1)}</strong> / 5 · ${n} रिव्यू</p>` : "<p>अभी कोई रिव्यू नहीं है।</p>"}
+      <div class="rv-form">
+        <strong>${mine ? "अपना रिव्यू बदलें" : "अपना रिव्यू लिखें"}</strong>
+        <div class="rv-pick" id="rvPick">${[1, 2, 3, 4, 5].map(i => `<button type="button" data-s="${i}">★</button>`).join("")}</div>
+        <textarea id="rvText" maxlength="500" placeholder="उत्पाद कैसा लगा? (वैकल्पिक)">${escapeHTML(mine?.comment || "")}</textarea>
+        <button type="button" id="rvSubmit" class="primary-btn">${signedInUser ? "रिव्यू सबमिट करें" : "रिव्यू लिखने के लिए Google Login करें"}</button>
+      </div>
+      <div class="rv-list">${data.map(r => `<article class="rv-item">
+        <div><strong>${escapeHTML(r.user_name || "ग्राहक")}</strong> <span class="stars">${stars(r.rating)}</span></div>
+        ${r.comment ? `<p>${escapeHTML(r.comment)}</p>` : ""}
+        <small>${new Date(r.created_at).toLocaleDateString("hi-IN")}</small>
+        ${signedInUser && (signedInUser.id === r.user_id || signedInUser.id === ADMIN) ? `<button type="button" class="rv-del" data-del="${r.id}">हटाएँ</button>` : ""}
+      </article>`).join("")}</div>`;
+    const paint = () => box.querySelectorAll("#rvPick button").forEach(b => b.classList.toggle("on", Number(b.dataset.s) <= pick));
+    paint();
+    box.querySelector("#rvPick").onclick = e => { const b = e.target.closest("[data-s]"); if (b) { pick = Number(b.dataset.s); paint(); } };
+    box.querySelector("#rvSubmit").onclick = async () => {
+      if (!signedInUser) { startGoogleLogin(); return; }
+      if (!pick) return showStoreToast("पहले स्टार रेटिंग चुनें।", "error");
+      const name = $("profileName")?.value.trim() || signedInUser.user_metadata?.full_name || "ग्राहक";
+      const { error: err } = await supabaseClient.from("reviews").upsert({
+        product_id: pid, user_id: signedInUser.id, user_name: name,
+        rating: pick, comment: box.querySelector("#rvText").value.trim()
+      }, { onConflict: "product_id,user_id" });
+      if (err) return showStoreToast("रिव्यू सेव नहीं हुआ: " + err.message, "error");
+      showStoreToast("रिव्यू सेव हो गया। धन्यवाद!", "success");
+      await render(box, pid); loadAgg();
+    };
+    box.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+      if (!confirm("यह रिव्यू हटाएँ?")) return;
+      const { error: err } = await supabaseClient.from("reviews").delete().eq("id", b.dataset.del);
+      if (err) return showStoreToast("हट नहीं पाया: " + err.message, "error");
+      await render(box, pid); loadAgg();
+    });
+  }
+  loadAgg();
+})();
