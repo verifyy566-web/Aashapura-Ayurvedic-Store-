@@ -109,6 +109,34 @@
     }
     const ph = String(o.phone || p.phone || "").replace(/\D/g, "").slice(-10);
     if (ph) add("💬 WhatsApp", () => window.open(`https://wa.me/91${ph}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", Aashapura Aurveda order " + (o.order_no || o.id) + " (" + money(o.total) + "): ")}`, "_blank", "noopener"));
+    if (["confirmed", "shipped"].includes(os)) {
+      const box = document.createElement("div"); box.className = "ad-trk";
+      box.innerHTML = `<b>📍 Live tracking (customer ko dikhega)</b>
+        <div class="ad-trk-r"><input class="tk-c" placeholder="Courier (e.g. Xpress Bees)" value="${esc(o.courier || "")}"><input class="tk-t" placeholder="Tracking ID" value="${esc(o.tracking_id || "")}"><button type="button" class="tk-s">Save courier</button></div>
+        <div class="ad-trk-r"><input class="tk-l" placeholder="Product abhi kahan hai? e.g. Reached at Jaipur Hub"><button type="button" class="tk-a">➕ Add location</button></div>
+        <div class="ad-trk-q">${["Packed and ready to ship", "Picked up by courier", "Reached at hub", "In transit", "Reached nearest hub", "Out for delivery"].map(x => `<button type="button" data-q="${x}">${x}</button>`).join("")}</div>
+        <div class="tk-list"><small>Khol kar dekho…</small></div>`;
+      d.querySelector(".ad-in").appendChild(box);
+      const listEl = box.querySelector(".tk-list");
+      const reload = async () => {
+        const r = await sb().from("order_events").select("*").eq("order_id", String(o.id)).order("created_at", { ascending: false });
+        if (r.error) { listEl.innerHTML = `<small style="color:#b42318">${esc(r.error.message)} — supabase_v14.sql chalayi?</small>`; return; }
+        listEl.innerHTML = (r.data || []).map(x => `<div>📍 ${esc(x.message)} <small>${esc(dt(x.created_at))}</small> <button type="button" data-del="${x.id}">✕</button></div>`).join("") || "<small>Abhi koi location update nahi.</small>";
+      };
+      let loaded = false; d.addEventListener("toggle", () => { if (d.open && !loaded) { loaded = true; reload(); } });
+      box.querySelectorAll("[data-q]").forEach(b => b.onclick = () => { box.querySelector(".tk-l").value = b.dataset.q; });
+      box.querySelector(".tk-a").onclick = async () => {
+        const m = box.querySelector(".tk-l").value.trim(); if (!m) return toast("Location likho", "error");
+        const r = await sb().from("order_events").insert({ order_id: String(o.id), message: m.slice(0, 200) });
+        if (r.error) return toast(r.error.message, "error");
+        box.querySelector(".tk-l").value = ""; toast("Location add ho gayi"); reload();
+      };
+      listEl.addEventListener("click", async e => { const b = e.target.closest("[data-del]"); if (!b) return; const r = await sb().from("order_events").delete().eq("id", b.dataset.del); if (r.error) return toast(r.error.message, "error"); reload(); });
+      box.querySelector(".tk-s").onclick = async () => {
+        const r = await sb().from("store_orders").update({ courier: box.querySelector(".tk-c").value.trim() || null, tracking_id: box.querySelector(".tk-t").value.trim() || null }).eq("id", o.id);
+        toast(r.error ? r.error.message : "Courier save ho gaya", r.error ? "error" : undefined);
+      };
+    }
     return d;
   }
 

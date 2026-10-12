@@ -139,11 +139,13 @@
     list.replaceChildren(); msg.textContent = "";
     if (!signedInUser) { list.textContent = T("Sign in to see your orders.", "अपने ऑर्डर देखने के लिए Sign In करें।"); return; }
     list.textContent = T("Loading your orders…", "आपके ऑर्डर लोड हो रहे हैं…");
-    const [o, r] = await Promise.all([
+    const [o, r, evq] = await Promise.all([
       supabaseClient.from("store_orders").select("*").eq("user_id", signedInUser.id).order("created_at", { ascending: false }),
-      supabaseClient.from("store_refunds").select("order_id,status").eq("user_id", signedInUser.id)
+      supabaseClient.from("store_refunds").select("order_id,status").eq("user_id", signedInUser.id),
+      supabaseClient.from("order_events").select("order_id,message,created_at").order("created_at", { ascending: false }).then(x => x, () => ({ data: [] }))
     ]);
     if (o.error) { list.textContent = T("Could not load orders.", "ऑर्डर लोड नहीं हो सके।"); msg.textContent = o.error.message; return; }
+    const evMap = {}; ((evq && evq.data) || []).forEach(x => { if (!evMap[x.order_id]) evMap[x.order_id] = x; });
     const ret = {}; (r.data || []).forEach(x => { if (!ret[x.order_id] || ["requested", "approved", "picked_up", "refunded"].includes(x.status)) ret[x.order_id] = x.status; });
     list.replaceChildren();
     if (!o.data.length) { list.textContent = T("You have no orders yet.", "अभी आपका कोई ऑर्डर नहीं है।"); return; }
@@ -154,6 +156,7 @@
       const idx = STEPS.indexOf(os);
       c.innerHTML = `<div class="od-top"><div><b>#${esc(od.order_no || od.id)}</b><small>${esc(dt(od.created_at))}</small></div><div style="text-align:right">${badge(ob[0], ob[1], ob[2])}<br>${ps === "paid" ? badge(T("Paid", "पेमेंट हुआ"), "#166534", "#dcfce7") : od.utr ? badge(T("Payment verifying", "पेमेंट जाँच में"), "#1d4ed8", "#dbeafe") : badge(T("Payment pending", "पेमेंट बाकी"), "#b45309", "#fef3c7")}</div></div>
         ${os === "cancelled" ? `<p style="color:#b42318;margin:6px 0">${T("Order cancelled", "ऑर्डर रद्द")}${od.cancel_reason ? ": " + esc(od.cancel_reason) : ""}</p>` : `<div class="od-tl">${STEPS.map((s, i) => `<span class="${i <= idx ? "on" : ""}">${esc(OB[s][0])}</span>`).join("")}</div>`}
+        ${window.aashapuraOrderExtra ? window.aashapuraOrderExtra(od, evMap[od.id]) : ""}
         <div class="od-items">${(od.items || []).map(i => `<div><span>${esc(i.name)}${i.weight ? " (" + esc(i.weight) + ")" : ""} × ${Number(i.qty || i.quantity || 1)}</span><span>${money(i.price * (i.qty || i.quantity || 1))}</span></div>`).join("")}</div>
         <div class="od-top"><span>${Number(od.discount) ? T("Discount", "छूट") + (od.coupon_code ? " (" + esc(od.coupon_code) + ")" : "") + " −" + money(od.discount) + " · " : ""}${T("Delivery", "डिलीवरी")} ${Number(od.delivery_charge) ? money(od.delivery_charge) : T("FREE", "फ्री")}</span><b>${T("Total", "कुल")} ${money(od.total)}</b></div>
         ${ps !== "paid" && os !== "cancelled" ? (od.utr ? `<p style="margin:6px 0;color:#1d4ed8">✅ ${T("⏳ Verification will take a few minutes. Your order will be confirmed shortly.", "⏳ वेरिफिकेशन में कुछ मिनट लगेंगे। ऑर्डर जल्दी कन्फर्म होगा।")}</p>` : `<p style="margin:6px 0;color:#b45309">${T("Paid already? Send your payment screenshot on WhatsApp so we can confirm.", "पेमेंट कर दिया? कन्फर्म के लिए WhatsApp पर पेमेंट स्क्रीनशॉट भेजें।")}</p>`) : ""}

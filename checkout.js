@@ -27,11 +27,12 @@
       const r = await fetch("https://api.postalpincode.in/pincode/" + pin, { signal: ctl.signal }); clearTimeout(t);
       const j = await r.json(); const x = j && j[0];
       if (x && x.Status === "Success" && x.PostOffice && x.PostOffice.length) {
-        const po = x.PostOffice[0]; return { ok: true, area: [po.District, po.State].filter(Boolean).join(", ") };
+        const po = x.PostOffice[0]; return { ok: true, area: [po.District, po.State].filter(Boolean).join(", "), state: po.State || "" };
       }
       return { ok: false, msg: L("Pincode not found. Please check it.", "पिनकोड नहीं मिला। कृपया जाँचें।") };
     } catch (e) { return { ok: true, area: "", unverified: true }; }
   };
+  window.aashapuraPinLookup = pinLookup;
 
   window.openPremiumCheckout = function () {
     if (window.aashapuraClampCart) window.aashapuraClampCart();
@@ -81,9 +82,12 @@
       pinFor = pin; const r = await pinLookup(pin); if (q("#coPin").value.trim() !== pin) return null;
       pinInfo = r;
       msg.textContent = r.ok ? (r.area ? "✅ " + L("Delivery available: ", "डिलीवरी उपलब्ध: ") + r.area : L("Could not verify pincode (offline). You can continue.", "पिनकोड जाँच नहीं हो पाई। आप आगे बढ़ सकते हैं।")) : "❌ " + r.msg;
-      msg.style.color = r.ok ? "#166534" : "#b42318"; return r;
+      msg.style.color = r.ok ? "#166534" : "#b42318";
+      if (r.ok && window.aashapuraEta) { if (window.aashapuraSavePin) window.aashapuraSavePin(pin, r); msg.textContent += "\n📦 " + L("Expected delivery: ", "अनुमानित डिलीवरी: ") + window.aashapuraEta(r.state).text; msg.style.whiteSpace = "pre-line"; }
+      return r;
     };
     q("#coPin").oninput = () => { q("#coPin").value = q("#coPin").value.replace(/\D/g, "").slice(0, 6); pinInfo = null; if (q("#coPin").value.length === 6) pinBusy = checkPin(); else checkPin(); };
+    if (!q("#coPin").value) { try { const sp = JSON.parse(localStorage.getItem("aashapura_pin") || "null"); if (sp && sp.pin) q("#coPin").value = sp.pin; } catch (e) {} }
     if (q("#coPin").value) pinBusy = checkPin();
 
     q("#coApply").onclick = async () => {
@@ -110,6 +114,7 @@
       const pr = await checkPin();
       if (!pr || !pr.ok) return showStoreToast(pr && pr.msg ? pr.msg : L("Please check your pincode.", "कृपया पिनकोड जाँचें।"), "error");
       const area = pr.area || "";
+      const etaCols = (() => { try { const e = window.aashapuraEta(pr.state); return { delivery_state: pr.state || null, exp_min: e.min.toISOString().slice(0, 10), exp_max: e.max.toISOString().slice(0, 10) }; } catch (x) { return {}; } })();
       const fullAddress = address.includes(pin) ? address : address + ", PIN " + pin;
       const btn = q("#coPlace"); btn.disabled = true; btn.textContent = "सेव हो रहा है…";
       const { d, del, total } = calc();
@@ -121,7 +126,8 @@
           subtotal, discount: d, total, coupon_code: appliedCoupon?.code || null,
           payment_status: "pending", order_status: "pending"
         };
-        let { data, error } = await supabaseClient.from("store_orders").insert({ ...base, pincode: pin, delivery_charge: del, delivery_area: area || null }).select("id,order_no").single();
+        let { data, error } = await supabaseClient.from("store_orders").insert({ ...base, pincode: pin, delivery_charge: del, delivery_area: area || null, ...etaCols }).select("id,order_no").single();
+        if (error && /exp_min|exp_max|delivery_state/i.test(error.message || "")) ({ data, error } = await supabaseClient.from("store_orders").insert({ ...base, pincode: pin, delivery_charge: del, delivery_area: area || null }).select("id,order_no").single());
         if (error && /pincode|delivery_charge|delivery_area|column/i.test(error.message || "")) {
           ({ data, error } = await supabaseClient.from("store_orders").insert(base).select("id,order_no").single());
         }

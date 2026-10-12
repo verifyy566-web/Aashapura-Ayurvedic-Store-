@@ -142,23 +142,32 @@
     [["confirmed", ["confirmed", "shipped", "delivered"], T("Order Confirmed", "ऑर्डर कन्फर्म"), T("Your order is confirmed.", "आपका ऑर्डर कन्फर्म हो गया है।"), o.confirmed_at, "blue"],
       ["shipped", ["shipped", "delivered"], T("Shipped", "शिप हो गया"), T("Your item has been shipped.", "आपका प्रोडक्ट शिप हो गया है।"), o.shipped_at, "blue"],
       ["delivered", ["delivered"], T("Delivered", "डिलीवर हुआ"), T("Your item has been delivered.", "आपका प्रोडक्ट डिलीवर हो गया है।"), o.delivered_at, "green"]].forEach(([stage, ok, title, sub, ts, tone]) => {
-      if (ok.includes(os)) ev.push({ at: tm(ts, stage), title, sub, tone, done: true });
-      else if (withFuture) ev.push({ at: null, title, sub: "", tone: "grey", done: false });
+      if (ok.includes(os)) ev.push({ at: tm(ts, stage), title, sub: stage === "delivered" ? T("Order delivered successfully.", "ऑर्डर सफलतापूर्वक डिलीवर हो गया।") : sub, tone, done: true, stage });
+      else if (withFuture) ev.push({ at: null, title, sub: "", tone: "grey", done: false, stage, hint: stage === "delivered" && window.aashapuraEtaFor ? T("Expected by ", "अनुमानित: ") + window.aashapuraEtaFor(o) : "" });
     });
     return ev;
   }
 
-  function openTrack(title, events, onBack) {
+  function openTrack(title, events, onBack, head) {
     const body = frame(title, onBack);
-    body.innerHTML = `<div class="rf-card tl">${events.map(e => `<div class="tl-r ${e.done ? "" : "p"}"><div class="tl-d">${esc(e.done ? sd(e.at) : "")}</div><div class="tl-dot">${e.done ? "✓" : ""}</div><div class="tl-c"><span class="tl-chip ${e.tone || "blue"}">${esc(e.title)}</span>${e.done && e.sub ? `<p>${esc(e.sub)}</p>` : ""}${e.done && e.at ? `<small>${esc(stime(e.at))}</small>` : ""}</div></div>`).join("")}</div>`;
+    body.innerHTML = `${head || ""}<div class="rf-card tl">${events.map(e => `<div class="tl-r ${e.done ? "" : "p"}"><div class="tl-d">${esc(e.done ? sd(e.at) : "")}</div><div class="tl-dot">${e.done ? "✓" : ""}</div><div class="tl-c">${e.plain ? `<span class="tl-pl">${esc(e.title)}</span>` : `<span class="tl-chip ${e.tone || "blue"}">${esc(e.title)}</span>`}${!e.done && e.hint ? `<small>${esc(e.hint)}</small>` : ""}${e.done && e.sub ? `<p>${esc(e.sub)}</p>` : ""}${e.done && e.at ? `<small>${esc(stime(e.at))}</small>` : ""}</div></div>`).join("")}</div>`;
   }
 
   window.openOrderTrack = async function (od) {
     const u = user(); let refs = [];
     try { const q = await sb().from("store_refunds").select("*").eq("order_id", String(od.id)).eq("user_id", u.id).order("created_at", { ascending: true }); refs = q.data || []; } catch (e) {}
+    let locs = []; try { const q2 = await sb().from("order_events").select("*").eq("order_id", String(od.id)).order("created_at", { ascending: true }); locs = q2.data || []; } catch (e) {}
     const ev = orderEvents(od, !refs.length);
+    const le = locs.map(x => ({ at: x.created_at, title: x.message, plain: true, done: true, tone: "blue" }));
+    if (le.length) { const si = ev.findIndex(x => x.stage === "shipped"); if (si >= 0) ev.splice(si + 1, 0, ...le); else ev.push(...le); }
+    const st = String(od.order_status || "").toLowerCase(), last = locs[locs.length - 1];
+    const hd = (od.courier || od.tracking_id ? `<div>${T("Courier", "कूरियर")}: <b>${esc(od.courier || "—")}</b><br>${T("Tracking ID", "ट्रैकिंग आईडी")}: <b>${esc(od.tracking_id || "—")}</b></div>` : "")
+      + (last && st !== "delivered" && st !== "cancelled" ? `<div class="dl-loc">📍 ${T("Currently at", "अभी यहाँ है")}: <b>${esc(last.message)}</b></div>` : "")
+      + (st !== "delivered" && st !== "cancelled" && window.aashapuraEtaFor ? `<div class="dl-eta">📦 ${T("Expected delivery", "अनुमानित डिलीवरी")}: <b>${esc(window.aashapuraEtaFor(od))}</b></div>` : "")
+      + (st === "delivered" ? `<div class="dl-ok">✅ ${T("Order delivered successfully", "ऑर्डर सफलतापूर्वक डिलीवर हुआ")}</div>` : "");
+    const head = hd ? `<div class="rf-card dl-head">${hd}</div>` : "";
     refs.forEach(r => ev.push(...refundEvents(r)));
-    openTrack(T("Track order", "ऑर्डर ट्रैक करें") + " #" + (od.order_no || od.id), ev, shut);
+    openTrack(T("Track order", "ऑर्डर ट्रैक करें") + " #" + (od.order_no || od.id), ev, shut, head);
   };
 
   /* ---------- customer page ---------- */
