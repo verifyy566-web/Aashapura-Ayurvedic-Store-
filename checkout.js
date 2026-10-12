@@ -69,7 +69,7 @@
       q("#coStep1").hidden = true;
       const s2 = q("#coStep2"); s2.hidden = false;
       const note = "Aashapura" + (orderId ? "-" + orderId : "");
-      const upi = `upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent("Aashapura Ayurvedic Store")}&am=${total.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}`.replace(/&/g, "&amp;");
+      const upi = `upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent("Aashapura Aurveda")}&am=${total.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}`.replace(/&/g, "&amp;");
       s2.innerHTML = `<h2>पेमेंट और ऑर्डर भेजें</h2>
         ${orderId ? `<p>ऑर्डर #${escapeHTML(String(orderId))} सेव हो गया।</p>`
           : `<p class="small-note" style="color:#b42318">${signedInUser ? "ऑर्डर सेव नहीं हुआ: " + escapeHTML(saveErr) : "Google Login नहीं है, इसलिए ऑर्डर 'मेरे ऑर्डर' में सेव नहीं हुआ।"} WhatsApp से ऑर्डर भेज सकते हैं।</p>`}
@@ -88,7 +88,7 @@
       s2.querySelector("#coWa").onclick = () => {
         const utr = s2.querySelector("#coUtr").value.trim();
         const lines = items.map(i => `• ${i.name} (${i.weight || "standard"}) × ${i.qty} = ${money(i.price * i.qty)}`).join("\n");
-        const msg = `नमस्ते Aashapura Ayurvedic Store,\n${orderId ? "ऑर्डर #" + orderId + "\n" : ""}${lines}\n` +
+        const msg = `नमस्ते Aashapura Aurveda,\n${orderId ? "ऑर्डर #" + orderId + "\n" : ""}${lines}\n` +
           `सबटोटल: ${money(subtotal)}\n${d ? "छूट (" + appliedCoupon.code + "): −" + money(d) + "\n" : ""}कुल: ${money(total)}\n` +
           `नाम: ${name}\nमोबाइल: ${phone}\nपता: ${address}\n${utr ? "UTR: " + utr + "\n" : ""}कृपया ऑर्डर कन्फर्म करें।`;
         const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;

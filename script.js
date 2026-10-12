@@ -364,7 +364,7 @@ $("checkoutBtn").addEventListener("click", () => {
   ).join("\n");
 
   const msg =
-    `नमस्ते Aashapura Ayurvedic Store,\n` +
+    `नमस्ते Aashapura Aurveda,\n` +
     `मुझे यह ऑर्डर करना है:\n${lines}\n` +
     `कुल: ₹${total}\nनाम: ${name}\nपता: ${address}\n` +
     `कृपया उपलब्धता और डिलीवरी चार्ज की पुष्टि करें।`;
@@ -924,7 +924,7 @@ async function validateStoreCoupon(code, subtotal) {
 /* Dynamic UPI payment link builder. Payment is not automatically verified; admin must verify UTR. */
 function buildDynamicUpiLink(amount, orderNote="Aashapura order") {
   const params = new URLSearchParams({
-    pa: UPI_ID, pn: "Aashapura Ayurvedic Store", am: Number(amount).toFixed(2),
+    pa: UPI_ID, pn: "Aashapura Aurveda", am: Number(amount).toFixed(2),
     cu: "INR", tn: orderNote
   });
   return "upi://pay?" + params.toString();
@@ -1031,7 +1031,7 @@ function openPremiumCheckout() {
       return;
     }
     const lines = items.map(item => `• ${item.name} (${item.weight || "standard"}) × ${item.qty} = ₹${(Number(item.price) * Number(item.qty)).toFixed(2)}`).join("\n");
-    const message = `नमस्ते Aashapura Ayurvedic Store,\nमुझे यह ऑर्डर करना है:\n${lines}\nकुल: ₹${total.toFixed(2)}\nनाम: ${name}\nमोबाइल: ${phone}\nपता: ${address}\nकृपया उपलब्धता और डिलीवरी चार्ज की पुष्टि करें।`;
+    const message = `नमस्ते Aashapura Aurveda,\nमुझे यह ऑर्डर करना है:\n${lines}\nकुल: ₹${total.toFixed(2)}\nनाम: ${name}\nमोबाइल: ${phone}\nपता: ${address}\nकृपया उपलब्धता और डिलीवरी चार्ज की पुष्टि करें।`;
     const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
     const opened = window.open(url, "_blank", "noopener");
     if (!opened) {
