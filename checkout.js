@@ -1,0 +1,92 @@
+/* Checkout upgrade: coupon, order saved to Supabase (store_orders), UPI link, WhatsApp, cart persistence */
+(function () {
+  const CK = "aashapura_cart";
+  try { Object.assign(cart, JSON.parse(localStorage.getItem(CK) || "{}")); } catch (e) {}
+  const _renderCart = renderCart;
+  window.renderCart = function () {
+    _renderCart();
+    try { localStorage.setItem(CK, JSON.stringify(cart)); } catch (e) {}
+  };
+  const clearCart = () => { Object.keys(cart).forEach(k => delete cart[k]); renderCart(); };
+  const money = n => "₹" + Number(n).toFixed(2);
+
+  window.openPremiumCheckout = function () {
+    const items = cartItems();
+    if (!items.length) { showStoreToast("पहले कार्ट में उत्पाद जोड़ें।", "error"); return; }
+    document.getElementById("premiumCheckoutModal")?.remove();
+    appliedCoupon = null;
+    const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+    const m = document.createElement("main");
+    m.id = "premiumCheckoutModal";
+    m.className = "premium-checkout-page";
+    m.style.cssText = "position:fixed;inset:0;z-index:100010;overflow-y:auto;background:#f7faf6;padding:22px;box-sizing:border-box;color:#173d2e;font-family:inherit";
+    m.innerHTML = `<section class="premium-modal" style="margin:20px auto;max-height:none;width:min(100%,560px);box-sizing:border-box">
+      <button type="button" class="premium-modal-close" aria-label="वापस जाएँ">×</button>
+      <span class="premium-eyebrow">AASHAPURA • CHECKOUT</span>
+      <div id="coStep1">
+        <h2>डिलीवरी जानकारी</h2>
+        <label>पूरा नाम<input id="coName" autocomplete="name" value="${escapeHTML($("profileName")?.value || $("customerName")?.value || signedInUser?.user_metadata?.full_name || "")}"></label>
+        <label>मोबाइल नंबर<input id="coPhone" inputmode="tel" autocomplete="tel" value="${escapeHTML($("profilePhone")?.value || "")}"></label>
+        <label>डिलीवरी का पता<textarea id="coAddress" autocomplete="street-address">${escapeHTML($("profileAddress")?.value || $("customerAddress")?.value || "")}</textarea></label>
+        <label>कूपन कोड<span style="display:flex;gap:8px"><input id="coCode" placeholder="जैसे WELCOME10" style="flex:1"><button type="button" id="coApply" class="secondary-btn">लगाएँ</button></span></label>
+        <p class="checkout-total">सबटोटल: <span id="coSub"></span><br>छूट: <span id="coDisc"></span><br>कुल: <strong id="coTotal"></strong></p>
+        <button type="button" id="coPlace" class="premium-checkout-submit">ऑर्डर पक्का करें</button>
+        <p class="premium-help">${signedInUser ? "ऑर्डर आपके 'मेरे ऑर्डर' में दिखेगा।" : "Google Login करने पर ऑर्डर 'मेरे ऑर्डर' में भी दिखेगा।"}</p>
+      </div>
+      <div id="coStep2" hidden></div></section>`;
+    document.body.appendChild(m);
+    const q = s => m.querySelector(s);
+    const close = () => m.remove();
+    q(".premium-modal-close").onclick = close;
+    const calc = () => { const d = appliedCoupon ? appliedCoupon.discount : 0; return { d, total: Math.max(0, subtotal - d) }; };
+    const paint = () => { const { d, total } = calc(); q("#coSub").textContent = money(subtotal); q("#coDisc").textContent = "−" + money(d); q("#coTotal").textContent = money(total); };
+    paint();
+
+    q("#coApply").onclick = async () => {
+      const r = await validateStoreCoupon(q("#coCode").value, subtotal);
+      if (!r.ok) appliedCoupon = null;
+      showStoreToast(r.message, r.ok ? "success" : "error");
+      paint();
+    };
+
+    q("#coPlace").onclick = async () => {
+      const name = q("#coName").value.trim(), phone = q("#coPhone").value.trim(), address = q("#coAddress").value.trim();
+      if (!name || !phone || !address) return showStoreToast("नाम, मोबाइल और पूरा पता भरें।", "error");
+      if (!/^[0-9+\-\s]{10,15}$/.test(phone)) return showStoreToast("मोबाइल नंबर सही भरें।", "error");
+      const btn = q("#coPlace"); btn.disabled = true; btn.textContent = "सेव हो रहा है…";
+      const { d, total } = calc();
+      const orderItems = items.map(i => ({ id: i.id, name: i.name, weight: i.weight, price: i.price, qty: i.qty }));
+      let orderId = null;
+      if (signedInUser) {
+        const { data, error } = await supabaseClient.from("store_orders").insert({
+          user_id: signedInUser.id, customer_name: name, phone, address, items: orderItems,
+          subtotal, discount: d, total, coupon_code: appliedCoupon?.code || null,
+          payment_status: "pending", order_status: "pending"
+        }).select("id").single();
+        if (error) { console.warn(error.message); showStoreToast("ऑर्डर सेव नहीं हुआ; WhatsApp से भेज सकते हैं।", "error"); }
+        else { orderId = data.id; clearCart(); }
+      }
+      q("#coStep1").hidden = true;
+      const s2 = q("#coStep2"); s2.hidden = false;
+      const upi = buildDynamicUpiLink(total, orderId ? "Order " + orderId : "Aashapura order").replace(/&/g, "&amp;");
+      s2.innerHTML = `<h2>पेमेंट और ऑर्डर भेजें</h2>
+        ${orderId ? `<p>ऑर्डर #${escapeHTML(String(orderId))} सेव हो गया।</p>` : ""}
+        <p class="checkout-total">देय राशि <strong>${money(total)}</strong></p>
+        <a class="primary-btn" href="${upi}">UPI ऐप से पेमेंट करें</a>
+        <label>UTR / Transaction ID (पेमेंट के बाद)<input id="coUtr"></label>
+        <button type="button" id="coWa" class="premium-checkout-submit">WhatsApp पर ऑर्डर भेजें</button>
+        <p class="premium-help">पेमेंट अपने-आप वेरिफाई नहीं होता; दुकान UTR जाँचकर कन्फर्म करेगी।</p>`;
+      s2.querySelector("#coWa").onclick = () => {
+        const utr = s2.querySelector("#coUtr").value.trim();
+        const lines = items.map(i => `• ${i.name} (${i.weight || "standard"}) × ${i.qty} = ${money(i.price * i.qty)}`).join("\n");
+        const msg = `नमस्ते Aashapura Ayurvedic Store,\n${orderId ? "ऑर्डर #" + orderId + "\n" : ""}${lines}\n` +
+          `सबटोटल: ${money(subtotal)}\n${d ? "छूट (" + appliedCoupon.code + "): −" + money(d) + "\n" : ""}कुल: ${money(total)}\n` +
+          `नाम: ${name}\nमोबाइल: ${phone}\nपता: ${address}\n${utr ? "UTR: " + utr + "\n" : ""}कृपया ऑर्डर कन्फर्म करें।`;
+        const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+        if (!orderId) clearCart();
+        if (!window.open(url, "_blank", "noopener")) { window.location.href = url; return; }
+        close(); closeCart();
+      };
+    };
+  };
+})();
