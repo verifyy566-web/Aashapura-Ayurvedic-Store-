@@ -71,6 +71,37 @@
     buildCats(); setInterval(buildCats, 1500);
   }
 
+  /* Home banners from admin (table home_banners). Cached for instant paint; falls back to built-in banners */
+  const GRADS = { green: "linear-gradient(120deg,#2f6b3a,#7aa84f)", gold: "linear-gradient(120deg,#b9731f,#e6a93b)", brown: "linear-gradient(120deg,#6a3d1f,#a8683a)", blue: "linear-gradient(120deg,#1e4e8c,#4a90d9)", red: "linear-gradient(120deg,#a4262c,#e0605a)", purple: "linear-gradient(120deg,#5b3a8c,#9b6fd0)" };
+  const bannerHTML = (b, i) => {
+    const bg = b.image_url ? `background:linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)),url('${String(b.image_url).replace(/'/g, "%27")}') center/cover` : `background:${GRADS[b.bg_color] || GRADS.green}`;
+    return `<div class="m-banner" data-bi="${i}" style="${bg}">${b.tag ? `<p>${esc2(b.tag)}</p>` : ""}${b.title ? `<h2>${esc2(b.title)}</h2>` : ""}${b.subtitle ? `<p>${esc2(b.subtitle)}</p>` : ""}${b.button_text ? `<a href="#shop" data-link="${esc2(b.button_link || "#shop")}">${esc2(b.button_text)}</a>` : ""}</div>`;
+  };
+  function paintBanners(rows) {
+    const box = document.querySelector(".m-banners"); if (!box || !rows || !rows.length) return;
+    box.innerHTML = rows.map(bannerHTML).join("");
+    box.scrollLeft = 0;
+  }
+  const bannerBox = document.querySelector(".m-banners");
+  if (bannerBox) {
+    bannerBox.addEventListener("click", e => {
+      const a = e.target.closest("a[data-link]"); if (!a) return;
+      const l = a.dataset.link;
+      if (l.startsWith("cat:")) { e.preventDefault(); pickCat(l.slice(4)); }
+      else if (l.startsWith("product:")) { e.preventDefault(); try { showProduct(Number(l.slice(8))); } catch (er) {} }
+      else if (/^https?:/i.test(l)) { e.preventDefault(); window.open(l, "_blank", "noopener"); }
+    });
+    try { const c = JSON.parse(localStorage.getItem("aashapura_banners") || "null"); if (c && c.length) paintBanners(c); } catch (e) {}
+    (async () => {
+      try {
+        const { data, error } = await supabaseClient.from("home_banners").select("*").eq("is_active", true).order("sort_order", { ascending: true });
+        if (error || !data) return;
+        try { localStorage.setItem("aashapura_banners", JSON.stringify(data)); } catch (e) {}
+        if (data.length) paintBanners(data);
+      } catch (e) {}
+    })();
+  }
+
   const ban = document.querySelector(".m-banners");
   if (ban) setInterval(() => {
     const n = ban.children.length, w = ban.clientWidth;
