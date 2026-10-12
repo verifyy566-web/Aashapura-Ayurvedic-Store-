@@ -56,26 +56,35 @@
       const btn = q("#coPlace"); btn.disabled = true; btn.textContent = "सेव हो रहा है…";
       const { d, total } = calc();
       const orderItems = items.map(i => ({ id: i.id, name: i.name, weight: i.weight, price: i.price, qty: i.qty }));
-      let orderId = null;
+      let orderId = null, saveErr = "";
       if (signedInUser) {
         const { data, error } = await supabaseClient.from("store_orders").insert({
           user_id: signedInUser.id, customer_name: name, phone, address, items: orderItems,
           subtotal, discount: d, total, coupon_code: appliedCoupon?.code || null,
           payment_status: "pending", order_status: "pending"
         }).select("id").single();
-        if (error) { console.warn(error.message); showStoreToast("ऑर्डर सेव नहीं हुआ; WhatsApp से भेज सकते हैं।", "error"); }
+        if (error) { console.warn(error.message); saveErr = error.message; showStoreToast("ऑर्डर सेव नहीं हुआ; WhatsApp से भेज सकते हैं।", "error"); }
         else { orderId = data.id; clearCart(); }
       }
       q("#coStep1").hidden = true;
       const s2 = q("#coStep2"); s2.hidden = false;
-      const upi = buildDynamicUpiLink(total, orderId ? "Order " + orderId : "Aashapura order").replace(/&/g, "&amp;");
+      const note = "Aashapura" + (orderId ? "-" + orderId : "");
+      const upi = `upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent("Aashapura Ayurvedic Store")}&am=${total.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}`.replace(/&/g, "&amp;");
       s2.innerHTML = `<h2>पेमेंट और ऑर्डर भेजें</h2>
-        ${orderId ? `<p>ऑर्डर #${escapeHTML(String(orderId))} सेव हो गया।</p>` : ""}
+        ${orderId ? `<p>ऑर्डर #${escapeHTML(String(orderId))} सेव हो गया।</p>`
+          : `<p class="small-note" style="color:#b42318">${signedInUser ? "ऑर्डर सेव नहीं हुआ: " + escapeHTML(saveErr) : "Google Login नहीं है, इसलिए ऑर्डर 'मेरे ऑर्डर' में सेव नहीं हुआ।"} WhatsApp से ऑर्डर भेज सकते हैं।</p>`}
         <p class="checkout-total">देय राशि <strong>${money(total)}</strong></p>
         <a class="primary-btn" href="${upi}">UPI ऐप से पेमेंट करें</a>
+        <p class="small-note">ऐप न खुले तो UPI ID कॉपी करके अपने UPI ऐप में खुद पेमेंट करें, या नीचे का QR स्कैन करें।</p>
+        <p><strong>${escapeHTML(UPI_ID)}</strong> <button type="button" id="coCopy" class="secondary-btn">कॉपी करें</button></p>
+        <img src="upi-qr.jpg" alt="UPI QR" style="width:min(100%,240px);border-radius:12px;display:block;margin:8px 0">
         <label>UTR / Transaction ID (पेमेंट के बाद)<input id="coUtr"></label>
         <button type="button" id="coWa" class="premium-checkout-submit">WhatsApp पर ऑर्डर भेजें</button>
         <p class="premium-help">पेमेंट अपने-आप वेरिफाई नहीं होता; दुकान UTR जाँचकर कन्फर्म करेगी।</p>`;
+      s2.querySelector("#coCopy").onclick = async () => {
+        try { await navigator.clipboard.writeText(UPI_ID); showStoreToast("UPI ID कॉपी हो गई।", "success"); }
+        catch (e) { showStoreToast("कॉपी नहीं हुई: " + UPI_ID, "error"); }
+      };
       s2.querySelector("#coWa").onclick = () => {
         const utr = s2.querySelector("#coUtr").value.trim();
         const lines = items.map(i => `• ${i.name} (${i.weight || "standard"}) × ${i.qty} = ${money(i.price * i.qty)}`).join("\n");
