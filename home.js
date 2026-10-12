@@ -21,6 +21,9 @@
   const esc2 = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const titleOf = c => c.replace(/\b\w/g, m => m.toUpperCase());
   const emojiOf = c => CAT_EMOJI[c] || "🌿";
+  /* Category photos set by admin (table category_images). Cached for instant paint. */
+  let catImgs = {}; try { catImgs = JSON.parse(localStorage.getItem("aashapura_catimgs") || "{}") || {}; } catch (e) {}
+  const iconOf = (c, emo) => catImgs[c] ? `<span class="has-img"><img src="${esc2(catImgs[c])}" alt="" loading="lazy"></span>` : `<span>${emo}</span>`;
   const listCats = () => {
     let ps = []; try { ps = products || []; } catch (e) {}
     const map = new Map();
@@ -41,7 +44,7 @@
     const all = document.createElement("button"); all.type = "button"; all.className = "m-cat";
     all.innerHTML = `<span>🌿</span>All<small>${list.reduce((a, x) => a + x.n, 0)} items</small>`;
     grid.appendChild(all);
-    list.forEach(({ c, n }) => { const b = document.createElement("button"); b.type = "button"; b.className = "m-cat"; b.dataset.c = c; b.innerHTML = `<span>${emojiOf(c)}</span>${esc2(titleOf(c))}<small>${n} item${n > 1 ? "s" : ""}</small>`; grid.appendChild(b); });
+    list.forEach(({ c, n }) => { const b = document.createElement("button"); b.type = "button"; b.className = "m-cat"; b.dataset.c = c; b.innerHTML = `${iconOf(c, emojiOf(c))}${esc2(titleOf(c))}<small>${n} item${n > 1 ? "s" : ""}</small>`; grid.appendChild(b); });
     document.body.appendChild(el);
     const A = window.aashapuraAddr && window.aashapuraAddr.ov;
     let shut;
@@ -53,14 +56,23 @@
   function buildCats() {
     const box = document.querySelector(".m-cats"); if (!box) return;
     const list = listCats();
-    const sig = list.map(x => x.c).join("|");
+    const sig = list.map(x => x.c).join("|") + "#" + Object.keys(catImgs).sort().map(k => k + catImgs[k]).join("|");
     if (!list.length || sig === catSig) return;
     catSig = sig;
     const show = list.length > MAXCAT ? list.slice(0, MAXCAT) : list;
-    box.innerHTML = `<button type="button" class="m-cat" data-c="all"><span>🌿</span>All</button>` +
-      show.map(({ c }) => `<button type="button" class="m-cat" data-c="${esc2(c)}"><span>${emojiOf(c)}</span>${esc2(titleOf(c))}</button>`).join("") +
+    box.innerHTML = `<button type="button" class="m-cat" data-c="all">${iconOf("all", "🌿")}All</button>` +
+      show.map(({ c }) => `<button type="button" class="m-cat" data-c="${esc2(c)}">${iconOf(c, emojiOf(c))}${esc2(titleOf(c))}</button>`).join("") +
       (list.length > MAXCAT ? `<button type="button" class="m-cat" data-more="1"><span>➕</span>More</button>` : "");
   }
+  (async () => {
+    try {
+      const { data, error } = await supabaseClient.from("category_images").select("category,image_url");
+      if (error || !data) return;
+      const m = {}; data.forEach(r => { if (r.image_url) m[String(r.category).trim().toLowerCase()] = r.image_url; });
+      try { localStorage.setItem("aashapura_catimgs", JSON.stringify(m)); } catch (e) {}
+      catImgs = m; buildCats();
+    } catch (e) {}
+  })();
   const catBox = document.querySelector(".m-cats");
   if (catBox) {
     catBox.addEventListener("click", e => {

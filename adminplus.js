@@ -227,18 +227,47 @@
     host.querySelector("#apAddB").onclick = () => bannerForm({ sort_order: (rows.length ? Math.max(...rows.map(b => b.sort_order || 0)) : 0) + 10 }, again);
   }
 
+  /* ================= CATEGORY PHOTOS ================= */
+  async function renderCatImgs(host) {
+    host.innerHTML = "<p>Load ho raha hai…</p>";
+    const r = await supabaseClient.from("category_images").select("*");
+    if (r.error) { host.innerHTML = `<p style="color:#b42318">Table nahi mili: ${esc(r.error.message)}<br>Supabase SQL Editor me <b>supabase_v20.sql</b> run karo.</p>`; return; }
+    const map = {}; (r.data || []).forEach(x => { map[String(x.category).toLowerCase()] = x.image_url; });
+    const cats = ["all", ...new Set((window.__apProducts || []).map(p => String(p.category || "").trim().toLowerCase()).filter(Boolean))];
+    const clear = () => { try { localStorage.removeItem("aashapura_catimgs"); } catch (e) {} };
+    host.innerHTML = cats.map(c => `<div class="ap-card"><div style="display:flex;gap:10px;align-items:center;min-width:0"><div style="width:52px;height:52px;border-radius:50%;overflow:hidden;background:#e8efe3;flex:none;display:flex;align-items:center;justify-content:center">${map[c] ? `<img src="${esc(map[c])}" style="width:100%;height:100%;object-fit:cover" alt="">` : "🌿"}</div><strong style="text-transform:capitalize">${esc(c)}</strong></div>
+      <div style="display:flex;gap:6px;flex:none"><label class="ap-btn" style="margin:0;font-size:13px;color:#173d2e">${map[c] ? "Change" : "Photo"}<input type="file" accept="image/*" data-cf="${esc(c)}" style="display:none"></label>${map[c] ? `<button type="button" class="ap-btn" data-cx="${esc(c)}">✕</button>` : ""}</div></div>`).join("");
+    host.querySelectorAll("[data-cf]").forEach(inp => inp.onchange = async () => {
+      const f = inp.files[0]; if (!f) return;
+      if (!(await isAdmin())) { alert("Admin login karo."); return; }
+      try {
+        toast("Photo upload ho rahi hai…");
+        const url = await uploadFile(f, "categories");
+        const { error } = await supabaseClient.from("category_images").upsert({ category: inp.dataset.cf, image_url: url, updated_at: new Date().toISOString() });
+        if (error) { alert("Save nahi hua: " + error.message + "\n\n(Pehle supabase_v20.sql run karo.)"); return; }
+        clear(); toast("Category photo save ho gayi!"); renderCatImgs(host);
+      } catch (e) { alert(e.message || e); }
+    });
+    host.querySelectorAll("[data-cx]").forEach(b => b.onclick = async () => {
+      if (!(await confirm("Is category ki photo hatao?"))) return;
+      const { error } = await supabaseClient.from("category_images").delete().eq("category", b.dataset.cx);
+      if (error) { toast("Nahi hua: " + error.message, "error"); return; }
+      clear(); renderCatImgs(host);
+    });
+  }
+
   /* ---- mount sections into admin panel ---- */
   let mounted = false;
   async function mount() {
     const list = $("adminProductList"); if (!list || mounted) return;
     mounted = true;
     const sec = document.createElement("div"); sec.className = "ap-sec";
-    sec.innerHTML = `<h3>🖼️ Home Banners</h3><div id="apBanners"></div>`;
+    sec.innerHTML = `<h3>🖼️ Home Banners</h3><div id="apBanners"></div><h3 style="margin-top:22px">🔘 Category Photos (home ke gol icons)</h3><div id="apCatImgs"></div>`;
     list.before(sec);
     const refresh = async () => {
       if (!(await isAdmin())) return;
       try { const { data } = await supabaseClient.from("products").select("id,name,category"); window.__apProducts = data || []; } catch (e) { window.__apProducts = []; }
-      renderBanners($("apBanners"));
+      renderBanners($("apBanners")); renderCatImgs($("apCatImgs"));
     };
     window.__apRefreshBanners = refresh;
     refresh();
