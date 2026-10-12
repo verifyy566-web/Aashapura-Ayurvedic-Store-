@@ -2,7 +2,7 @@
 (function () {
   const tr = s => (window.I18N ? window.I18N.t(String(s)) : String(s));
   const css = document.createElement("style");
-  css.textContent = ".pp-back{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(10,25,18,.55);backdrop-filter:blur(4px);animation:ppf .18s ease}" +
+  css.textContent = ".pp-back{position:fixed;inset:0;z-index:200000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(10,25,18,.55);backdrop-filter:blur(4px);animation:ppf .18s ease}" +
     ".pp-card{width:min(92vw,380px);background:#fff;border-radius:22px;padding:28px 24px 20px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.3);animation:ppu .22s cubic-bezier(.2,.9,.3,1.2)}" +
     ".pp-ic{width:60px;height:60px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:28px;background:#e8f3e6}" +
     ".pp-ic.warn{background:#fdecea}.pp-ic.ask{background:#fff4dc}" +

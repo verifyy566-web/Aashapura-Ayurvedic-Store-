@@ -163,7 +163,7 @@
 
 
 /* Premium toast + checkout modal */
-#storeToastHost{position:fixed;z-index:100000;top:18px;right:16px;left:16px;display:flex;flex-direction:column;align-items:flex-end;gap:10px;pointer-events:none}
+#storeToastHost{position:fixed;z-index:200001;top:18px;right:16px;left:16px;display:flex;flex-direction:column;align-items:flex-end;gap:10px;pointer-events:none}
 .store-toast{max-width:440px;width:max-content;padding:14px 18px;border-radius:16px;background:#123c2b;color:#fff;box-shadow:0 14px 38px rgba(13,45,31,.22);font-weight:650;opacity:0;transform:translateY(-10px);transition:opacity .25s ease,transform .25s ease}
 .store-toast.show{opacity:1;transform:translateY(0)}
 .store-toast.is-error{background:#8d3029}

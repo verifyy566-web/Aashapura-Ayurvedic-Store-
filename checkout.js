@@ -34,73 +34,61 @@
   };
   window.aashapuraPinLookup = pinLookup;
 
+  const imgOfP = p => {
+    let urls = [];
+    try { const x = typeof p.images === "string" ? JSON.parse(p.images || "[]") : p.images; urls = Array.isArray(x) ? x.slice() : []; } catch (e) {}
+    if (p.image_url && !urls.includes(p.image_url)) urls.unshift(p.image_url);
+    return urls.filter(Boolean)[0] || "";
+  };
+
+  /* v15: Myntra-style checkout = Address step (saved addresses, change, add/edit, location) -> Payment step (bill + UPI + WhatsApp).
+     Coupon and pincode check now live ONLY on the cart page. */
   window.openPremiumCheckout = function () {
+    const AD = window.aashapuraAddr;
+    if (!AD) { showStoreToast(L("Please reload the page and try again.", "कृपया पेज रीलोड करके फिर कोशिश करें।"), "error"); return; }
     if (window.aashapuraClampCart) window.aashapuraClampCart();
     const items = cartItems();
     if (!items.length) { showStoreToast("पहले कार्ट में उत्पाद जोड़ें।", "error"); return; }
-    document.getElementById("premiumCheckoutModal")?.remove();
-    appliedCoupon = null;
+    const old = document.getElementById("premiumCheckoutModal"); if (old) AD.ov.drop(old);
     const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
     const m = document.createElement("main");
-    m.id = "premiumCheckoutModal";
-    m.className = "premium-checkout-page";
-    m.style.cssText = "position:fixed;inset:0;z-index:100010;overflow-y:auto;background:#f7faf6;padding:22px;box-sizing:border-box;color:#173d2e;font-family:inherit";
-    m.innerHTML = `<section class="premium-modal" style="margin:20px auto;max-height:none;width:min(100%,560px);box-sizing:border-box">
-      <button type="button" class="premium-modal-close" aria-label="वापस जाएँ">×</button>
-      <span class="premium-eyebrow">AASHAPURA • CHECKOUT</span>
-      <div id="coStep1">
-        <h2>डिलीवरी जानकारी</h2>
-        <label>पूरा नाम<input id="coName" autocomplete="name" value="${escapeHTML($("profileName")?.value || $("customerName")?.value || signedInUser?.user_metadata?.full_name || "")}"></label>
-        <label>मोबाइल नंबर<input id="coPhone" inputmode="tel" autocomplete="tel" value="${escapeHTML($("profilePhone")?.value || "")}"></label>
-        <label>डिलीवरी का पता<textarea id="coAddress" autocomplete="street-address">${escapeHTML($("profileAddress")?.value || $("customerAddress")?.value || "")}</textarea></label>
-        <label>${L("Pincode","पिनकोड")}<input id="coPin" inputmode="numeric" maxlength="6" autocomplete="postal-code" placeholder="${L("6-digit pincode","6 अंकों का पिनकोड")}" value="${escapeHTML((($("profileAddress")?.value || $("customerAddress")?.value || "").match(/\b[1-9][0-9]{5}\b/) || [""])[0])}"><small id="coPinMsg" style="display:block;margin-top:4px"></small></label>
-        <label>कूपन कोड<span style="display:flex;gap:8px"><input id="coCode" placeholder="जैसे WELCOME10" style="flex:1"><button type="button" id="coApply" class="secondary-btn">लगाएँ</button></span></label>
-        <p id="coFreeNote" class="small-note" style="color:#166534;margin:6px 0"></p>
-        <div class="co-sum"><div><span>सबटोटल</span><span id="coSub"></span></div><div><span>छूट</span><span id="coDisc"></span></div><div><span>${L("Delivery","डिलीवरी")}</span><span id="coDel"></span></div><div class="tot"><span>कुल</span><strong id="coTotal"></strong></div></div>
-        <button type="button" id="coPlace" class="premium-checkout-submit">ऑर्डर पक्का करें</button>
-        <p class="premium-help">${signedInUser ? "ऑर्डर आपके 'मेरे ऑर्डर' में दिखेगा।" : "Sign In करने पर ऑर्डर 'मेरे ऑर्डर' में भी दिखेगा।"}</p>
-      </div>
-      <div id="coStep2" hidden></div></section>`;
+    m.id = "premiumCheckoutModal"; m.className = "aa-page";
+    m.innerHTML = `<div class="aa-wrap"><div class="aa-oh"><button type="button" class="aa-bk" aria-label="${L("Back", "वापस")}">←</button><b id="coTitle"></b></div><div id="coSteps"></div><div id="coStep1"></div><div id="coStep2" hidden></div></div>`;
     document.body.appendChild(m);
+    AD.ov.push(m);
     const q = s => m.querySelector(s);
-    const close = () => m.remove();
-    q(".premium-modal-close").onclick = close;
-    const calc = () => { const d = appliedCoupon ? appliedCoupon.discount : 0; const after = Math.max(0, subtotal - d); const del = delFor(after); return { d, del, total: after + del }; };
-    const paint = () => {
-      const { d, del, total } = calc(); const after = Math.max(0, subtotal - d);
-      q("#coSub").textContent = money(subtotal); q("#coDisc").textContent = "−" + money(d);
-      q("#coDel").textContent = del ? money(del) : L("FREE", "फ्री"); q("#coTotal").textContent = money(total);
-      q("#coFreeNote").textContent = del ? L(`Add ${money(DELIVERY.freeAbove - after)} more for FREE delivery`, `${money(DELIVERY.freeAbove - after)} और जोड़ें, डिलीवरी फ्री पाएँ`) : L("🎉 You get FREE delivery", "🎉 आपकी डिलीवरी फ्री है");
-    };
-    paint();
-    let pinInfo = null, pinFor = "", pinBusy = null;
-    const checkPin = async () => {
-      const pin = q("#coPin").value.trim(), msg = q("#coPinMsg");
-      if (!/^[1-9][0-9]{5}$/.test(pin)) { pinInfo = null; pinFor = ""; msg.textContent = pin ? L("Enter a valid 6-digit pincode", "6 अंकों का सही पिनकोड भरें") : ""; msg.style.color = "#b42318"; return null; }
-      if (pin === pinFor && pinInfo) return pinInfo;
-      msg.textContent = L("Checking…", "जाँच हो रही है…"); msg.style.color = "#666";
-      pinFor = pin; const r = await pinLookup(pin); if (q("#coPin").value.trim() !== pin) return null;
-      pinInfo = r;
-      msg.textContent = r.ok ? (r.area ? "✅ " + L("Delivery available: ", "डिलीवरी उपलब्ध: ") + r.area : L("Could not verify pincode (offline). You can continue.", "पिनकोड जाँच नहीं हो पाई। आप आगे बढ़ सकते हैं।")) : "❌ " + r.msg;
-      msg.style.color = r.ok ? "#166534" : "#b42318";
-      if (r.ok && window.aashapuraEta) { if (window.aashapuraSavePin) window.aashapuraSavePin(pin, r); msg.textContent += "\n📦 " + L("Expected delivery: ", "अनुमानित डिलीवरी: ") + window.aashapuraEta(r.state).text; msg.style.whiteSpace = "pre-line"; }
-      return r;
-    };
-    q("#coPin").oninput = () => { q("#coPin").value = q("#coPin").value.replace(/\D/g, "").slice(0, 6); pinInfo = null; if (q("#coPin").value.length === 6) pinBusy = checkPin(); else checkPin(); };
-    if (!q("#coPin").value) { try { const sp = JSON.parse(localStorage.getItem("aashapura_pin") || "null"); if (sp && sp.pin) q("#coPin").value = sp.pin; } catch (e) {} }
-    if (q("#coPin").value) pinBusy = checkPin();
+    const close = () => AD.ov.close(m);
+    q(".aa-bk").onclick = close;
+    const calc = () => { const d = appliedCoupon ? Math.min(Number(appliedCoupon.discount) || 0, subtotal) : 0; const after = Math.max(0, subtotal - d); const del = delFor(after); return { d, del, total: after + del }; };
 
-    q("#coApply").onclick = async () => {
-      const r = await validateStoreCoupon(q("#coCode").value, subtotal);
-      if (!r.ok) appliedCoupon = null;
-      showStoreToast(r.message, r.ok ? "success" : "error");
-      paint();
+    let addr = null;
+    const showAddr = async () => {
+      q("#coStep1").hidden = false; q("#coStep2").hidden = true;
+      q("#coTitle").textContent = L("ADDRESS", "पता");
+      q("#coSteps").innerHTML = AD.stepper(2);
+      let list = await AD.load(true);
+      if (!list.length) {
+        const r = await AD.openForm({ first: true, select: true });
+        if (!r) { close(); return; }
+        list = await AD.load(true);
+      }
+      addr = AD.selected(list);
+      if (!addr) { close(); return; }
+      const th = items.slice(0, 4).map(i => { const im = imgOfP(i.product); return im ? `<img src="${escapeHTML(im)}" alt="">` : `<span class="em">${escapeHTML(i.product.emoji || "🌿")}</span>`; }).join("");
+      q("#coStep1").innerHTML = `<div class="aa-card" style="margin-top:10px"><div class="aa-top"><b>${escapeHTML(addr.name)}</b>${AD.chip(addr)}<button type="button" class="aa-chg" id="coChange">${L("Change", "बदलें")}</button></div>${AD.html(addr)}<div class="aa-mob">${L("Mobile", "मोबाइल")}: <b>${escapeHTML(addr.phone)}</b></div></div>
+        <div class="aa-lbl">${L("DELIVERY ESTIMATES", "डिलीवरी अनुमान")}</div>
+        <div class="aa-est"><span class="th">${th}</span><span style="margin-left:10px">${L("Delivery between", "डिलीवरी")} <b>${escapeHTML(AD.estimate(addr.state))}</b></span></div>
+        <p class="small-note" style="padding:12px 16px;margin:0">${signedInUser ? L("Your order will be saved in 'My Orders'. Payment options come next.", "ऑर्डर 'मेरे ऑर्डर' में सेव होगा। अगले स्टेप में पेमेंट दिखेगा।") : L("Sign In to see this order in 'My Orders'. Payment options come next.", "'मेरे ऑर्डर' में दिखाने के लिए Sign In करें। अगले स्टेप में पेमेंट दिखेगा।")}</p>
+        <div class="aa-cta"><button type="button" id="coGo">${L("CONTINUE", "आगे बढ़ें")}</button></div>`;
+      q("#coChange").onclick = async () => { await AD.openSelect(); showAddr(); };
+      q("#coGo").onclick = place;
     };
 
-    q("#coPlace").onclick = async () => {
-      const name = q("#coName").value.trim(), phone = q("#coPhone").value.trim(), address = q("#coAddress").value.trim();
-      if (!name || !phone || !address) return showStoreToast("नाम, मोबाइल और पूरा पता भरें।", "error");
-      if (!/^[0-9+\-\s]{10,15}$/.test(phone)) return showStoreToast("मोबाइल नंबर सही भरें।", "error");
+    const place = async () => {
+      const a = addr; if (!a) return;
+      const btn = q("#coGo"); btn.disabled = true;
+      const reset = () => { btn.disabled = false; btn.textContent = L("CONTINUE", "आगे बढ़ें"); };
+      btn.textContent = L("Checking…", "जाँच हो रही है…");
       if (window.aashapuraRefreshStock) {
         await window.aashapuraRefreshStock(true);
         const bad = items.find(i => i.product.stock < i.qty);
@@ -109,21 +97,27 @@
           close(); try { window.renderCart(); window.renderCartPage(true); } catch (e) {} return;
         }
       }
-      const pin = q("#coPin").value.trim();
-      if (!/^[1-9][0-9]{5}$/.test(pin)) return showStoreToast(L("Enter a valid 6-digit pincode.", "6 अंकों का सही पिनकोड भरें।"), "error");
-      const pr = await checkPin();
-      if (!pr || !pr.ok) return showStoreToast(pr && pr.msg ? pr.msg : L("Please check your pincode.", "कृपया पिनकोड जाँचें।"), "error");
-      const area = pr.area || "";
-      const etaCols = (() => { try { const e = window.aashapuraEta(pr.state); return { delivery_state: pr.state || null, exp_min: e.min.toISOString().slice(0, 10), exp_max: e.max.toISOString().slice(0, 10) }; } catch (x) { return {}; } })();
-      const fullAddress = address.includes(pin) ? address : address + ", PIN " + pin;
-      const btn = q("#coPlace"); btn.disabled = true; btn.textContent = "सेव हो रहा है…";
+      const pin = a.pincode;
+      const pr = await pinLookup(pin);
+      if (!pr || !pr.ok) { reset(); return showStoreToast(pr && pr.msg ? pr.msg : L("Please check your pincode.", "कृपया पिनकोड जाँचें।"), "error"); }
+      if (appliedCoupon) {
+        const rc = await validateStoreCoupon(appliedCoupon.code, subtotal);
+        if (!rc.ok) { appliedCoupon = null; showStoreToast(rc.message + " " + L("Please review your bag.", "कृपया कार्ट देखें।"), "error"); close(); try { window.renderCartPage(true); } catch (e) {} return; }
+      }
+      const name = a.name, phone = a.phone;
+      const fullAddress = AD.text(a);
+      const area = pr.area || [a.city, a.state].filter(Boolean).join(", ");
+      const stt = pr.state || a.state;
+      const etaCols = (() => { try { const e = window.aashapuraEta(stt); return { delivery_state: stt || null, exp_min: e.min.toISOString().slice(0, 10), exp_max: e.max.toISOString().slice(0, 10) }; } catch (x) { return {}; } })();
+      btn.textContent = L("Saving…", "सेव हो रहा है…");
       const { d, del, total } = calc();
+      const cCode = appliedCoupon ? appliedCoupon.code : "";
       const orderItems = items.map(i => ({ id: i.id, name: i.name, weight: i.weight, price: i.price, qty: i.qty }));
       let orderId = null, orderNo = null, saveErr = "";
       if (signedInUser) {
         const base = {
           user_id: signedInUser.id, customer_name: name, customer_email: signedInUser.email || null, phone, address: fullAddress, delivery_address: fullAddress, items: orderItems,
-          subtotal, discount: d, total, coupon_code: appliedCoupon?.code || null,
+          subtotal, discount: d, total, coupon_code: cCode || null,
           payment_status: "pending", order_status: "pending"
         };
         let { data, error } = await supabaseClient.from("store_orders").insert({ ...base, pincode: pin, delivery_charge: del, delivery_area: area || null, ...etaCols }).select("id,order_no").single();
@@ -132,25 +126,32 @@
           ({ data, error } = await supabaseClient.from("store_orders").insert(base).select("id,order_no").single());
         }
         if (error) { console.warn(error.message); saveErr = error.message; showStoreToast("ऑर्डर सेव नहीं हुआ; WhatsApp से भेज सकते हैं।", "error"); }
-        else { orderId = data.id; orderNo = data.order_no || String(data.id); clearCart(); }
+        else { orderId = data.id; orderNo = data.order_no || String(data.id); clearCart(); appliedCoupon = null; }
       }
       q("#coStep1").hidden = true;
-      const s2 = q("#coStep2"); s2.hidden = false;
+      q("#coTitle").textContent = L("PAYMENT", "पेमेंट"); q("#coSteps").innerHTML = AD.stepper(3);
+      const s2 = q("#coStep2"); s2.hidden = false; s2.className = "aa-pay";
       const note = orderNo || "Aashapura";
       const qs = `pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent("Aashapura Aurveda")}&am=${total.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}`;
       const isAndroid = /android/i.test(navigator.userAgent);
       const upiLink = pkg => isAndroid ? `intent://pay?${qs}#Intent;scheme=upi;${pkg ? "package=" + pkg + ";" : ""}end` : `upi://pay?${qs}`;
-      s2.innerHTML = `<h2>पेमेंट और ऑर्डर भेजें</h2>
-        ${orderId ? `<p>ऑर्डर #${escapeHTML(String(orderNo))} सेव हो गया।</p>`
+      s2.innerHTML = `${orderId ? `<p style="margin:12px 4px 0">${L("Order", "ऑर्डर")} #${escapeHTML(String(orderNo))} ${L("saved.", "सेव हो गया।")}</p>`
           : `<p class="small-note" style="color:#b42318">${signedInUser ? "ऑर्डर सेव नहीं हुआ: " + escapeHTML(saveErr) : "Sign In नहीं है, इसलिए ऑर्डर 'मेरे ऑर्डर' में सेव नहीं हुआ।"} WhatsApp से ऑर्डर भेज सकते हैं।</p>`}
-        <p class="checkout-total">देय राशि <strong>${money(total)}</strong></p>
-        <button type="button" class="primary-btn" id="coPayUpi" style="width:100%">${L("Pay with UPI app","UPI ऐप से पेमेंट करें")}</button>
+        <div class="aa-bill" style="margin:10px 0"><h4>${L("Price Details", "प्राइस डिटेल")}</h4>
+          <div><span>${L("Subtotal", "सबटोटल")}</span><span>${money(subtotal)}</span></div>
+          ${d ? `<div><span>${L("Coupon", "कूपन")} (${escapeHTML(cCode)})</span><span class="g">−${money(d)}</span></div>` : ""}
+          <div><span>${L("Delivery", "डिलीवरी")}</span><span class="${del ? "" : "g"}">${del ? money(del) : L("FREE", "फ्री")}</span></div>
+          <div class="t"><span>${L("Total to pay", "देय राशि")}</span><span>${money(total)}</span></div></div>
+        <div class="aa-card"><div class="aa-top"><b>${L("Delivering to", "डिलीवरी का पता")}: ${escapeHTML(name)}</b>${AD.chip(a)}</div>${AD.html(a)}<div class="aa-mob">${L("Mobile", "मोबाइल")}: ${escapeHTML(phone)}</div>
+          <div class="aa-mob">📦 ${L("Delivery between", "डिलीवरी")} <b>${escapeHTML(AD.estimate(stt))}</b></div></div>
+        <button type="button" class="primary-btn" id="coPayUpi" style="width:100%">${L("Pay with UPI app", "UPI ऐप से पेमेंट करें")}</button>
         <div style="display:flex;gap:6px;margin:8px 0;flex-wrap:wrap"><button type="button" class="secondary-btn" data-pkg="com.google.android.apps.nbu.paisa.user" style="flex:1">GPay</button><button type="button" class="secondary-btn" data-pkg="com.phonepe.app" style="flex:1">PhonePe</button><button type="button" class="secondary-btn" data-pkg="net.one97.paytm" style="flex:1">Paytm</button></div>
         <p class="small-note">ऐप न खुले तो UPI ID कॉपी करके अपने UPI ऐप में खुद पेमेंट करें, या नीचे का QR स्कैन करें।</p>
         <p><strong>${escapeHTML(UPI_ID)}</strong> <button type="button" id="coCopy" class="secondary-btn">कॉपी करें</button></p>
         <img src="upi-qr.jpg" alt="UPI QR" style="width:min(100%,240px);border-radius:12px;display:block;margin:8px 0">
-        <button type="button" id="coWa" class="premium-checkout-submit">${L("Send order & payment screenshot on WhatsApp","WhatsApp पर ऑर्डर और पेमेंट स्क्रीनशॉट भेजें")}</button>
-        <p class="premium-help">${L("After paying, tap the button below and send your payment screenshot in the WhatsApp chat. ⏳ Verification will take a few minutes. Your order will be confirmed after we check the payment. Status shows in My Orders.","पेमेंट के बाद नीचे बटन दबाकर WhatsApp चैट में पेमेंट का स्क्रीनशॉट भेजें। ⏳ वेरिफिकेशन में कुछ मिनट लगेंगे। पेमेंट जाँचकर ऑर्डर कन्फर्म होगा। स्टेटस 'मेरे ऑर्डर' में दिखेगा।")}</p>`;
+        <button type="button" id="coWa" class="premium-checkout-submit">${L("Send order & payment screenshot on WhatsApp", "WhatsApp पर ऑर्डर और पेमेंट स्क्रीनशॉट भेजें")}</button>
+        <p class="premium-help">${L("After paying, tap the button below and send your payment screenshot in the WhatsApp chat. ⏳ Verification will take a few minutes. Your order will be confirmed after we check the payment. Status shows in My Orders.", "पेमेंट के बाद नीचे बटन दबाकर WhatsApp चैट में पेमेंट का स्क्रीनशॉट भेजें। ⏳ वेरिफिकेशन में कुछ मिनट लगेंगे। पेमेंट जाँचकर ऑर्डर कन्फर्म होगा। स्टेटस 'मेरे ऑर्डर' में दिखेगा।")}</p>`;
+      m.scrollTop = 0;
       const openUpi = pkg => {
         window.location.href = upiLink(pkg);
         setTimeout(() => { if (!document.hidden) showStoreToast(L("UPI app did not open. Copy the UPI ID below or scan the QR.", "UPI ऐप नहीं खुला। नीचे UPI ID कॉपी करें या QR स्कैन करें।"), "error"); }, 2500);
@@ -164,14 +165,15 @@
       s2.querySelector("#coWa").onclick = () => {
         const lines = items.map(i => `• ${i.name} (${i.weight || "standard"}) × ${i.qty} = ${money(i.price * i.qty)}`).join("\n");
         const msg = `नमस्ते Aashapura Aurveda,\n${orderId ? "ऑर्डर #" + orderNo + "\n" : ""}${lines}\n` +
-          `सबटोटल: ${money(subtotal)}\n${d ? "छूट (" + appliedCoupon.code + "): −" + money(d) + "\n" : ""}${L("Delivery", "डिलीवरी")}: ${del ? money(del) : L("FREE", "फ्री")}\nकुल: ${money(total)}\n` +
+          `सबटोटल: ${money(subtotal)}\n${d ? "छूट (" + cCode + "): −" + money(d) + "\n" : ""}${L("Delivery", "डिलीवरी")}: ${del ? money(del) : L("FREE", "फ्री")}\nकुल: ${money(total)}\n` +
           `नाम: ${name}\nमोबाइल: ${phone}\nपता: ${fullAddress}\n${L("I have paid. My payment screenshot is below.", "मैंने पेमेंट कर दिया है। पेमेंट का स्क्रीनशॉट नीचे भेज रहा/रही हूँ।")}\n${L("Please confirm my order.", "कृपया ऑर्डर कन्फर्म करें।")}`;
         const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
-        if (!orderId) clearCart();
+        if (!orderId) { clearCart(); appliedCoupon = null; }
         else { try { supabaseClient.rpc("submit_order_utr", { p_id: String(orderId), p_utr: "WA-SCREENSHOT" }); } catch (e) {} }
         if (!window.open(url, "_blank", "noopener")) { window.location.href = url; return; }
-        close(); closeCart();
+        AD.ov.closeAll(); closeCart();
       };
     };
+    showAddr();
   };
 })();

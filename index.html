@@ -6,8 +6,8 @@
   <title>Aashapura Aurveda</title>
   <meta name="description" content="Aashapura Aurveda — herbal and Ayurvedic products.">
   <script src="i18n.js?v=2"></script>
-  <script src="popup.js?v=1"></script>
-  <link rel="stylesheet" href="styles.css">
+  <script src="popup.js?v=2"></script>
+  <link rel="stylesheet" href="styles.css?v=2">
   <link rel="stylesheet" href="enhance.css?v=3">
   <link rel="stylesheet" href="home.css?v=4">
 </head>
@@ -97,7 +97,8 @@
       <p id="accountEmail" class="small-note"></p>
       <label for="profileName">पूरा नाम</label><input id="profileName" autocomplete="name" placeholder="आपका नाम">
       <label for="profilePhone">मोबाइल नंबर</label><input id="profilePhone" autocomplete="tel" inputmode="tel" placeholder="10 अंकों का मोबाइल नंबर">
-      <label for="profileAddress">डिलीवरी का पता</label><textarea id="profileAddress" autocomplete="street-address" placeholder="मकान, गली, शहर, पिन कोड"></textarea>
+      <textarea id="profileAddress" hidden></textarea>
+      <div id="profileAddrBox"></div>
       <button id="saveProfileBtn" class="primary-btn" type="button">प्रोफ़ाइल सेव करें</button>
       <button
   id="openMyOrdersBtn"
@@ -153,11 +154,12 @@ style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
     <button type="button" onclick="adminLogout()" style="padding:12px;width:100%;margin-top:8px;">Logout</button>
   </div>
 </section>
-<script src="script.js?v=12"></script>
+<script src="script.js?v=13"></script>
 <script src="enhance.js?v=3"></script>
-<script src="checkout.js?v=13"></script>
+<script src="checkout.js?v=14"></script>
 <script src="delivery.js?v=1"></script>
-<script src="cart2.js?v=2"></script>
+<script src="address.js?v=1"></script>
+<script src="cart2.js?v=3"></script>
 <script src="media.js?v=1"></script>
 <script src="reviews.js?v=6"></script>
 <script src="productpage.js?v=3"></script>

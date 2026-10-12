@@ -811,6 +811,7 @@ async function openAccountModal() {
     });
     history.pushState({page:"profile"}, "", "#profile");
   }
+  if (window.aashapuraRenderProfileAddr) window.aashapuraRenderProfileAddr();
   $("accountEmail").textContent = signedInUser.email || "";
   const { data, error } = await supabaseClient.from("customer_profiles")
     .select("full_name, phone, address").eq("user_id", signedInUser.id).maybeSingle();
@@ -828,7 +829,7 @@ async function saveCustomerProfile() {
   const full_name = $("profileName").value.trim();
   const phone = $("profilePhone").value.trim();
   const address = $("profileAddress").value.trim();
-  if (!full_name || !phone || !address) return accountNotice("नाम, मोबाइल और पता भरें।", true);
+  if (!full_name || !phone) return accountNotice("नाम और मोबाइल भरें।", true);
   if (!/^[0-9+\-\s]{10,15}$/.test(phone)) return accountNotice("मोबाइल नंबर सही भरें।", true);
   const { error } = await supabaseClient.from("customer_profiles").upsert({
     user_id: signedInUser.id, full_name, phone, address, updated_at: new Date().toISOString()

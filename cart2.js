@@ -121,8 +121,26 @@
     const sub = items.reduce((s, i) => s + i.price * i.qty, 0);
     const mrpTotal = items.reduce((s, i) => s + Math.max(Number(i.product.mrp) || 0, i.price) * i.qty, 0);
     const mrpOff = mrpTotal - sub;
-    const del = items.length && sub < D.freeAbove ? D.charge : 0;
-    const total = sub + del;
+    const cpd = appliedCoupon && items.length ? Math.min(Number(appliedCoupon.discount) || 0, sub) : 0;
+    const after = Math.max(0, sub - cpd);
+    const del = items.length && after < D.freeAbove ? D.charge : 0;
+    const total = after + del;
+    const AD = window.aashapuraAddr;
+    // coupon discount depends on cart value: re-check it silently whenever the subtotal changes
+    if (appliedCoupon && items.length && appliedCoupon.forSub !== sub && !appliedCoupon.checking) {
+      appliedCoupon.checking = true;
+      validateStoreCoupon(appliedCoupon.code, sub).then(r => {
+        if (!r.ok) { appliedCoupon = null; toast(r.message, "error"); } else appliedCoupon.forSub = sub;
+        if (document.getElementById("cartFullPage")) renderCartPage(true);
+      }).catch(() => { if (appliedCoupon) appliedCoupon.forSub = sub; });
+    }
+    const addrBar = () => {
+      if (!AD) return "";
+      const cur = AD.selected(AD.cached() || []), sp = AD.savedPin();
+      if (sp && sp.pin && (!cur || sp.pin !== cur.pincode)) return `<div class="tx"><b>${L("Deliver to", "डिलीवरी")}: ${esc(sp.pin)}</b><small>${esc(sp.area || "")}</small></div><span class="ar">▾</span>`;
+      if (cur) return `<div class="tx"><b>${esc(cur.name)} (${esc(cur.pincode)})</b><small>${esc(AD.text(cur))}</small></div><span class="ar">▾</span>`;
+      return `<div class="tx"><b>${L("Select delivery location", "डिलीवरी लोकेशन चुनें")}</b><small>${L("Pincode, current location or saved address", "पिनकोड, करंट लोकेशन या सेव पता")}</small></div><span class="ar">▾</span>`;
+    };
     const head = `<div class="ct-head"><button type="button" id="ctBack" aria-label="${L("Back", "वापस")}">←</button><b>${L("My Bag", "आपका कार्ट")}</b><small>${countAll} ${L(countAll === 1 ? "item" : "items", "आइटम")}</small></div>`;
 
     if (!all.length) {
@@ -130,7 +148,7 @@
       page.querySelector("#ctBack").onclick = closeCart; page.querySelector("#ctShop").onclick = closeCart; return;
     }
 
-    const pct = D.freeAbove ? Math.min(100, Math.round(sub / D.freeAbove * 100)) : 100;
+    const pct = D.freeAbove ? Math.min(100, Math.round(after / D.freeAbove * 100)) : 100;
     const rows = all.map(({ product: p, qty }) => {
       const off = p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : 0;
       const img = imgOf(p), atMax = qty >= p.stock, out = p.stock <= 0;
@@ -146,21 +164,40 @@
     }).join("");
 
     page.innerHTML = `<div class="ct-in">${head}
+      ${AD ? `<div style="margin:0 -12px 10px">${AD.stepper(1)}</div>` : ""}
+      ${AD ? `<div class="ct-addr" id="ctAddr">${addrBar()}</div>` : ""}
       ${oos.length ? `<div class="ct-oos"><span>⚠️ ${L("Some items are out of stock. Remove them to place your order.", "कुछ आइटम स्टॉक में नहीं हैं। ऑर्डर के लिए उन्हें हटाएँ।")}</span><button type="button" id="ctRmOos">${L("Remove", "हटाएँ")}</button></div>` : ""}
-      ${mrpOff > 0 ? `<div class="ct-save">🎉 ${L("You're saving", "आप बचा रहे हैं")} ${rs(mrpOff)} ${L("on this order", "इस ऑर्डर पर")}</div>` : ""}
-      ${D.freeAbove ? `<div class="ct-card ct-free"><p>${del ? L(`Add ${rs(D.freeAbove - sub)} more for FREE delivery`, `${rs(D.freeAbove - sub)} और जोड़ें, डिलीवरी फ्री पाएँ`) : L("🎉 You get FREE delivery on this order", "🎉 इस ऑर्डर पर डिलीवरी फ्री है")}</p><div class="ct-bar"><i style="width:${pct}%"></i></div></div>` : ""}
+      ${mrpOff + cpd > 0 ? `<div class="ct-save">🎉 ${L("You're saving", "आप बचा रहे हैं")} ${rs(mrpOff + cpd)} ${L("on this order", "इस ऑर्डर पर")}</div>` : ""}
+      ${D.freeAbove ? `<div class="ct-card ct-free"><p>${del ? L(`Add ${rs(D.freeAbove - after)} more for FREE delivery`, `${rs(D.freeAbove - after)} और जोड़ें, डिलीवरी फ्री पाएँ`) : L("🎉 You get FREE delivery on this order", "🎉 इस ऑर्डर पर डिलीवरी फ्री है")}</p><div class="ct-bar"><i style="width:${pct}%"></i></div></div>` : ""}
       ${rows}
+      ${items.length ? `<div class="ct-card ct-cp"><b>🏷️ ${L("Coupons", "कूपन")}</b>${appliedCoupon && cpd > 0 ? `<div class="cp-on"><span>✅ ${esc(appliedCoupon.code)} ${L("applied", "लागू")} · −${rs(cpd)}</span><button type="button" id="ctCpRm">${L("Remove", "हटाएँ")}</button></div>` : `<div class="dl-row"><input id="ctCpIn" placeholder="${L("Enter coupon code (e.g. WELCOME10)", "कूपन कोड भरें (जैसे WELCOME10)")}" autocapitalize="characters" autocomplete="off"><button type="button" id="ctCpGo">${L("Apply", "लगाएँ")}</button></div>`}</div>` : ""}
       ${items.length ? `<div class="ct-card ct-pd"><h4>${L("Price Details", "प्राइस डिटेल")} (${count} ${L(count === 1 ? "item" : "items", "आइटम")})</h4>
         <div class="ct-r"><span>${L("Total MRP", "कुल MRP")}</span><span>${rs(mrpTotal)}</span></div>
         ${mrpOff > 0 ? `<div class="ct-r"><span>${L("Discount on MRP", "MRP पर छूट")}</span><span class="g">−${rs(mrpOff)}</span></div>` : ""}
+        ${cpd > 0 ? `<div class="ct-r"><span>${L("Coupon discount", "कूपन छूट")} (${esc(appliedCoupon.code)})</span><span class="g">−${rs(cpd)}</span></div>` : ""}
         <div class="ct-r"><span>${L("Delivery fee", "डिलीवरी शुल्क")}</span><span class="${del ? "" : "g"}">${del ? rs(del) : L("FREE", "फ्री")}</span></div>
         <div class="ct-r t"><span>${L("Total Amount", "कुल राशि")}</span><span>${rs(total)}</span></div>
-        <small style="color:#6b7f74">${L("Have a coupon? You can apply it on the next step.", "कूपन है? अगले स्टेप में लगा सकते हैं।")}</small></div>` : ""}
+        </div>` : ""}
       <div class="ct-trust"><span><b>🌿</b>${L("100% Ayurvedic", "100% आयुर्वेदिक")}</span><span><b>↩️</b>${L("Easy returns", "आसान रिटर्न")}</span><span><b>🔒</b>${L("Secure UPI pay", "सुरक्षित UPI")}</span></div>
     </div>
     <div class="ct-bar2"><div><span><small>${L("Total", "कुल")}</small><strong>${rs(total)}</strong></span><button type="button" id="ctPlace" class="${oos.length || !items.length ? "off" : ""}">${L("Place Order", "ऑर्डर करें")}</button></div></div>`;
 
     const refresh = () => { renderCart(); renderCartPage(); };
+    const bar = page.querySelector("#ctAddr");
+    if (bar && AD) {
+      bar.onclick = () => AD.openSheet({ onChange: () => renderCartPage(true) });
+      if (!AD.cached()) AD.load().then(() => { const b = page.querySelector("#ctAddr"); if (b) b.innerHTML = addrBar(); }).catch(() => {});
+    }
+    const cpGo = page.querySelector("#ctCpGo"), cpIn = page.querySelector("#ctCpIn"), cpRm = page.querySelector("#ctCpRm");
+    if (cpGo) {
+      const apply = async () => {
+        const r = await validateStoreCoupon(cpIn.value, sub);
+        if (!r.ok) { appliedCoupon = null; toast(r.message, "error"); } else { appliedCoupon.forSub = sub; toast(r.message); }
+        renderCartPage(true);
+      };
+      cpGo.onclick = apply; cpIn.onkeydown = e => { if (e.key === "Enter") apply(); };
+    }
+    if (cpRm) cpRm.onclick = () => { appliedCoupon = null; renderCartPage(true); };
     page.querySelector("#ctBack").onclick = closeCart;
     const rmOos = page.querySelector("#ctRmOos"); if (rmOos) rmOos.onclick = () => { oos.forEach(i => delete cart[i.id]); refresh(); };
     page.querySelector("#ctPlace").onclick = () => { if (oos.length || !items.length) return toast(L("Please remove out-of-stock items first.", "पहले स्टॉक खत्म वाले आइटम हटाएँ।"), "error"); if (window.aashapuraClampCart && window.aashapuraClampCart().length) return renderCartPage(); openPremiumCheckout(); };
