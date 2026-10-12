@@ -29,7 +29,7 @@
         <label>मोबाइल नंबर<input id="coPhone" inputmode="tel" autocomplete="tel" value="${escapeHTML($("profilePhone")?.value || "")}"></label>
         <label>डिलीवरी का पता<textarea id="coAddress" autocomplete="street-address">${escapeHTML($("profileAddress")?.value || $("customerAddress")?.value || "")}</textarea></label>
         <label>कूपन कोड<span style="display:flex;gap:8px"><input id="coCode" placeholder="जैसे WELCOME10" style="flex:1"><button type="button" id="coApply" class="secondary-btn">लगाएँ</button></span></label>
-        <p class="checkout-total">सबटोटल: <span id="coSub"></span><br>छूट: <span id="coDisc"></span><br>कुल: <strong id="coTotal"></strong></p>
+        <div class="co-sum"><div><span>सबटोटल</span><span id="coSub"></span></div><div><span>छूट</span><span id="coDisc"></span></div><div class="tot"><span>कुल</span><strong id="coTotal"></strong></div></div>
         <button type="button" id="coPlace" class="premium-checkout-submit">ऑर्डर पक्का करें</button>
         <p class="premium-help">${signedInUser ? "ऑर्डर आपके 'मेरे ऑर्डर' में दिखेगा।" : "Google Login करने पर ऑर्डर 'मेरे ऑर्डर' में भी दिखेगा।"}</p>
       </div>

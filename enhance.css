@@ -15,3 +15,7 @@
 .product-grid.list-view .product-art{width:150px;min-height:150px;flex:0 0 150px}
 .product-grid.list-view .product-info{flex:1}
 @media(max-width:560px){.product-grid.list-view .product-art{width:110px;flex-basis:110px}}
+
+.co-sum{background:#e8f0e6;border-radius:16px;padding:14px 18px;margin:16px 0}
+.co-sum>div{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+.co-sum .tot{border-top:1px solid #c9d8c6;margin-top:6px;padding-top:10px;font-size:20px}
