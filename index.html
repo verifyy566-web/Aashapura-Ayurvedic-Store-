@@ -8,6 +8,7 @@
   <script src="i18n.js?v=1"></script>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="enhance.css?v=3">
+  <link rel="stylesheet" href="home.css?v=1">
 </head>
 <body>
   <div class="topbar">प्राकृतिक देखभाल • आसान ऑर्डर</div>
@@ -23,15 +24,31 @@
   </header>
 
   <main>
-    <section class="hero" id="home">
-      <div class="hero-copy">
-        <p class="eyebrow">प्रकृति से प्रेरित</p>
-        <h1>सेहत और देखभाल,<br><em>प्रकृति के साथ।</em></h1>
-        <p class="hero-text">Aashapura Aurveda पर अपने पसंदीदा हर्बल उत्पाद खोजें और WhatsApp पर ऑर्डर भेजें।</p>
-        <a class="primary-btn" href="#shop">उत्पाद देखें ↗</a>
-        <div class="trust-row"><span>✓ मोबाइल-फ्रेंडली</span><span>✓ आसान ऑर्डर</span><span>✓ साफ़ कीमतें</span></div>
+    <section class="m-home" id="home">
+      <div class="m-search"><input id="homeSearch" type="search" placeholder='Search "Moringa powder", "Ashwagandha"…' aria-label="Search products"></div>
+      <div class="m-cats">
+        <button class="m-cat" data-q=""><span>🌿</span>All</button>
+        <button class="m-cat" data-q="powder"><span>🥣</span>Powders</button>
+        <button class="m-cat" data-q="herbal"><span>🍃</span>Herbal</button>
+        <button class="m-cat" data-q="wellness"><span>💪</span>Wellness</button>
+        <button class="m-cat" data-q="hair"><span>💇</span>Hair Care</button>
+        <button class="m-cat" data-q="skin"><span>✨</span>Skin Care</button>
+        <button class="m-cat" data-q="immunity"><span>🛡️</span>Immunity</button>
+        <button class="m-cat" data-q="digest"><span>🍵</span>Digestion</button>
       </div>
-      <div class="hero-art"><div class="sun"></div><div class="leaf leaf-one"></div><div class="leaf leaf-two"></div><div class="leaf leaf-three"></div><div class="hero-card"><span>नैचुरल चॉइस</span><strong>Everyday<br>Wellness</strong><small>AASHAPURA • HERBAL CARE</small></div></div>
+      <div class="m-banners">
+        <div class="m-banner b1"><p>NEW COLLECTION</p><h2>Pure Ayurvedic Care</h2><p>Herbal products made for everyday wellness</p><a href="#shop">Shop Now</a></div>
+        <div class="m-banner b2"><p>FEATURED</p><h2>Natural Powders &amp; Herbs</h2><p>Moringa, Ashwagandha, Amla and more</p><a href="#shop">Explore</a></div>
+        <div class="m-banner b3"><p>EASY ORDERING</p><h2>Order on WhatsApp or UPI</h2><p>Simple, quick and secure checkout</p><a href="#shop">Start Shopping</a></div>
+      </div>
+      <h2 class="m-title">SHOP BY CONCERN</h2>
+      <div class="m-concerns">
+        <button class="m-concern" data-q="immunity">Immunity<small>Daily protection</small></button>
+        <button class="m-concern" data-q="hair">Hair Care<small>Strong &amp; healthy</small></button>
+        <button class="m-concern" data-q="skin">Skin Care<small>Natural glow</small></button>
+        <button class="m-concern" data-q="digest">Digestion<small>Gut wellness</small></button>
+      </div>
+      <div class="m-trust"><div>🌿<br>Natural &amp; Ayurvedic</div><div>🔒<br>Secure UPI payment</div><div>💬<br>WhatsApp support</div></div>
     </section>
 
     <section class="shop-section" id="shop">
@@ -140,5 +157,6 @@ style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
 <script src="checkout.js?v=3"></script>
 <script src="reviews.js?v=4"></script>
 <script src="productpage.js?v=3"></script>
+<script src="home.js?v=1"></script>
 </body>
 </html>
