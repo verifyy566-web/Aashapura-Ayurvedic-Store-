@@ -132,7 +132,7 @@
       q("#coTitle").textContent = L("PAYMENT", "पेमेंट"); q("#coSteps").innerHTML = AD.stepper(3);
       const s2 = q("#coStep2"); s2.hidden = false; s2.className = "aa-pay";
       const note = orderNo || "Aashapura";
-      const qs = `pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent("Aashapura Ayurveda")}&am=${total.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}`;
+      const qs = `pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent("Aashapura Aurveda")}&am=${total.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}`;
       const isAndroid = /android/i.test(navigator.userAgent);
       const upiLink = pkg => isAndroid ? `intent://pay?${qs}#Intent;scheme=upi;${pkg ? "package=" + pkg + ";" : ""}end` : `upi://pay?${qs}`;
       s2.innerHTML = `${orderId ? `<p style="margin:12px 4px 0">${L("Order", "ऑर्डर")} #${escapeHTML(String(orderNo))} ${L("saved.", "सेव हो गया।")}</p>`
@@ -164,7 +164,7 @@
       };
       s2.querySelector("#coWa").onclick = () => {
         const lines = items.map(i => `• ${i.name} (${i.weight || "standard"}) × ${i.qty} = ${money(i.price * i.qty)}`).join("\n");
-        const msg = `नमस्ते Aashapura Ayurveda,\n${orderId ? "ऑर्डर #" + orderNo + "\n" : ""}${lines}\n` +
+        const msg = `नमस्ते Aashapura Aurveda,\n${orderId ? "ऑर्डर #" + orderNo + "\n" : ""}${lines}\n` +
           `सबटोटल: ${money(subtotal)}\n${d ? "छूट (" + cCode + "): −" + money(d) + "\n" : ""}${L("Delivery", "डिलीवरी")}: ${del ? money(del) : L("FREE", "फ्री")}\nकुल: ${money(total)}\n` +
           `नाम: ${name}\nमोबाइल: ${phone}\nपता: ${fullAddress}\n${L("I have paid. My payment screenshot is below.", "मैंने पेमेंट कर दिया है। पेमेंट का स्क्रीनशॉट नीचे भेज रहा/रही हूँ।")}\n${L("Please confirm my order.", "कृपया ऑर्डर कन्फर्म करें।")}`;
         const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;

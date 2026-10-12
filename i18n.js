@@ -1,4 +1,4 @@
-/* Aashapura Ayurveda — language layer. English is the main language; Hindi is optional. */
+/* Aashapura Aurveda — language layer. English is the main language; Hindi is optional. */
 (function () {
   const KEY = "aashapura_lang";
   let lang = "en";
@@ -6,7 +6,7 @@
   window.AASHAPURA_LANG = lang;
 
   const D = [
-    ["Aashapura Ayurveda पर अपने पसंदीदा हर्बल उत्पाद खोजें और WhatsApp पर ऑर्डर भेजें।", "Discover your favourite herbal products at Aashapura Ayurveda and send your order on WhatsApp."],
+    ["Aashapura Aurveda पर अपने पसंदीदा हर्बल उत्पाद खोजें और WhatsApp पर ऑर्डर भेजें।", "Discover your favourite herbal products at Aashapura Aurveda and send your order on WhatsApp."],
     ["ऑर्डर और सवालों के लिए WhatsApp पर संपर्क करें।", "Contact us on WhatsApp for orders and questions."],
     ["WhatsApp खुलेगा और ऑर्डर का संदेश तैयार होगा। ऑर्डर तभी भेजा जाएगा जब आप WhatsApp में Send दबाएँगे।", "WhatsApp will open with your order message ready. The order is sent only when you press Send in WhatsApp."],
     ["ऐप न खुले तो UPI ID कॉपी करके अपने UPI ऐप में खुद पेमेंट करें, या नीचे का QR स्कैन करें।", "If the app does not open, copy the UPI ID and pay in your UPI app, or scan the QR below."],
@@ -223,7 +223,7 @@
   const B = "\\u0900-\\u097F";
   const reEn = new RegExp("(?<![" + B + "])(?:" + D.map(x => esc(x[0])).join("|") + ")(?![" + B + "])", "g");
   const mapEn = new Map(D);
-  const HI_NAME = [["Aashapura Ayurveda", "आशापुरा आयुर्वेद"], ["AASHAPURA", "आशापुरा"], ["Aashapura", "आशापुरा"], ["AYURVEDA", "आयुर्वेद"]];
+  const HI_NAME = [["Aashapura Aurveda", "आशापुरा आयुर्वेद"], ["AASHAPURA", "आशापुरा"], ["Aashapura", "आशापुरा"], ["AURVEDA", "आयुर्वेद"]];
   const reHi = new RegExp(HI_NAME.map(x => esc(x[0])).join("|"), "g");
   const mapHi = new Map(HI_NAME);
 
@@ -273,7 +273,7 @@
 
   /* Amazon-style Language Settings */
   function ui() {
-    document.title = lang === "hi" ? "आशापुरा आयुर्वेद" : "Aashapura Ayurveda";
+    document.title = lang === "hi" ? "आशापुरा आयुर्वेद" : "Aashapura Aurveda";
     walk(document.body);
     const css = document.createElement("style");
     css.textContent = ".lang-btn{background:transparent;border:1px solid currentColor;border-radius:999px;padding:6px 10px;font:inherit;cursor:pointer}" +

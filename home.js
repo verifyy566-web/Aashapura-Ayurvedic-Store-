@@ -84,7 +84,7 @@
   }
 
   /* Home banners from admin (table home_banners). Cached for instant paint; falls back to built-in banners */
-  const GRADS = { green: "linear-gradient(120deg,var(--green2),#7aa84f)", gold: "linear-gradient(120deg,#b9731f,#e6a93b)", brown: "linear-gradient(120deg,#6a3d1f,#a8683a)", blue: "linear-gradient(120deg,#1e4e8c,#4a90d9)", red: "linear-gradient(120deg,#a4262c,#e0605a)", purple: "linear-gradient(120deg,#5b3a8c,#9b6fd0)" };
+  const GRADS = { green: "linear-gradient(120deg,#2f6b3a,#7aa84f)", gold: "linear-gradient(120deg,#b9731f,#e6a93b)", brown: "linear-gradient(120deg,#6a3d1f,#a8683a)", blue: "linear-gradient(120deg,#1e4e8c,#4a90d9)", red: "linear-gradient(120deg,#a4262c,#e0605a)", purple: "linear-gradient(120deg,#5b3a8c,#9b6fd0)" };
   const bannerHTML = (b, i) => {
     const bg = b.image_url ? `background:linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)),url('${String(b.image_url).replace(/'/g, "%27")}') center/cover` : `background:${GRADS[b.bg_color] || GRADS.green}`;
     return `<div class="m-banner" data-bi="${i}" style="${bg}">${b.tag ? `<p>${esc2(b.tag)}</p>` : ""}${b.title ? `<h2>${esc2(b.title)}</h2>` : ""}${b.subtitle ? `<p>${esc2(b.subtitle)}</p>` : ""}${b.button_text ? `<a href="#shop" data-link="${esc2(b.button_link || "#shop")}">${esc2(b.button_text)}</a>` : ""}</div>`;
@@ -148,7 +148,7 @@
       list.append(
         item("✏️", "Edit Profile", "Name, mobile and address", () => openAccountModal()),
         item("📦", "My Orders", "Track and view your orders", () => $("openMyOrdersBtn").click()),
-        item("↩️", "Returns & Refunds", "Return, cancel and track requests", () => (window.openRefunds ? window.openRefunds() : wa("Hello Aashapura Ayurveda, I need help with a refund for my order. Order ID: "))),
+        item("↩️", "Returns & Refunds", "Return, cancel and track requests", () => (window.openRefunds ? window.openRefunds() : wa("Hello Aashapura Aurveda, I need help with a refund for my order. Order ID: "))),
         item("📍", "Saved Address", "Delivery address", () => openAccountModal()),
         item("🛒", "My Cart", "", () => $("cartOpen").click())
       );
@@ -157,7 +157,7 @@
     }
     list.append(
       item("🌐", "Language", window.AASHAPURA_LANG === "hi" ? "हिन्दी" : "English", () => { const l = document.querySelector(".lang-btn"); if (l) l.click(); }),
-      item("💬", "Help Center", "Chat with us on WhatsApp", () => wa("Hello Aashapura Ayurveda, I need help.")),
+      item("💬", "Help Center", "Chat with us on WhatsApp", () => wa("Hello Aashapura Aurveda, I need help.")),
       item("ℹ️", "About Us", "", () => $("about").scrollIntoView({ behavior: "smooth" })),
       item("📞", "Contact Us", "", () => $("contact").scrollIntoView({ behavior: "smooth" }))
     );

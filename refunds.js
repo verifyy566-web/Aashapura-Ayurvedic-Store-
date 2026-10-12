@@ -45,8 +45,8 @@
   .rf-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
   .rf-badge{padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700}
   .rf-note{margin-top:6px;padding:8px;background:#f6f6f6;border-radius:8px;font-size:13px}
-  .rf-btn{display:block;width:100%;padding:13px;border:0;border-radius:12px;background:var(--green2);color:#fff;font-size:16px;font-weight:700;margin:8px 0}
-  .rf-btn.alt{background:#fff;color:var(--green2);border:1px solid var(--green2)}
+  .rf-btn{display:block;width:100%;padding:13px;border:0;border-radius:12px;background:#2f6b3a;color:#fff;font-size:16px;font-weight:700;margin:8px 0}
+  .rf-btn.alt{background:#fff;color:#2f6b3a;border:1px solid #2f6b3a}
   .rf-form label{display:block;margin:10px 0 4px;font-weight:600;font-size:14px}
   .rf-form select,.rf-form input,.rf-form textarea{width:100%;box-sizing:border-box;padding:11px;border:1px solid #ccc;border-radius:10px;font-size:16px;background:#fff}
   .rf-empty{text-align:center;color:#666;padding:30px 10px}
@@ -232,7 +232,7 @@
     });
     const help = document.createElement("button");
     help.type = "button"; help.className = "rf-btn alt"; help.textContent = T("💬 Chat with us on WhatsApp", "💬 WhatsApp पर बात करें");
-    help.onclick = () => wa("Hello Aashapura Ayurveda, I need help with a refund.");
+    help.onclick = () => wa("Hello Aashapura Aurveda, I need help with a refund.");
     body.appendChild(help);
   }
 

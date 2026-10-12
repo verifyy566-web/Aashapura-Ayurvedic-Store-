@@ -12,7 +12,7 @@
   .ad-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:10px 0}@media(min-width:700px){.ad-stats{grid-template-columns:repeat(4,1fr)}}
   .ad-stat{background:#f6f9f4;border:1px solid #dfe8da;border-radius:12px;padding:10px}.ad-stat small{display:block;color:#555}.ad-stat b{font-size:18px}
   .ad-stat.red{background:#fff4f2;border-color:#f3d0cb}.ad-stat.blue{background:#f1f6ff;border-color:#d3e1fb}
-  .ad-tabs{display:flex;gap:6px;overflow-x:auto;padding:4px 0}.ad-tabs button{white-space:nowrap;padding:8px 12px;border-radius:99px;border:1px solid #bbb;background:#fff}.ad-tabs button.on{background:var(--green2);color:#fff;border-color:var(--green2)}
+  .ad-tabs{display:flex;gap:6px;overflow-x:auto;padding:4px 0}.ad-tabs button{white-space:nowrap;padding:8px 12px;border-radius:99px;border:1px solid #bbb;background:#fff}.ad-tabs button.on{background:#2f6b3a;color:#fff;border-color:#2f6b3a}
   .ad-o{border:1px solid #ddd;border-radius:12px;margin:8px 0;background:#fff}.ad-o summary{padding:10px;cursor:pointer;list-style:none}.ad-o summary::-webkit-details-marker{display:none}
   .ad-o .ad-in{padding:0 10px 10px;font-size:14px;line-height:1.5}.ad-o table{width:100%;border-collapse:collapse;margin:6px 0}.ad-o td,.ad-o th{border-bottom:1px solid #eee;padding:4px;text-align:left}
   .ad-b{padding:2px 8px;border-radius:99px;font-size:12px;font-weight:700;margin-left:4px}
@@ -100,7 +100,7 @@
       if (!isPaid(o)) add("✅ Payment mila – Confirm Order", async () => {
         await setO(o, { payment_status: "paid", order_status: os === "pending" ? "confirmed" : o.order_status }, "Order confirmed");
         const ph2 = String(o.phone || "").replace(/\D/g, "").slice(-10);
-        if (ph2 && await confirm("Customer ko WhatsApp par confirmation bhejein?")) window.open(`https://wa.me/91${ph2}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", aapka payment mil gaya. Aapka order " + (o.order_no || o.id) + " (" + money(o.total) + ") confirm ho gaya hai. Dhanyavaad - Aashapura Ayurveda")}`, "_blank", "noopener");
+        if (ph2 && await confirm("Customer ko WhatsApp par confirmation bhejein?")) window.open(`https://wa.me/91${ph2}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", aapka payment mil gaya. Aapka order " + (o.order_no || o.id) + " (" + money(o.total) + ") confirm ho gaya hai. Dhanyavaad - Aashapura Aurveda")}`, "_blank", "noopener");
       });
       if (os === "pending") add("Confirm", () => setO(o, { order_status: "confirmed" }));
       if (["pending", "confirmed"].includes(os)) add("🚚 Shipped", () => setO(o, { order_status: "shipped" }));
@@ -108,7 +108,7 @@
       if (os !== "delivered") add("✕ Cancel", () => { const r = window.prompt("Cancel reason:", ""); if (r !== null) setO(o, { order_status: "cancelled", cancel_reason: r, cancelled_at: new Date().toISOString() }, "Cancelled"); });
     }
     const ph = String(o.phone || p.phone || "").replace(/\D/g, "").slice(-10);
-    if (ph) add("💬 WhatsApp", () => window.open(`https://wa.me/91${ph}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", Aashapura Ayurveda order " + (o.order_no || o.id) + " (" + money(o.total) + "): ")}`, "_blank", "noopener"));
+    if (ph) add("💬 WhatsApp", () => window.open(`https://wa.me/91${ph}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", Aashapura Aurveda order " + (o.order_no || o.id) + " (" + money(o.total) + "): ")}`, "_blank", "noopener"));
     if (["confirmed", "shipped"].includes(os)) {
       const box = document.createElement("div"); box.className = "ad-trk";
       box.innerHTML = `<b>📍 Live tracking (customer ko dikhega)</b>
