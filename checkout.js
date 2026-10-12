@@ -56,22 +56,22 @@
       const btn = q("#coPlace"); btn.disabled = true; btn.textContent = "सेव हो रहा है…";
       const { d, total } = calc();
       const orderItems = items.map(i => ({ id: i.id, name: i.name, weight: i.weight, price: i.price, qty: i.qty }));
-      let orderId = null, saveErr = "";
+      let orderId = null, orderNo = null, saveErr = "";
       if (signedInUser) {
         const { data, error } = await supabaseClient.from("store_orders").insert({
-          user_id: signedInUser.id, customer_name: name, phone, address, items: orderItems,
+          user_id: signedInUser.id, customer_name: name, customer_email: signedInUser.email || null, phone, address, items: orderItems,
           subtotal, discount: d, total, coupon_code: appliedCoupon?.code || null,
           payment_status: "pending", order_status: "pending"
-        }).select("id").single();
+        }).select("id,order_no").single();
         if (error) { console.warn(error.message); saveErr = error.message; showStoreToast("ऑर्डर सेव नहीं हुआ; WhatsApp से भेज सकते हैं।", "error"); }
-        else { orderId = data.id; clearCart(); }
+        else { orderId = data.id; orderNo = data.order_no || String(data.id); clearCart(); }
       }
       q("#coStep1").hidden = true;
       const s2 = q("#coStep2"); s2.hidden = false;
-      const note = "Aashapura" + (orderId ? "-" + orderId : "");
+      const note = orderNo || "Aashapura";
       const upi = `upi://pay?pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent("Aashapura Aurveda")}&am=${total.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}`.replace(/&/g, "&amp;");
       s2.innerHTML = `<h2>पेमेंट और ऑर्डर भेजें</h2>
-        ${orderId ? `<p>ऑर्डर #${escapeHTML(String(orderId))} सेव हो गया।</p>`
+        ${orderId ? `<p>ऑर्डर #${escapeHTML(String(orderNo))} सेव हो गया।</p>`
           : `<p class="small-note" style="color:#b42318">${signedInUser ? "ऑर्डर सेव नहीं हुआ: " + escapeHTML(saveErr) : "Sign In नहीं है, इसलिए ऑर्डर 'मेरे ऑर्डर' में सेव नहीं हुआ।"} WhatsApp से ऑर्डर भेज सकते हैं।</p>`}
         <p class="checkout-total">देय राशि <strong>${money(total)}</strong></p>
         <a class="primary-btn" href="${upi}">UPI ऐप से पेमेंट करें</a>
@@ -88,11 +88,12 @@
       s2.querySelector("#coWa").onclick = () => {
         const utr = s2.querySelector("#coUtr").value.trim();
         const lines = items.map(i => `• ${i.name} (${i.weight || "standard"}) × ${i.qty} = ${money(i.price * i.qty)}`).join("\n");
-        const msg = `नमस्ते Aashapura Aurveda,\n${orderId ? "ऑर्डर #" + orderId + "\n" : ""}${lines}\n` +
+        const msg = `नमस्ते Aashapura Aurveda,\n${orderId ? "ऑर्डर #" + orderNo + "\n" : ""}${lines}\n` +
           `सबटोटल: ${money(subtotal)}\n${d ? "छूट (" + appliedCoupon.code + "): −" + money(d) + "\n" : ""}कुल: ${money(total)}\n` +
           `नाम: ${name}\nमोबाइल: ${phone}\nपता: ${address}\n${utr ? "UTR: " + utr + "\n" : ""}कृपया ऑर्डर कन्फर्म करें।`;
         const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
         if (!orderId) clearCart();
+        else if (utr) { try { supabaseClient.rpc("submit_order_utr", { p_id: String(orderId), p_utr: utr }); } catch (e) {} }
         if (!window.open(url, "_blank", "noopener")) { window.location.href = url; return; }
         close(); closeCart();
       };

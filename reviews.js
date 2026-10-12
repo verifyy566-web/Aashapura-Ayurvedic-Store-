@@ -43,7 +43,7 @@
   async function render(box, pid) {
     box.innerHTML = "<p>रिव्यू लोड हो रहे हैं…</p>";
     const { data, error } = await supabaseClient.from("reviews")
-      .select("id,user_id,user_name,rating,comment,created_at")
+      .select("id,user_id,user_name,rating,comment,created_at,media")
       .eq("product_id", pid).order("created_at", { ascending: false });
     if (error) { box.innerHTML = `<p class="small-note">रिव्यू लोड नहीं हुए: ${escapeHTML(error.message)}</p>`; return; }
     const n = data.length, avg = n ? data.reduce((s, r) => s + r.rating, 0) / n : 0;
@@ -55,16 +55,19 @@
         <strong>${mine ? "अपना रिव्यू बदलें" : "अपना रिव्यू लिखें"}</strong>
         <div class="rv-pick" id="rvPick">${[1, 2, 3, 4, 5].map(i => `<button type="button" data-s="${i}">★</button>`).join("")}</div>
         <textarea id="rvText" maxlength="500" placeholder="उत्पाद कैसा लगा? (वैकल्पिक)">${escapeHTML(mine?.comment || "")}</textarea>
+        <div id="rvMedia"></div>
         <button type="button" id="rvSubmit" class="primary-btn">${signedInUser ? "रिव्यू सबमिट करें" : "रिव्यू लिखने के लिए Sign In करें"}</button>
       </div>
       <div class="rv-list">${data.map(r => `<article class="rv-item">
         <div><strong>${escapeHTML(r.user_name || "ग्राहक")}</strong> <span class="stars">${stars(r.rating)}</span></div>
         ${r.comment ? `<p>${escapeHTML(r.comment)}</p>` : ""}
+        ${Array.isArray(r.media) && r.media.length ? `<div class="md-row">${AashapuraMedia.thumbs(r.media)}</div>` : ""}
         <small>${new Date(r.created_at).toLocaleDateString("hi-IN")}</small>
         ${signedInUser && (signedInUser.id === r.user_id || signedInUser.id === ADMIN) ? `<button type="button" class="rv-del" data-del="${r.id}">हटाएँ</button>` : ""}
       </article>`).join("")}</div>`;
     const rt = document.getElementById("ppRate");
     if (rt) rt.innerHTML = n ? `<span class="stars">${stars(avg)}</span> <strong>${avg.toFixed(1)}</strong> <a href="#" onclick="document.querySelector('.reviews-box').scrollIntoView({behavior:'smooth'});return false">(${n} रिव्यू)</a>` : "<small>अभी कोई रिव्यू नहीं</small>";
+    const pk = AashapuraMedia.picker(box.querySelector("#rvMedia"), { max: 4, existing: Array.isArray(mine?.media) ? mine.media : [] });
     const paint = () => box.querySelectorAll("#rvPick button").forEach(b => b.classList.toggle("on", Number(b.dataset.s) <= pick));
     paint();
     box.querySelector("#rvPick").onclick = e => { const b = e.target.closest("[data-s]"); if (b) { pick = Number(b.dataset.s); paint(); } };
@@ -72,10 +75,15 @@
       if (!signedInUser) { startGoogleLogin(); return; }
       if (!pick) return showStoreToast("पहले स्टार रेटिंग चुनें।", "error");
       const name = $("profileName")?.value.trim() || signedInUser.user_metadata?.full_name || "ग्राहक";
+      const sub = box.querySelector("#rvSubmit"); sub.disabled = true;
+      let media = pk.existing();
+      try { media = media.concat(await AashapuraMedia.upload(pk.files(), "reviews")); }
+      catch (e) { sub.disabled = false; return showStoreToast("Upload failed: " + e.message, "error"); }
       const { error: err } = await supabaseClient.from("reviews").upsert({
         product_id: pid, user_id: signedInUser.id, user_name: name,
-        rating: pick, comment: box.querySelector("#rvText").value.trim()
+        rating: pick, comment: box.querySelector("#rvText").value.trim(), media
       }, { onConflict: "product_id,user_id" });
+      sub.disabled = false;
       if (err) return showStoreToast("रिव्यू सेव नहीं हुआ: " + err.message, "error");
       showStoreToast("रिव्यू सेव हो गया। धन्यवाद!", "success");
       await render(box, pid); loadAgg();

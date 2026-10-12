@@ -49,7 +49,7 @@
       list.append(
         item("✏️", "Edit Profile", "Name, mobile and address", () => openAccountModal()),
         item("📦", "My Orders", "Track and view your orders", () => $("openMyOrdersBtn").click()),
-        item("↩️", "My Refunds", "Request a refund on WhatsApp", () => wa("Hello Aashapura Aurveda, I need help with a refund for my order. Order ID: ")),
+        item("↩️", "Returns & Refunds", "Return, cancel and track requests", () => (window.openRefunds ? window.openRefunds() : wa("Hello Aashapura Aurveda, I need help with a refund for my order. Order ID: "))),
         item("📍", "Saved Address", "Delivery address", () => openAccountModal()),
         item("🛒", "My Cart", "", () => $("cartOpen").click())
       );
