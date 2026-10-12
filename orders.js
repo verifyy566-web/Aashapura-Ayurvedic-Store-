@@ -28,7 +28,7 @@
       <h2>Aashapura Aurveda</h2><p>Invoice / Order <b>${esc(o.order_no || o.id)}</b><br>${esc(dt(o.created_at))}</p>
       <p><b>${esc(o.customer_name || "")}</b><br>${esc(o.phone || "")}<br>${esc(o.address || o.delivery_address || "")}</p>
       <table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>${rows}</table>
-      <p>Subtotal: ${money(o.subtotal)}<br>${Number(o.discount) ? "Discount" + (o.coupon_code ? " (" + esc(o.coupon_code) + ")" : "") + ": −" + money(o.discount) + "<br>" : ""}<b>Total: ${money(o.total)}</b><br>Payment: ${esc(o.payment_status || "pending")}</p>
+      <p>Subtotal: ${money(o.subtotal)}<br>${Number(o.discount) ? "Discount" + (o.coupon_code ? " (" + esc(o.coupon_code) + ")" : "") + ": −" + money(o.discount) + "<br>" : ""}${Number(o.delivery_charge) ? "Delivery: " + money(o.delivery_charge) + "<br>" : "Delivery: FREE<br>"}<b>Total: ${money(o.total)}</b><br>Payment: ${esc(o.payment_status || "pending")}</p>
       <p style="color:#777;font-size:12px">Thank you for shopping with Aashapura Aurveda.</p><script>setTimeout(function(){print()},400)<\/script>`);
     w.document.close();
   }
@@ -154,7 +154,7 @@
       c.innerHTML = `<div class="od-top"><div><b>#${esc(od.order_no || od.id)}</b><small>${esc(dt(od.created_at))}</small></div><div style="text-align:right">${badge(ob[0], ob[1], ob[2])}<br>${ps === "paid" ? badge(T("Paid", "पेमेंट हुआ"), "#166534", "#dcfce7") : od.utr ? badge(T("Payment verifying", "पेमेंट जाँच में"), "#1d4ed8", "#dbeafe") : badge(T("Payment pending", "पेमेंट बाकी"), "#b45309", "#fef3c7")}</div></div>
         ${os === "cancelled" ? `<p style="color:#b42318;margin:6px 0">${T("Order cancelled", "ऑर्डर रद्द")}${od.cancel_reason ? ": " + esc(od.cancel_reason) : ""}</p>` : `<div class="od-tl">${STEPS.map((s, i) => `<span class="${i <= idx ? "on" : ""}">${esc(OB[s][0])}</span>`).join("")}</div>`}
         <div class="od-items">${(od.items || []).map(i => `<div><span>${esc(i.name)}${i.weight ? " (" + esc(i.weight) + ")" : ""} × ${Number(i.qty || i.quantity || 1)}</span><span>${money(i.price * (i.qty || i.quantity || 1))}</span></div>`).join("")}</div>
-        <div class="od-top"><span>${Number(od.discount) ? T("Discount", "छूट") + (od.coupon_code ? " (" + esc(od.coupon_code) + ")" : "") + " −" + money(od.discount) : ""}</span><b>${T("Total", "कुल")} ${money(od.total)}</b></div>
+        <div class="od-top"><span>${Number(od.discount) ? T("Discount", "छूट") + (od.coupon_code ? " (" + esc(od.coupon_code) + ")" : "") + " −" + money(od.discount) + " · " : ""}${T("Delivery", "डिलीवरी")} ${Number(od.delivery_charge) ? money(od.delivery_charge) : T("FREE", "फ्री")}</span><b>${T("Total", "कुल")} ${money(od.total)}</b></div>
         ${ps !== "paid" && os !== "cancelled" ? (od.utr ? `<p style="margin:6px 0;color:#1d4ed8">✅ ${T("⏳ Verification will take a few minutes. Your order will be confirmed shortly.", "⏳ वेरिफिकेशन में कुछ मिनट लगेंगे। ऑर्डर जल्दी कन्फर्म होगा।")}</p>` : `<p style="margin:6px 0;color:#b45309">${T("Paid already? Send your payment screenshot on WhatsApp so we can confirm.", "पेमेंट कर दिया? कन्फर्म के लिए WhatsApp पर पेमेंट स्क्रीनशॉट भेजें।")}</p>`) : ""}
         <small style="color:#666">📍 ${esc(od.address || od.delivery_address || "")}</small>
         ${active ? `<p style="margin:6px 0">↩️ ${T("Return/refund", "रिटर्न/रिफंड")}: <b>${esc(ret[od.id])}</b></p>` : ""}

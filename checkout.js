@@ -11,6 +11,27 @@
   const L = (en, hi) => (window.AASHAPURA_LANG === "hi" ? hi : en);
   const money = n => "₹" + Number(n).toFixed(2);
 
+  /* ===== DELIVERY SETTINGS (yahin se badlo) ===== */
+  const DELIVERY = {
+    charge: 49,          // delivery charge (₹) jab order chhota ho
+    freeAbove: 499,      // is amount ya usse upar ka order (coupon ke baad) = FREE delivery
+    blocked: [],         // jin pincode par delivery nahi: e.g. ["190001", "682001"]
+    blockedPrefix: []    // jin pincode ke shuruaat par delivery nahi: e.g. ["19"] (Kashmir) 
+  };
+  const delFor = amt => (amt >= DELIVERY.freeAbove ? 0 : DELIVERY.charge);
+  const pinLookup = async pin => {
+    if (DELIVERY.blocked.includes(pin) || DELIVERY.blockedPrefix.some(x => pin.startsWith(x))) return { ok: false, msg: L("Sorry, we can't deliver to this pincode yet.", "माफ़ कीजिए, इस पिनकोड पर अभी डिलीवरी नहीं होती।") };
+    try {
+      const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 6000);
+      const r = await fetch("https://api.postalpincode.in/pincode/" + pin, { signal: ctl.signal }); clearTimeout(t);
+      const j = await r.json(); const x = j && j[0];
+      if (x && x.Status === "Success" && x.PostOffice && x.PostOffice.length) {
+        const po = x.PostOffice[0]; return { ok: true, area: [po.District, po.State].filter(Boolean).join(", ") };
+      }
+      return { ok: false, msg: L("Pincode not found. Please check it.", "पिनकोड नहीं मिला। कृपया जाँचें।") };
+    } catch (e) { return { ok: true, area: "", unverified: true }; }
+  };
+
   window.openPremiumCheckout = function () {
     const items = cartItems();
     if (!items.length) { showStoreToast("पहले कार्ट में उत्पाद जोड़ें।", "error"); return; }
@@ -29,8 +50,10 @@
         <label>पूरा नाम<input id="coName" autocomplete="name" value="${escapeHTML($("profileName")?.value || $("customerName")?.value || signedInUser?.user_metadata?.full_name || "")}"></label>
         <label>मोबाइल नंबर<input id="coPhone" inputmode="tel" autocomplete="tel" value="${escapeHTML($("profilePhone")?.value || "")}"></label>
         <label>डिलीवरी का पता<textarea id="coAddress" autocomplete="street-address">${escapeHTML($("profileAddress")?.value || $("customerAddress")?.value || "")}</textarea></label>
+        <label>${L("Pincode","पिनकोड")}<input id="coPin" inputmode="numeric" maxlength="6" autocomplete="postal-code" placeholder="${L("6-digit pincode","6 अंकों का पिनकोड")}" value="${escapeHTML((($("profileAddress")?.value || $("customerAddress")?.value || "").match(/\b[1-9][0-9]{5}\b/) || [""])[0])}"><small id="coPinMsg" style="display:block;margin-top:4px"></small></label>
         <label>कूपन कोड<span style="display:flex;gap:8px"><input id="coCode" placeholder="जैसे WELCOME10" style="flex:1"><button type="button" id="coApply" class="secondary-btn">लगाएँ</button></span></label>
-        <div class="co-sum"><div><span>सबटोटल</span><span id="coSub"></span></div><div><span>छूट</span><span id="coDisc"></span></div><div class="tot"><span>कुल</span><strong id="coTotal"></strong></div></div>
+        <p id="coFreeNote" class="small-note" style="color:#166534;margin:6px 0"></p>
+        <div class="co-sum"><div><span>सबटोटल</span><span id="coSub"></span></div><div><span>छूट</span><span id="coDisc"></span></div><div><span>${L("Delivery","डिलीवरी")}</span><span id="coDel"></span></div><div class="tot"><span>कुल</span><strong id="coTotal"></strong></div></div>
         <button type="button" id="coPlace" class="premium-checkout-submit">ऑर्डर पक्का करें</button>
         <p class="premium-help">${signedInUser ? "ऑर्डर आपके 'मेरे ऑर्डर' में दिखेगा।" : "Sign In करने पर ऑर्डर 'मेरे ऑर्डर' में भी दिखेगा।"}</p>
       </div>
@@ -39,9 +62,27 @@
     const q = s => m.querySelector(s);
     const close = () => m.remove();
     q(".premium-modal-close").onclick = close;
-    const calc = () => { const d = appliedCoupon ? appliedCoupon.discount : 0; return { d, total: Math.max(0, subtotal - d) }; };
-    const paint = () => { const { d, total } = calc(); q("#coSub").textContent = money(subtotal); q("#coDisc").textContent = "−" + money(d); q("#coTotal").textContent = money(total); };
+    const calc = () => { const d = appliedCoupon ? appliedCoupon.discount : 0; const after = Math.max(0, subtotal - d); const del = delFor(after); return { d, del, total: after + del }; };
+    const paint = () => {
+      const { d, del, total } = calc(); const after = Math.max(0, subtotal - d);
+      q("#coSub").textContent = money(subtotal); q("#coDisc").textContent = "−" + money(d);
+      q("#coDel").textContent = del ? money(del) : L("FREE", "फ्री"); q("#coTotal").textContent = money(total);
+      q("#coFreeNote").textContent = del ? L(`Add ${money(DELIVERY.freeAbove - after)} more for FREE delivery`, `${money(DELIVERY.freeAbove - after)} और जोड़ें, डिलीवरी फ्री पाएँ`) : L("🎉 You get FREE delivery", "🎉 आपकी डिलीवरी फ्री है");
+    };
     paint();
+    let pinInfo = null, pinFor = "", pinBusy = null;
+    const checkPin = async () => {
+      const pin = q("#coPin").value.trim(), msg = q("#coPinMsg");
+      if (!/^[1-9][0-9]{5}$/.test(pin)) { pinInfo = null; pinFor = ""; msg.textContent = pin ? L("Enter a valid 6-digit pincode", "6 अंकों का सही पिनकोड भरें") : ""; msg.style.color = "#b42318"; return null; }
+      if (pin === pinFor && pinInfo) return pinInfo;
+      msg.textContent = L("Checking…", "जाँच हो रही है…"); msg.style.color = "#666";
+      pinFor = pin; const r = await pinLookup(pin); if (q("#coPin").value.trim() !== pin) return null;
+      pinInfo = r;
+      msg.textContent = r.ok ? (r.area ? "✅ " + L("Delivery available: ", "डिलीवरी उपलब्ध: ") + r.area : L("Could not verify pincode (offline). You can continue.", "पिनकोड जाँच नहीं हो पाई। आप आगे बढ़ सकते हैं।")) : "❌ " + r.msg;
+      msg.style.color = r.ok ? "#166534" : "#b42318"; return r;
+    };
+    q("#coPin").oninput = () => { q("#coPin").value = q("#coPin").value.replace(/\D/g, "").slice(0, 6); pinInfo = null; if (q("#coPin").value.length === 6) pinBusy = checkPin(); else checkPin(); };
+    if (q("#coPin").value) pinBusy = checkPin();
 
     q("#coApply").onclick = async () => {
       const r = await validateStoreCoupon(q("#coCode").value, subtotal);
@@ -54,16 +95,26 @@
       const name = q("#coName").value.trim(), phone = q("#coPhone").value.trim(), address = q("#coAddress").value.trim();
       if (!name || !phone || !address) return showStoreToast("नाम, मोबाइल और पूरा पता भरें।", "error");
       if (!/^[0-9+\-\s]{10,15}$/.test(phone)) return showStoreToast("मोबाइल नंबर सही भरें।", "error");
+      const pin = q("#coPin").value.trim();
+      if (!/^[1-9][0-9]{5}$/.test(pin)) return showStoreToast(L("Enter a valid 6-digit pincode.", "6 अंकों का सही पिनकोड भरें।"), "error");
+      const pr = await checkPin();
+      if (!pr || !pr.ok) return showStoreToast(pr && pr.msg ? pr.msg : L("Please check your pincode.", "कृपया पिनकोड जाँचें।"), "error");
+      const area = pr.area || "";
+      const fullAddress = address.includes(pin) ? address : address + ", PIN " + pin;
       const btn = q("#coPlace"); btn.disabled = true; btn.textContent = "सेव हो रहा है…";
-      const { d, total } = calc();
+      const { d, del, total } = calc();
       const orderItems = items.map(i => ({ id: i.id, name: i.name, weight: i.weight, price: i.price, qty: i.qty }));
       let orderId = null, orderNo = null, saveErr = "";
       if (signedInUser) {
-        const { data, error } = await supabaseClient.from("store_orders").insert({
-          user_id: signedInUser.id, customer_name: name, customer_email: signedInUser.email || null, phone, address, delivery_address: address, items: orderItems,
+        const base = {
+          user_id: signedInUser.id, customer_name: name, customer_email: signedInUser.email || null, phone, address: fullAddress, delivery_address: fullAddress, items: orderItems,
           subtotal, discount: d, total, coupon_code: appliedCoupon?.code || null,
           payment_status: "pending", order_status: "pending"
-        }).select("id,order_no").single();
+        };
+        let { data, error } = await supabaseClient.from("store_orders").insert({ ...base, pincode: pin, delivery_charge: del, delivery_area: area || null }).select("id,order_no").single();
+        if (error && /pincode|delivery_charge|delivery_area|column/i.test(error.message || "")) {
+          ({ data, error } = await supabaseClient.from("store_orders").insert(base).select("id,order_no").single());
+        }
         if (error) { console.warn(error.message); saveErr = error.message; showStoreToast("ऑर्डर सेव नहीं हुआ; WhatsApp से भेज सकते हैं।", "error"); }
         else { orderId = data.id; orderNo = data.order_no || String(data.id); clearCart(); }
       }
@@ -97,8 +148,8 @@
       s2.querySelector("#coWa").onclick = () => {
         const lines = items.map(i => `• ${i.name} (${i.weight || "standard"}) × ${i.qty} = ${money(i.price * i.qty)}`).join("\n");
         const msg = `नमस्ते Aashapura Aurveda,\n${orderId ? "ऑर्डर #" + orderNo + "\n" : ""}${lines}\n` +
-          `सबटोटल: ${money(subtotal)}\n${d ? "छूट (" + appliedCoupon.code + "): −" + money(d) + "\n" : ""}कुल: ${money(total)}\n` +
-          `नाम: ${name}\nमोबाइल: ${phone}\nपता: ${address}\n${L("I have paid. My payment screenshot is below.", "मैंने पेमेंट कर दिया है। पेमेंट का स्क्रीनशॉट नीचे भेज रहा/रही हूँ।")}\n${L("Please confirm my order.", "कृपया ऑर्डर कन्फर्म करें।")}`;
+          `सबटोटल: ${money(subtotal)}\n${d ? "छूट (" + appliedCoupon.code + "): −" + money(d) + "\n" : ""}${L("Delivery", "डिलीवरी")}: ${del ? money(del) : L("FREE", "फ्री")}\nकुल: ${money(total)}\n` +
+          `नाम: ${name}\nमोबाइल: ${phone}\nपता: ${fullAddress}\n${L("I have paid. My payment screenshot is below.", "मैंने पेमेंट कर दिया है। पेमेंट का स्क्रीनशॉट नीचे भेज रहा/रही हूँ।")}\n${L("Please confirm my order.", "कृपया ऑर्डर कन्फर्म करें।")}`;
         const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
         if (!orderId) clearCart();
         else { try { supabaseClient.rpc("submit_order_utr", { p_id: String(orderId), p_utr: "WA-SCREENSHOT" }); } catch (e) {} }
