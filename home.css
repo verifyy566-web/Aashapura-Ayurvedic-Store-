@@ -58,3 +58,10 @@ body:has(#profilePage:not([hidden])) footer,body:has(#myOrdersPage:not([hidden])
 .m-sheet-chips button.on{border-color:#14402b;background:#e8f3e6;color:#14402b;font-weight:700}
 .m-sheet-foot{display:flex;gap:10px}.m-sheet-foot button{flex:1;padding:14px;border-radius:10px;font:inherit;font-weight:700;cursor:pointer;border:1px solid #14402b;background:#fff;color:#14402b}
 .m-sheet-foot .app{background:#14402b;color:#fff}
+
+.m-cat small{display:block;font-size:10px;color:#777;margin-top:2px}
+.m-allcats{position:fixed;inset:0;z-index:100010;background:#f3f6f2;overflow-y:auto;color:#173d2e}
+.m-allcats-head{position:sticky;top:0;display:flex;align-items:center;gap:12px;padding:14px 16px;background:#fff;border-bottom:1px solid #e3eadf;font-size:18px}
+.m-allcats-head .bk{border:0;background:none;font-size:24px;cursor:pointer;color:inherit}
+.m-allcats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 8px;padding:20px 12px 40px}
+.m-allcats-grid .m-cat{width:auto}

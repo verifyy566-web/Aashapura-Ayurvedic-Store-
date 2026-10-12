@@ -15,6 +15,62 @@
     hs.addEventListener("input", () => { const s = $("searchInput"); if (s) { s.value = hs.value; s.dispatchEvent(new Event("input", { bubbles: true })); } });
     hs.addEventListener("keydown", e => { if (e.key === "Enter") { hs.blur(); $("shop").scrollIntoView({ behavior: "smooth" }); } });
   }
+  /* Dynamic categories: built from products (admin category) - first 7 + "More" page */
+  const MAXCAT = 7;
+  const CAT_EMOJI = { powder: "🥣", powders: "🥣", herbal: "🍃", wellness: "💪", hair: "💇", "hair care": "💇", skin: "✨", "skin care": "✨", immunity: "🛡️", digestion: "🍵", digest: "🍵", oil: "🫙", oils: "🫙", tablet: "💊", tablets: "💊", capsule: "💊", capsules: "💊", juice: "🧃", tea: "🍵", churna: "🥣", ghee: "🧈", honey: "🍯", soap: "🧼", "face pack": "🌸" };
+  const esc2 = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const titleOf = c => c.replace(/\b\w/g, m => m.toUpperCase());
+  const emojiOf = c => CAT_EMOJI[c] || "🌿";
+  const listCats = () => {
+    let ps = []; try { ps = products || []; } catch (e) {}
+    const map = new Map();
+    ps.forEach(p => { const c = String(p.category || "").trim().toLowerCase(); if (c) map.set(c, (map.get(c) || 0) + 1); });
+    return [...map.entries()].map(([c, n]) => ({ c, n })).sort((a, b) => b.n - a.n || a.c.localeCompare(b.c));
+  };
+  const pickCat = c => {
+    const sel = $("categoryFilter");
+    const s = $("searchInput"); if ($("homeSearch")) $("homeSearch").value = ""; if (s && s.value) { s.value = ""; s.dispatchEvent(new Event("input", { bubbles: true })); }
+    if (sel) { if (![...sel.options].some(o => o.value === c)) sel.add(new Option(titleOf(c), c)); sel.value = c; sel.dispatchEvent(new Event("change", { bubbles: true })); }
+    const shop = $("shop"); if (shop) shop.scrollIntoView({ behavior: "smooth" });
+  };
+  function openAllCats() {
+    const list = listCats();
+    const el = document.createElement("div"); el.className = "m-allcats";
+    el.innerHTML = `<div class="m-allcats-head"><button type="button" class="bk" aria-label="Back">←</button><b>All Categories</b></div><div class="m-allcats-grid"></div>`;
+    const grid = el.querySelector(".m-allcats-grid");
+    const all = document.createElement("button"); all.type = "button"; all.className = "m-cat";
+    all.innerHTML = `<span>🌿</span>All<small>${list.reduce((a, x) => a + x.n, 0)} items</small>`;
+    grid.appendChild(all);
+    list.forEach(({ c, n }) => { const b = document.createElement("button"); b.type = "button"; b.className = "m-cat"; b.dataset.c = c; b.innerHTML = `<span>${emojiOf(c)}</span>${esc2(titleOf(c))}<small>${n} item${n > 1 ? "s" : ""}</small>`; grid.appendChild(b); });
+    document.body.appendChild(el);
+    const A = window.aashapuraAddr && window.aashapuraAddr.ov;
+    let shut;
+    if (A) { A.push(el); shut = () => A.close(el); } else shut = () => el.remove();
+    el.querySelector(".bk").onclick = shut;
+    grid.addEventListener("click", e => { const b = e.target.closest(".m-cat"); if (!b) return; shut(); setTimeout(() => pickCat(b.dataset.c || "all"), 60); });
+  }
+  let catSig = null;
+  function buildCats() {
+    const box = document.querySelector(".m-cats"); if (!box) return;
+    const list = listCats();
+    const sig = list.map(x => x.c).join("|");
+    if (!list.length || sig === catSig) return;
+    catSig = sig;
+    const show = list.length > MAXCAT ? list.slice(0, MAXCAT) : list;
+    box.innerHTML = `<button type="button" class="m-cat" data-c="all"><span>🌿</span>All</button>` +
+      show.map(({ c }) => `<button type="button" class="m-cat" data-c="${esc2(c)}"><span>${emojiOf(c)}</span>${esc2(titleOf(c))}</button>`).join("") +
+      (list.length > MAXCAT ? `<button type="button" class="m-cat" data-more="1"><span>➕</span>More</button>` : "");
+  }
+  const catBox = document.querySelector(".m-cats");
+  if (catBox) {
+    catBox.addEventListener("click", e => {
+      const b = e.target.closest(".m-cat"); if (!b) return;
+      if (b.dataset.more) return openAllCats();
+      if (b.dataset.c) pickCat(b.dataset.c);
+    });
+    buildCats(); setInterval(buildCats, 1500);
+  }
+
   const ban = document.querySelector(".m-banners");
   if (ban) setInterval(() => {
     const n = ban.children.length, w = ban.clientWidth;
