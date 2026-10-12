@@ -12,8 +12,8 @@
       const p = products.find(x => String(x.id) === String(id));
       if (!p) return;
       const q = Number(cart[id]) || 0;
-      if (p.stock <= 0) { delete cart[id]; msgs.push(L(`${p.name} is out of stock`, `${p.name} स्टॉक में नहीं है`)); }
-      else if (q > p.stock) { cart[id] = p.stock; msgs.push(L(`Only ${p.stock} of ${p.name} available`, `${p.name} सिर्फ़ ${p.stock} उपलब्ध है`)); }
+      if (p.stock <= 0) return;
+      if (q > p.stock) { cart[id] = p.stock; msgs.push(L(`Only ${p.stock} of ${p.name} available`, `${p.name} सिर्फ़ ${p.stock} उपलब्ध है`)); }
     });
     return msgs;
   }
@@ -23,6 +23,45 @@
     const m = clampCart();
     if (m.length) toast(m[0], "error");
     return _renderCart.apply(this, arguments);
+  };
+
+  const oosItems = () => cartItems().filter(i => i.product.stock <= 0);
+
+  /* ---------- live stock: another customer's confirmed order updates stock ---------- */
+  let lastRefresh = 0;
+  async function refreshStock(force) {
+    if (!force && Date.now() - lastRefresh < 10000) return false;
+    const ids = Object.keys(cart).map(Number).filter(Boolean);
+    if (!ids.length) return false;
+    lastRefresh = Date.now();
+    try {
+      const { data, error } = await supabaseClient.from("products").select("id,stock").in("id", ids);
+      if (error || !data) return false;
+      let changed = false;
+      data.forEach(r => {
+        const p = products.find(x => x.id === Number(r.id)); const n = Number(r.stock || 0);
+        if (p && p.stock !== n) {
+          if (n <= 0 && p.stock > 0) toast(L(`${p.name} is now out of stock`, `${p.name} अब स्टॉक में नहीं है`), "error");
+          p.stock = n; changed = true;
+        }
+      });
+      if (changed) { try { renderProducts(); } catch (e) {} }
+      return changed;
+    } catch (e) { return false; }
+  }
+  window.aashapuraRefreshStock = refreshStock;
+  let watch = null;
+  const startWatch = () => {
+    if (watch) return;
+    watch = setInterval(async () => {
+      if (!document.getElementById("cartFullPage")) { clearInterval(watch); watch = null; return; }
+      if (await refreshStock(true)) { window.renderCart(); window.renderCartPage(true); }
+    }, 15000);
+  };
+  const _opc = window.openPremiumCheckout;
+  window.openPremiumCheckout = function () {
+    if (oosItems().length) { toast(L("Please remove out-of-stock items from your bag first.", "पहले कार्ट से स्टॉक खत्म वाले आइटम हटाएँ।"), "error"); try { window.renderCartPage(true); } catch (e) {} return; }
+    return _opc.apply(this, arguments);
   };
 
   /* ---------- styles ---------- */
@@ -55,6 +94,11 @@
   .ct-bar2 div{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px))}
   .ct-bar2 small{display:block;color:#6b7f74;font-size:12px}.ct-bar2 strong{font-size:21px}
   .ct-bar2 button{flex:1;margin-left:auto;max-width:230px;padding:15px;border:0;border-radius:12px;background:#123c2b;color:#fff;font-size:17px;font-weight:700}
+  .ct-oos{background:#fee4e2;color:#8a1c12;border-radius:12px;padding:11px 14px;margin-bottom:10px;font-weight:600;display:flex;gap:10px;align-items:center;justify-content:space-between}
+  .ct-oos button{border:1px solid #b42318;background:#fff;color:#b42318;border-radius:8px;padding:6px 10px;font-weight:700;flex:none}
+  .ct-item.out .ct-img img,.ct-item.out .ct-img{filter:grayscale(1);opacity:.55}.ct-item.out h3,.ct-item.out .ct-price{opacity:.55}
+  .ct-tag{display:inline-block;background:#b42318;color:#fff;border-radius:6px;padding:3px 8px;font-size:12.5px;font-weight:700;margin-top:4px}
+  .ct-bar2 button.off{background:#9aa8a0}
   .ct-empty{text-align:center;padding:60px 20px}.ct-empty div{font-size:64px}.ct-empty button{margin-top:14px;padding:13px 26px;border:0;border-radius:12px;background:#123c2b;color:#fff;font-size:16px;font-weight:700}`;
   document.head.appendChild(st);
 
@@ -66,58 +110,60 @@
   };
 
   /* ---------- premium cart page ---------- */
-  window.renderCartPage = function () {
+  window.renderCartPage = function (noRefresh) {
     let page = document.getElementById("cartFullPage");
     if (!page) { page = document.createElement("main"); page.id = "cartFullPage"; document.body.appendChild(page); }
     page.removeAttribute("style");
     const m = clampCart(); if (m.length) toast(m[0], "error");
-    const items = cartItems();
+    const all = cartItems(), oos = all.filter(i => i.product.stock <= 0), items = all.filter(i => i.product.stock > 0);
     const D = window.AASHAPURA_DELIVERY || { charge: 0, freeAbove: 0 };
-    const count = items.reduce((n, i) => n + i.qty, 0);
+    const count = items.reduce((n, i) => n + i.qty, 0), countAll = all.reduce((n, i) => n + i.qty, 0);
     const sub = items.reduce((s, i) => s + i.price * i.qty, 0);
     const mrpTotal = items.reduce((s, i) => s + Math.max(Number(i.product.mrp) || 0, i.price) * i.qty, 0);
     const mrpOff = mrpTotal - sub;
     const del = items.length && sub < D.freeAbove ? D.charge : 0;
     const total = sub + del;
-    const head = `<div class="ct-head"><button type="button" id="ctBack" aria-label="${L("Back", "वापस")}">←</button><b>${L("My Bag", "आपका कार्ट")}</b><small>${count} ${L(count === 1 ? "item" : "items", "आइटम")}</small></div>`;
+    const head = `<div class="ct-head"><button type="button" id="ctBack" aria-label="${L("Back", "वापस")}">←</button><b>${L("My Bag", "आपका कार्ट")}</b><small>${countAll} ${L(countAll === 1 ? "item" : "items", "आइटम")}</small></div>`;
 
-    if (!items.length) {
+    if (!all.length) {
       page.innerHTML = `<div class="ct-in">${head}<div class="ct-empty"><div>🛍️</div><h2>${L("Your bag is empty", "आपका कार्ट खाली है")}</h2><p>${L("Add some Ayurvedic products to get started.", "शुरू करने के लिए कुछ आयुर्वेदिक प्रोडक्ट जोड़ें।")}</p><button type="button" id="ctShop">${L("Continue shopping", "खरीदारी करें")}</button></div></div>`;
       page.querySelector("#ctBack").onclick = closeCart; page.querySelector("#ctShop").onclick = closeCart; return;
     }
 
     const pct = D.freeAbove ? Math.min(100, Math.round(sub / D.freeAbove * 100)) : 100;
-    const rows = items.map(({ product: p, qty }) => {
+    const rows = all.map(({ product: p, qty }) => {
       const off = p.mrp > p.price ? Math.round((1 - p.price / p.mrp) * 100) : 0;
-      const img = imgOf(p), atMax = qty >= p.stock;
-      return `<div class="ct-card ct-item">
+      const img = imgOf(p), atMax = qty >= p.stock, out = p.stock <= 0;
+      return `<div class="ct-card ct-item ${out ? "out" : ""}">
         <div class="ct-img">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : esc(p.emoji || "🌿")}</div>
         <div class="ct-main">
           <button type="button" class="ct-x" data-rm="${p.id}" aria-label="${L("Remove", "हटाएँ")}">✕</button>
           <h3>${esc(p.name)}</h3>${p.weight ? `<div class="ct-w">${esc(p.weight)}</div>` : ""}
           <div class="ct-price"><b>${rs(p.price)}</b>${off ? `<s>${rs(p.mrp)}</s><em>${off}% ${L("off", "छूट")}</em>` : ""}</div>
-          <div class="ct-qty"><button type="button" data-dec="${p.id}" aria-label="${L("Decrease", "घटाएँ")}">${qty === 1 ? "🗑" : "−"}</button><span>${qty}</span><button type="button" data-inc="${p.id}" ${atMax ? "disabled" : ""} aria-label="${L("Increase", "बढ़ाएँ")}">+</button></div>
-          ${p.stock <= 5 ? `<div class="ct-note ${atMax ? "ct-max" : "ct-low"}">${atMax ? L(`Max ${p.stock} available in stock`, `स्टॉक में अधिकतम ${p.stock} उपलब्ध`) : L(`Only ${p.stock} left!`, `सिर्फ़ ${p.stock} बचे!`)}</div>` : ""}
+          ${out ? `<span class="ct-tag">${L("Out of stock", "स्टॉक खत्म")}</span>` : `<div class="ct-qty"><button type="button" data-dec="${p.id}" aria-label="${L("Decrease", "घटाएँ")}">${qty === 1 ? "🗑" : "−"}</button><span>${qty}</span><button type="button" data-inc="${p.id}" ${atMax ? "disabled" : ""} aria-label="${L("Increase", "बढ़ाएँ")}">+</button></div>`}
+          ${!out && p.stock <= 5 ? `<div class="ct-note ${atMax ? "ct-max" : "ct-low"}">${atMax ? L(`Max ${p.stock} available in stock`, `स्टॉक में अधिकतम ${p.stock} उपलब्ध`) : L(`Only ${p.stock} left!`, `सिर्फ़ ${p.stock} बचे!`)}</div>` : ""}
         </div></div>`;
     }).join("");
 
     page.innerHTML = `<div class="ct-in">${head}
+      ${oos.length ? `<div class="ct-oos"><span>⚠️ ${L("Some items are out of stock. Remove them to place your order.", "कुछ आइटम स्टॉक में नहीं हैं। ऑर्डर के लिए उन्हें हटाएँ।")}</span><button type="button" id="ctRmOos">${L("Remove", "हटाएँ")}</button></div>` : ""}
       ${mrpOff > 0 ? `<div class="ct-save">🎉 ${L("You're saving", "आप बचा रहे हैं")} ${rs(mrpOff)} ${L("on this order", "इस ऑर्डर पर")}</div>` : ""}
       ${D.freeAbove ? `<div class="ct-card ct-free"><p>${del ? L(`Add ${rs(D.freeAbove - sub)} more for FREE delivery`, `${rs(D.freeAbove - sub)} और जोड़ें, डिलीवरी फ्री पाएँ`) : L("🎉 You get FREE delivery on this order", "🎉 इस ऑर्डर पर डिलीवरी फ्री है")}</p><div class="ct-bar"><i style="width:${pct}%"></i></div></div>` : ""}
       ${rows}
-      <div class="ct-card ct-pd"><h4>${L("Price Details", "प्राइस डिटेल")} (${count} ${L(count === 1 ? "item" : "items", "आइटम")})</h4>
+      ${items.length ? `<div class="ct-card ct-pd"><h4>${L("Price Details", "प्राइस डिटेल")} (${count} ${L(count === 1 ? "item" : "items", "आइटम")})</h4>
         <div class="ct-r"><span>${L("Total MRP", "कुल MRP")}</span><span>${rs(mrpTotal)}</span></div>
         ${mrpOff > 0 ? `<div class="ct-r"><span>${L("Discount on MRP", "MRP पर छूट")}</span><span class="g">−${rs(mrpOff)}</span></div>` : ""}
         <div class="ct-r"><span>${L("Delivery fee", "डिलीवरी शुल्क")}</span><span class="${del ? "" : "g"}">${del ? rs(del) : L("FREE", "फ्री")}</span></div>
         <div class="ct-r t"><span>${L("Total Amount", "कुल राशि")}</span><span>${rs(total)}</span></div>
-        <small style="color:#6b7f74">${L("Have a coupon? You can apply it on the next step.", "कूपन है? अगले स्टेप में लगा सकते हैं।")}</small></div>
+        <small style="color:#6b7f74">${L("Have a coupon? You can apply it on the next step.", "कूपन है? अगले स्टेप में लगा सकते हैं।")}</small></div>` : ""}
       <div class="ct-trust"><span><b>🌿</b>${L("100% Ayurvedic", "100% आयुर्वेदिक")}</span><span><b>↩️</b>${L("Easy returns", "आसान रिटर्न")}</span><span><b>🔒</b>${L("Secure UPI pay", "सुरक्षित UPI")}</span></div>
     </div>
-    <div class="ct-bar2"><div><span><small>${L("Total", "कुल")}</small><strong>${rs(total)}</strong></span><button type="button" id="ctPlace">${L("Place Order", "ऑर्डर करें")}</button></div></div>`;
+    <div class="ct-bar2"><div><span><small>${L("Total", "कुल")}</small><strong>${rs(total)}</strong></span><button type="button" id="ctPlace" class="${oos.length || !items.length ? "off" : ""}">${L("Place Order", "ऑर्डर करें")}</button></div></div>`;
 
     const refresh = () => { renderCart(); renderCartPage(); };
     page.querySelector("#ctBack").onclick = closeCart;
-    page.querySelector("#ctPlace").onclick = () => { if (window.aashapuraClampCart && window.aashapuraClampCart().length) return renderCartPage(); openPremiumCheckout(); };
+    const rmOos = page.querySelector("#ctRmOos"); if (rmOos) rmOos.onclick = () => { oos.forEach(i => delete cart[i.id]); refresh(); };
+    page.querySelector("#ctPlace").onclick = () => { if (oos.length || !items.length) return toast(L("Please remove out-of-stock items first.", "पहले स्टॉक खत्म वाले आइटम हटाएँ।"), "error"); if (window.aashapuraClampCart && window.aashapuraClampCart().length) return renderCartPage(); openPremiumCheckout(); };
     page.querySelectorAll("[data-inc]").forEach(b => b.onclick = () => {
       const id = b.dataset.inc, p = products.find(x => String(x.id) === id);
       if (p && (Number(cart[id]) || 0) >= p.stock) return toast(L(`Only ${p.stock} available in stock`, `स्टॉक में सिर्फ़ ${p.stock} उपलब्ध`), "error");
@@ -127,6 +173,10 @@
       const id = b.dataset.dec; cart[id] = (Number(cart[id]) || 0) - 1; if (cart[id] <= 0) delete cart[id]; refresh();
     });
     page.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { delete cart[b.dataset.rm]; refresh(); });
+
+    // Fetch the latest stock (another customer's confirmed order may have used it up)
+    if (!noRefresh) refreshStock().then(ch => { if (ch) { window.renderCart(); window.renderCartPage(true); } });
+    startWatch();
   };
 
   // If the cart page is already open when this file loads, redraw it.

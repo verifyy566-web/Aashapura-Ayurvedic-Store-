@@ -97,6 +97,14 @@
       const name = q("#coName").value.trim(), phone = q("#coPhone").value.trim(), address = q("#coAddress").value.trim();
       if (!name || !phone || !address) return showStoreToast("नाम, मोबाइल और पूरा पता भरें।", "error");
       if (!/^[0-9+\-\s]{10,15}$/.test(phone)) return showStoreToast("मोबाइल नंबर सही भरें।", "error");
+      if (window.aashapuraRefreshStock) {
+        await window.aashapuraRefreshStock(true);
+        const bad = items.find(i => i.product.stock < i.qty);
+        if (bad) {
+          showStoreToast(bad.product.stock <= 0 ? L(`${bad.name} is out of stock now. Please update your bag.`, `${bad.name} अब स्टॉक में नहीं है। कार्ट अपडेट करें।`) : L(`Only ${bad.product.stock} of ${bad.name} left. Please update your bag.`, `${bad.name} सिर्फ़ ${bad.product.stock} बचा है। कार्ट अपडेट करें।`), "error");
+          close(); try { window.renderCart(); window.renderCartPage(true); } catch (e) {} return;
+        }
+      }
       const pin = q("#coPin").value.trim();
       if (!/^[1-9][0-9]{5}$/.test(pin)) return showStoreToast(L("Enter a valid 6-digit pincode.", "6 अंकों का सही पिनकोड भरें।"), "error");
       const pr = await checkPin();

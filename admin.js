@@ -54,6 +54,17 @@
   };
 
   async function setO(o, patch, okMsg) {
+    if (["confirmed", "shipped", "delivered"].includes(patch.order_status || "") && (lc(o.order_status) || "pending") === "pending") {
+      try {
+        const its = Array.isArray(o.items) ? o.items : [];
+        const ids = its.map(i => Number(i.id)).filter(Boolean);
+        if (ids.length) {
+          const pr = await sb().from("products").select("id,name,stock").in("id", ids);
+          const bad = (pr.data || []).map(p => { const it = its.find(i => Number(i.id) === Number(p.id)); const q = Number(it && (it.qty || it.quantity) || 1); return Number(p.stock || 0) < q ? `${p.name}: stock ${p.stock}, order qty ${q}` : null; }).filter(Boolean);
+          if (bad.length && !(await confirm("⚠️ Stock kam hai:\n" + bad.join("\n") + "\nPhir bhi confirm karein? (Customer ko refund dena pad sakta hai)"))) return;
+        }
+      } catch (e) {}
+    }
     const now = new Date().toISOString(), ts = {};
     if (patch.payment_status === "paid") ts.paid_at = now;
     if (patch.order_status === "confirmed") ts.confirmed_at = now;
@@ -78,6 +89,7 @@
       </div>
       <table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>${items.map(i => `<tr><td>${esc(i.name)}${i.weight ? " (" + esc(i.weight) + ")" : ""}</td><td>${Number(i.qty || i.quantity || 1)}</td><td>${money(i.price)}</td><td>${money(i.price * (i.qty || i.quantity || 1))}</td></tr>`).join("")}</table>
       <div>Subtotal ${money(o.subtotal)}${Number(o.discount) ? " · Discount −" + money(o.discount) + (o.coupon_code ? " (" + esc(o.coupon_code) + ")" : "") : ""} · Delivery ${Number(o.delivery_charge) ? money(o.delivery_charge) : "FREE"} · <b>Total ${money(o.total)}</b></div>
+      <div>${o.stock_deducted ? "📦 Stock kam ho chuka hai" : "Stock: confirm par kam hoga"}</div>
       <div>Order No: <b>${num(o)}</b> · DB ID: ${esc(o.id)} · Payment screenshot: <b>${o.utr ? "sent on WhatsApp (check chat)" : "not yet"}</b></div>
       ${o.cancel_reason ? `<div style="color:#b42318">Cancel reason: ${esc(o.cancel_reason)}</div>` : ""}
       <div class="ad-acts"></div></div>`;
