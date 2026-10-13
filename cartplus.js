@@ -29,7 +29,7 @@
   .mv-q{font-size:16px;color:#2d3f35;margin:0 0 16px}
   .mv-row{display:flex;gap:10px}
   .mv-row button{flex:1;padding:14px 8px;border-radius:12px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;border:1px solid #cdd8cf;background:#fff;color:#14301f}
-  .mv-row .wl{background:#e0245e;border-color:#e0245e;color:#fff}`;
+  .mv-row .wl{background:var(--green,#123c2b);border-color:var(--green,#123c2b);color:#fff}`;
   document.head.appendChild(css);
 
   /* ---------- header: wishlist heart + cart icon ---------- */
