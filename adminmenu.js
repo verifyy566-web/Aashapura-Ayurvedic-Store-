@@ -6,6 +6,7 @@
   const SECS = [
     { id: "overview", icon: "📊", title: "Sales Overview", sub: "Sales, payments, low stock" },
     { id: "orders", icon: "🧾", title: "Orders", sub: "Search, confirm, ship, track" },
+    { id: "customers", icon: "👥", title: "Customers", sub: "Kaun kitna kharidta hai" },
     { id: "refunds", icon: "↩️", title: "Refund Requests", sub: "Approve or reject returns" },
     { id: "alerts", icon: "🔔", title: "Stock Alerts", sub: "Customers waiting for stock" },
     { id: "add", icon: "➕", title: "Add Product", sub: "New product with photos" },
@@ -18,7 +19,7 @@
     { id: "log", icon: "📜", title: "Activity Log", sub: "Kisne kya badla, kab" },
     { id: "backup", icon: "💾", title: "Backup", sub: "Data download (CSV / JSON)" }
   ];
-  window.aashapuraAdmin = { sections: SECS, active: () => false };
+  window.aashapuraAdmin = { sections: SECS, active: () => false, badges: {}, setBadges(o) { this.badges = o || {}; document.dispatchEvent(new Event("aashapura-badges")); } };
   if (!isRoute) return;
 
   const KEY = "aashapura_admin_sec";
@@ -48,6 +49,8 @@
   .adm-dl button small{display:block;color:#7a8a80;font-size:12px}
   .adm-dl button.on{background:#eef5ea;border-left-color:#2f6b3a;font-weight:700}
   .adm-dl .sp{height:1px;background:#e8eee5;margin:6px 0}
+  body.adm-mode .menu-toggle{position:relative}
+  body.adm-mode .menu-toggle[data-n]::after{content:attr(data-n);position:absolute;top:-6px;right:-6px;background:#b42318;color:#fff;border-radius:99px;font-size:11px;min-width:18px;height:18px;line-height:18px;text-align:center;font-weight:700;padding:0 4px}
   .adm-badge{margin-left:auto;background:#b42318;color:#fff;border-radius:99px;font-size:11px;padding:2px 8px;font-weight:700}
   .adm-df{padding:12px 18px;border-top:1px solid #e8eee5}.adm-df button{width:100%;padding:12px;border-radius:10px;border:1px solid #c0392b;background:#fff;color:#c0392b;font-weight:700;font-size:15px;cursor:pointer}`;
   document.head.appendChild(st);
@@ -75,6 +78,7 @@
   function go(id) {
     cur = id; try { sessionStorage.setItem(KEY, id); } catch (e) {}
     apply(); shut(); window.scrollTo({ top: 0, behavior: "auto" });
+    try { document.dispatchEvent(new CustomEvent("aashapura-admin-sec", { detail: id })); } catch (e) {}
   }
   window.aashapuraAdmin.go = go; window.aashapuraAdmin.cur = () => cur;
 
@@ -84,7 +88,8 @@
     const list = dr.querySelector(".adm-dl");
     SECS.forEach(s => {
       const b = document.createElement("button"); b.type = "button"; if (s.id === cur) b.className = "on";
-      b.innerHTML = `<span style="font-size:20px">${s.icon}</span><span>${s.title}<small>${s.sub}</small></span>`;
+      const bn = Number((window.aashapuraAdmin.badges || {})[s.id]) || 0;
+      b.innerHTML = `<span style="font-size:20px">${s.icon}</span><span>${s.title}<small>${s.sub}</small></span>${bn > 0 ? `<span class="adm-badge">${bn}</span>` : ""}`;
       b.onclick = () => go(s.id); list.appendChild(b);
     });
     const sp = document.createElement("div"); sp.className = "sp"; list.appendChild(sp);
@@ -99,6 +104,7 @@
   const mt = $("menuToggle");
   if (mt) mt.addEventListener("click", e => { if (!loggedIn()) return; e.stopImmediatePropagation(); e.preventDefault(); openDrawer(); }, true);
 
+  setTimeout(() => { try { document.dispatchEvent(new CustomEvent("aashapura-admin-sec", { detail: cur })); } catch (e) {} }, 0);
   const b = box();
   if (b) {
     new MutationObserver(apply).observe(b, { attributes: true, attributeFilter: ["style"] });

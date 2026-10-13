@@ -26,6 +26,7 @@
   const isPaid = o => lc(o.payment_status) === "paid";
   const isCan = o => lc(o.order_status) === "cancelled";
   const num = o => esc(o.order_no || o.id);
+  const isNew = o => !isCan(o) && new Date(o.created_at).getTime() > (Number(window.aashapuraAdminSeenAt) || Infinity);
 
   function stats() {
     const sold = ORD.filter(o => isPaid(o) && !isCan(o)), can = ORD.filter(isCan);
@@ -82,7 +83,7 @@
     const items = Array.isArray(o.items) ? o.items : [];
     const refs = REF.filter(r => String(r.order_id) === String(o.id));
     const d = document.createElement("details"); d.className = "ad-o";
-    d.innerHTML = `<summary><b>#${num(o)}</b> · ${esc(o.customer_name || p.full_name || "Customer")} · <b>${money(o.total)}</b><br><small>${esc(dt(o.created_at))}</small> ${bd(o.order_status)} ${bd(isPaid(o) ? "paid" : "unpaid")}${!isPaid(o) && !isCan(o) && o.utr ? ` <span class="ad-b" style="background:#fff3cd;color:#8a5a00">📷 screenshot sent · check &amp; confirm</span>` : ""}${refs.length ? ` <span class="ad-b" style="background:#fee4e2;color:#b42318">return: ${esc(refs[0].status)}</span>` : ""}</summary>
+    d.innerHTML = `<summary>${isNew(o) ? `<span class="ad-b" style="background:#b42318;color:#fff;margin:0 6px 0 0">NEW</span>` : ""}<b>#${num(o)}</b> · ${esc(o.customer_name || p.full_name || "Customer")} · <b>${money(o.total)}</b><br><small>${esc(dt(o.created_at))}</small> ${bd(o.order_status)} ${bd(isPaid(o) ? "paid" : "unpaid")}${!isPaid(o) && !isCan(o) && o.utr ? ` <span class="ad-b" style="background:#fff3cd;color:#8a5a00">📷 screenshot sent · check &amp; confirm</span>` : ""}${refs.length ? ` <span class="ad-b" style="background:#fee4e2;color:#b42318">return: ${esc(refs[0].status)}</span>` : ""}</summary>
       <div class="ad-in"><div class="ad-grid">
         <div><b>Customer</b><br>${esc(o.customer_name || "")}<br>📞 ${esc(o.phone || "—")}<br>✉️ ${esc(o.customer_email || "—")}<br>📍 ${esc((o.address || o.delivery_address || "—"))}${o.pincode ? "<br>PIN: <b>" + esc(o.pincode) + "</b>" + (o.delivery_area ? " · " + esc(o.delivery_area) : "") : ""}</div>
         <div><b>Profile (login)</b><br>${p.full_name ? esc(p.full_name) + "<br>📞 " + esc(p.phone || "") + "<br>📍 " + esc(p.address || "") : "—"}<br><small>User ID: ${esc(o.user_id)}<br>Orders by this customer: ${nOrd}${nOrd > 1 ? " (repeat)" : ""}</small></div>
@@ -108,6 +109,13 @@
       if (os !== "delivered") add("✕ Cancel", async () => { const r = await window.prompt("Cancel reason:", ""); if (r !== null && r !== undefined) setO(o, { order_status: "cancelled", cancel_reason: String(r).trim(), cancelled_at: new Date().toISOString() }, "Cancelled"); });
     }
     const ph = String(o.phone || p.phone || "").replace(/\D/g, "").slice(-10);
+    const wa = txt => window.open(`https://wa.me/91${ph}?text=${encodeURIComponent(txt)}`, "_blank", "noopener");
+    const hi = "Namaste " + (o.customer_name || p.full_name || "") + ", ", no = o.order_no || o.id;
+    if (ph && !isCan(o) && ["confirmed", "shipped", "delivered"].includes(os)) {
+      if (os === "confirmed") add("📲 Confirm msg", () => wa(hi + "aapka order " + no + " (" + money(o.total) + ") confirm ho gaya hai. Hum jaldi hi ise ship karenge. Dhanyavaad - Aashapura Ayurveda"));
+      if (os === "shipped") add("📲 Shipped msg", () => wa(hi + "aapka order " + no + " ship ho gaya hai." + (o.courier ? " Courier: " + o.courier + "." : "") + (o.tracking_id ? " Tracking ID: " + o.tracking_id + "." : "") + " Jaldi pahunch jayega. - Aashapura Ayurveda"));
+      if (os === "delivered") add("📲 Delivered msg", () => wa(hi + "aapka order " + no + " deliver ho gaya hai. Product pasand aaye to website par review zaroor dein. Dhanyavaad - Aashapura Ayurveda"));
+    }
     if (ph) add("💬 WhatsApp", () => window.open(`https://wa.me/91${ph}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", Aashapura Ayurveda order " + (o.order_no || o.id) + " (" + money(o.total) + "): ")}`, "_blank", "noopener"));
     if (["confirmed", "shipped"].includes(os)) {
       const box = document.createElement("div"); box.className = "ad-trk";
