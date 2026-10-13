@@ -40,14 +40,28 @@
     if (CARE.test(q)) out += "⚠️ गर्भावस्था, बच्चों, लंबी बीमारी या चल रही दवा में पहले अपने डॉक्टर/वैद्य से ज़रूर पूछें।\n";
     return out.trim();
   }
+  /* Gemini ke jawab se markdown (**, *, #) hata do: screen par bhi saaf dikhe aur awaaz "tarankan" na bole */
+  const clean = t => String(t || "").replace(/\*\*|__|`/g, "").replace(/^\s*#{1,6}\s*/gm, "").replace(/^\s*[*\-]\s+/gm, "\u2022 ").replace(/\*/g, "").replace(/\n{3,}/g, "\n\n").trim();
+  /* Jawab ki bhasha: Devanagari = "hi" (Hindi), Roman Hindi = "hing" (Hinglish), saaf English = "en". Sawal ki bhasha wahi jawab ki bhasha. */
+  function detectLang(q) {
+    q = String(q || "");
+    if (/\b(in|reply in|answer in|speak in)\s+english\b|\benglish\s+(me|mein|main|mai)\b/i.test(q)) return "en";
+    if (/\bhinglish\b/i.test(q)) return "hing";
+    if (/\b(in|reply in|answer in)\s+hindi\b|\bhindi\s+(me|mein|main|mai)\b/i.test(q)) return "hi";
+    if (/[\u0900-\u097F]/.test(q)) return "hi";
+    const w = q.toLowerCase().match(/[a-z']+/g) || [];
+    const en = w.filter(x => /^(the|is|are|what|how|why|can|could|should|does|do|i|my|me|for|of|to|and|with|in|on|at|have|has|good|best|help|tell|about|which|when|a|an|it|this|that|you|please|benefits|use|take|cure|treatment|remedy|remedies|sleep|pain|cold|cough|fever|skin|hair|weight|digestion|stress)$/.test(x)).length;
+    const hi = w.filter(x => /^(ka|ki|ke|ko|me|mein|hai|hain|kya|kaise|kyun|nahi|nahin|ilaaj|upay|dawai|bimari|aur|se|par|ho|hoga|karo|batao|bataiye|mujhe|mera|meri|liye|wala|wali|kaun|kab|kitna|kitni|lun|lu|lena|lein|chahiye|rahta|rehta|aati|aata)$/.test(x)).length;
+    return en >= 2 && en > hi ? "en" : "hing";
+  }
   async function answer(q) {
     if (ENDPOINT) {
       try {
         const herbs = pick(q), ps = prods(q, herbs).map(p => ({ name: p.name, price: p.price, benefits: p.ay_benefits, usage: p.ay_usage, dose: p.ay_dose, precautions: p.ay_precautions, ingredients: p.ay_ingredients }));
         let key = ""; try { key = SUPABASE_KEY; } catch (e) { }
-        const r = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", apikey: key, Authorization: "Bearer " + key }, body: JSON.stringify({ messages: msgs.slice(-6).map(m => ({ role: m.r, content: m.t })), products: ps }) });
+        const r = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", apikey: key, Authorization: "Bearer " + key }, body: JSON.stringify({ messages: msgs.slice(-6).map(m => ({ role: m.r, content: m.t })), products: ps, lang: detectLang(q) }) });
         const j = await r.json();
-        if (j && j.reply) return j.reply;
+        if (j && j.reply) return clean(j.reply);
       } catch (e) { }
     }
     return local(q);
@@ -55,18 +69,20 @@
   let voices = [];
   const loadV = () => { voices = (window.speechSynthesis && speechSynthesis.getVoices()) || []; };
   if (window.speechSynthesis) { loadV(); speechSynthesis.onvoiceschanged = loadV; }
-  function bestVoice() {
+  function bestVoice(en) {
+    if (en) { const e = voices.filter(v => /^en[-_]IN/i.test(v.lang)), e2 = e.length ? e : voices.filter(v => /^en/i.test(v.lang)); return e2.find(v => /google/i.test(v.name)) || e2[0] || null; }
+
     const hi = voices.filter(v => /^hi[-_]?IN/i.test(v.lang) || /hindi|हिन्दी|हिंदी/i.test(v.name));
     return hi.find(v => /google/i.test(v.name)) || hi.find(v => /female|lekha|kalpana|swara|neerja/i.test(v.name)) || hi[0] || null;
   }
   function speak(t) {
     if (!window.speechSynthesis) return alert("इस फ़ोन में बोलने की सुविधा नहीं है।");
     speechSynthesis.cancel(); loadV();
-    const v = bestVoice();
-    if (!v) alert("आपके फ़ोन में हिन्दी आवाज़ नहीं मिली। Settings → Language → Text-to-speech → Google → Voice data → Hindi (भारत) डाउनलोड करें।");
+    const en = !/[\u0900-\u097F]/.test(String(t)); const v = bestVoice(en);
+    if (!v && !en) alert("आपके फ़ोन में हिन्दी आवाज़ नहीं मिली। Settings → Language → Text-to-speech → Google → Voice data → Hindi (भारत) डाउनलोड करें।");
     const clean = String(t).replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF•]/gu, " ").replace(/\n+/g, "। ");
     clean.match(/[^।.!?]+[।.!?]?/g).filter(x => x.trim()).forEach(part => {
-      const u = new SpeechSynthesisUtterance(part.trim()); u.lang = "hi-IN"; u.rate = .92; u.pitch = 1; if (v) u.voice = v; speechSynthesis.speak(u);
+      const u = new SpeechSynthesisUtterance(part.trim()); u.lang = en ? "en-IN" : "hi-IN"; u.rate = .92; u.pitch = 1; if (v) u.voice = v; speechSynthesis.speak(u);
     });
   }
   const css = `.aai-fab{position:fixed;left:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:9000;display:flex;align-items:center;gap:6px;padding:12px 16px;border:1.5px solid #d9b36a;border-radius:99px;background:linear-gradient(135deg,#1e6245,#123c2b);color:#f3e2b3;font:600 14px 'DM Sans',sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.28);cursor:pointer}
