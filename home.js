@@ -158,7 +158,7 @@
     }
     list.append(
       item("🌐", "Language", window.AASHAPURA_LANG === "hi" ? "हिन्दी" : "English", () => { const l = document.querySelector(".lang-btn"); if (l) l.click(); }),
-      item("💬", "Help Center", "Chat with us on WhatsApp", () => wa("Hello Aashapura Ayurveda, I need help.")),
+      item("🎧", "Help Desk", "Order problem? Hum madad karenge", () => (window.aashapuraHelpDesk ? window.aashapuraHelpDesk.open() : wa("Hello Aashapura Ayurveda, I need help."))),
       item("ℹ️", "About Us", "", () => $("about").scrollIntoView({ behavior: "smooth" })),
       item("📞", "Contact Us", "", () => $("contact").scrollIntoView({ behavior: "smooth" }))
     );
