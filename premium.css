@@ -93,3 +93,12 @@ html body .premium-toast{border:1px solid var(--gold2);border-radius:16px;box-sh
 html body button,html body a{-webkit-tap-highlight-color:rgba(184,137,59,.18)}
 html body .ad-o,html body .ad-stat{border-radius:14px}
 @media(max-width:760px){html body .brand strong{font-size:20px}html body .m-banner h2{font-size:27px}html body .m-title{font-size:19px}}
+
+/* v52: prices/numbers normal (lining) font sitewide.
+   Cormorant Garamond ke digits "old-style" (upar-neeche) dikhte the. Neeche ka rule sirf digits aur Rs-sign ko
+   phone/system ke normal sans font se dikhata hai, baaki akshar waise hi rahte hain. */
+@font-face{font-family:'Cormorant Garamond';font-weight:100 900;font-style:normal;
+  src:local('Roboto'),local('Arial'),local('Helvetica Neue'),local('Helvetica'),local('Segoe UI'),local('Noto Sans'),local('Liberation Sans');
+  unicode-range:U+0030-0039,U+20B9,U+002C,U+002E,U+002F,U+0025}
+html body{font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1}
+html body .pp-price,html body .product-buy strong,html body .pp-mrp,html body .card-mrp,html body [class*="price"],html body [class*="amt"]{font-family:var(--sans);font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1;letter-spacing:0}
