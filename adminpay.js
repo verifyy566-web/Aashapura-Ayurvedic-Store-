@@ -29,7 +29,7 @@
     else if (r.data) cur = { upi_id: r.data.upi_id || cur.upi_id, payee_name: r.data.payee_name || cur.payee_name, qr_url: r.data.qr_url || "" };
     let file = null, clearQr = false;
 
-    host.innerHTML = `<div class="pay-box"><h3>💳 Payment (UPI &amp; QR)</h3>
+    host.innerHTML = `<div class="pay-box">
       <p class="s">Yahan se UPI ID aur QR badlo. Naye orders me turant dikhega.</p>
       ${missing ? `<div class="pay-msg bad">Pehle Supabase SQL Editor me <b>supabase_v28.sql</b> chalao, phir page refresh karo.</div>` : ""}
       <label>UPI ID</label><input type="text" id="payUpi" value="${esc(cur.upi_id)}" autocapitalize="none" autocomplete="off" placeholder="name@bank">
