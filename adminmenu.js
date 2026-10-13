@@ -69,8 +69,7 @@
     const s = SECS.find(x => x.id === cur) || SECS[0];
     const t = $("admTitle");
     if (t) {
-      t.innerHTML = `<span class="ic">${s.icon}</span><div><b>${s.title}</b><small>${s.sub}</small></div><button type="button" class="adm-mn">☰ Menu</button>`;
-      t.querySelector(".adm-mn").onclick = openDrawer;
+      t.innerHTML = `<span class="ic">${s.icon}</span><div><b>${s.title}</b><small>${s.sub}</small></div>`;
     }
   }
   function go(id) {

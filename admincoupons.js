@@ -145,7 +145,7 @@
       if (mode === "days") { const n = Math.floor(Number(g("cpDays").value)); if (!(n >= 1 && n <= 3650)) return msg("Din 1 se 3650 ke beech likho."); d = daysDate(n); }
       else if (mode === "date") { d = g("cpExp").value; if (!d) return msg("Last date chuno."); if (d < daysDate(0)) return msg("Date aaj ya aage ki chuno."); }
       const row = {
-        discount_percent: type === "percent" ? v : null, discount_amount: type === "flat" ? v : null,
+        discount_percent: type === "percent" ? v : 0, discount_amount: type === "flat" ? v : 0,
         min_order: min, is_active: g("cpAct").checked, expires_at: d ? d + "T23:59:59+05:30" : null,
         description: g("cpDs").value.trim() || null
       };

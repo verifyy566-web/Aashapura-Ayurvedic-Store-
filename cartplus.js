@@ -51,9 +51,18 @@
   }
   function paintBadge() {
     const b = document.getElementById("wishBadge"), w = W(); if (!b || !w) return;
-    const n = w.count(); b.textContent = n; b.classList.toggle("zero", !n);
+    const prods = (typeof products !== "undefined" && Array.isArray(products)) ? products : [];
+    let n = 0;
+    if (prods.length) {
+      const seen = new Set(); w.ids().forEach(id => { const p = prods.find(x => x.id === window.primaryId(id)); if (p) seen.add(p.id); });
+      n = seen.size;
+      const bad = w.ids().filter(id => !prods.some(x => x.id === Number(id)));
+      if (bad.length) { try { w.set(w.ids().filter(id => prods.some(x => x.id === Number(id)))); } catch (e) {} }
+    }
+    b.textContent = n; b.classList.toggle("zero", !n);
   }
   window.addEventListener("aashapura-wish", paintBadge);
+  setInterval(paintBadge, 2000);
 
   /* ---------- Move from Bag sheet ---------- */
   function sheet(id, rowEl) {
