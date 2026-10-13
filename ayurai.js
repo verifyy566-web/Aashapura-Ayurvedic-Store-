@@ -59,7 +59,7 @@
   }
   const SP = {}; /* Hinglish jawab -> usi ka Devanagari rup, sirf bolne ke liye (Hindi voice ke liye) */
   async function answer(q, img) {
-    let err = "";
+    let err = "", dbg = "";
     if (ENDPOINT) {
       try {
         const herbs = pick(q), ps = prods(q, herbs).map(p => ({ name: p.name, price: p.price, benefits: p.ay_benefits, usage: p.ay_usage, dose: p.ay_dose, precautions: p.ay_precautions, ingredients: p.ay_ingredients }));
@@ -67,12 +67,14 @@
         const body = { messages: msgs.slice(-6).map(m => ({ role: m.r, content: m.t })), products: ps, lang: detectLang(q) };
         if (img) body.image = { mime: img.mime, data: img.data };
         const r = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", apikey: key, Authorization: "Bearer " + key }, body: JSON.stringify(body) });
-        const j = await r.json();
+        const rawT = await r.text(); let j = null;
+        try { j = JSON.parse(rawT); } catch (e) { dbg = "HTTP " + r.status + " " + rawT.slice(0, 100); }
         if (j && j.reply) { const c = clean(j.reply); if (j.speech) SP[c] = clean(j.speech); return c; }
         err = (j && j.error) || "fail";
-      } catch (e) { err = "fail"; }
+        if (j && !dbg) dbg = j.detail || j.message || (r.ok ? "" : "HTTP " + r.status);
+      } catch (e) { err = "fail"; dbg = "net: " + String(e && e.message || e).slice(0, 80); }
     }
-    if (img) return "📷 फोटो समझने के लिए AI चाहिए। " + busyMsg(err || "fail");
+    if (img) return "📷 फोटो समझने के लिए AI चाहिए। " + busyMsg(err || "fail") + (dbg && err !== "quota" ? "\n\n(तकनीकी कारण: " + String(dbg).slice(0, 300) + ")" : "");
     return local(q, err);
   }
   /* Photo chhoti karo (max 1024px JPEG) taaki upload tez ho aur AI quota kam lage */
