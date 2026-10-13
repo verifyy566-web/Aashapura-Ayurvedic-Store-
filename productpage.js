@@ -19,6 +19,19 @@
     return urls.filter(Boolean);
   };
   const imagesOf = p => allMedia(p).filter(u => !isVid(u));
+  const L = (en, hi) => (window.AASHAPURA_LANG === "hi" ? hi : en);
+  const AY = [
+    ["ay_ingredients", "🌿", "Ingredients", "सामग्री"], ["ay_benefits", "✨", "Benefits", "फ़ायदे"], ["ay_usage", "🥄", "How to use", "कैसे उपयोग करें"],
+    ["ay_dose", "⚖️", "Dose", "मात्रा"], ["ay_precautions", "⚠️", "Precautions", "सावधानियाँ"]
+  ];
+  const ayTabs = (p, variants) => AY.map(([k, ic, en, hi]) => {
+    const v = [p].concat(variants).map(x => String(x && x[k] || "").trim()).find(Boolean);
+    return v ? { k, ic, label: L(en, hi), v } : null;
+  }).filter(Boolean);
+  const ayHtml = v => {
+    const lines = v.split(/\n+/).map(x => x.replace(/^\s*[-•*·]\s*/, "").trim()).filter(Boolean);
+    return lines.length > 1 ? `<ul>${lines.map(x => `<li>${escapeHTML(x)}</li>`).join("")}</ul>` : `<p>${escapeHTML(lines[0] || v)}</p>`;
+  };
   const resetUrl = id => { const u = new URL(location.href); id ? u.searchParams.set("product", id) : u.searchParams.delete("product"); history.replaceState({}, "", u); };
 
   window.renderProductPage = function (p) {
@@ -31,12 +44,13 @@
     const variants = products.filter(x => norm(x) === norm(p)).sort((a, b) => ((unit(a.weight)?.v) || a.price) - ((unit(b.weight)?.v) || b.price));
     const rel = [], seen = new Set([norm(p)]);
     products.filter(x => x.category === p.category).forEach(x => { if (!seen.has(norm(x)) && rel.length < 8) { seen.add(norm(x)); rel.push(x); } });
+    const ay = ayTabs(p, variants);
     const [sk, st] = stockLine(p);
     const d = off(p);
     const maxQ = Math.max(1, Math.min(10, p.stock || 10));
 
     page.innerHTML = `
-      <div class="pp-top"><button type="button" id="ppBack" aria-label="वापस">←</button><span>${escapeHTML(p.name)}</span></div>
+      <div class="pp-top"><button type="button" id="ppBack" aria-label="वापस">←</button><span>${escapeHTML(p.name)}</span><button type="button" id="ppWish" class="pp-wish" aria-label="Wishlist">♡</button></div>
       <div class="pp-wrap">
         <div class="pp-gallery">
           ${d ? `<span class="pp-badge">${d}% छूट</span>` : ""}
@@ -70,6 +84,7 @@
             <tr><th>ब्रांड</th><td>Aashapura Ayurveda</td></tr>
           </table>
           ${p.desc ? `<h3>विवरण</h3><p class="pp-desc">${escapeHTML(p.desc)}</p>` : ""}
+          ${ay.length ? `<h3>🌿 ${L("Ayurveda Info", "आयुर्वेद जानकारी")}</h3><div class="pp-ay"><div class="pp-ay-tabs" role="tablist">${ay.map((t, i) => `<button type="button" role="tab" data-ay="${i}" class="${i ? "" : "on"}${t.k === "ay_precautions" ? " warn" : ""}">${t.ic} ${escapeHTML(t.label)}</button>`).join("")}</div><div class="pp-ay-body" id="ppAyBody">${ayHtml(ay[0].v)}</div><small class="pp-ay-note">${L("General information. If you are pregnant, have a medical condition or take medicines, please consult your Vaidya/doctor first.", "यह सामान्य जानकारी है। गर्भावस्था, कोई बीमारी या दवा चल रही हो तो पहले वैद्य/डॉक्टर से सलाह लें।")}</small></div>` : ""}
           ${p.video_url ? `<p><a href="${escapeHTML(p.video_url)}" target="_blank" rel="noopener">▶ प्रोडक्ट वीडियो देखें</a></p>` : ""}
         </div>
       </div>
@@ -85,6 +100,13 @@
       dots.forEach((x, j) => x.classList.toggle("on", i === j));
       slides.querySelectorAll("video").forEach(v => { const k = Array.prototype.indexOf.call(slides.children, v.parentNode); if (k !== i) v.pause(); });
     }, { passive: true });
+
+    const ayB = page.querySelector("#ppAyBody");
+    page.querySelectorAll("[data-ay]").forEach(b => b.onclick = () => {
+      page.querySelectorAll("[data-ay]").forEach(x => x.classList.toggle("on", x === b));
+      ayB.innerHTML = ayHtml(ay[Number(b.dataset.ay)].v);
+    });
+    (window.aashapuraPPHooks || []).forEach(h => { try { h(page, p); } catch (e) { console.warn(e); } });
 
     page.querySelector("#ppBack").onclick = () => { page.remove(); resetUrl(null); };
     page.querySelectorAll("[data-v]").forEach(b => b.onclick = () => {

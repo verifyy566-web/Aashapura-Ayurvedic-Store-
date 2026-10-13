@@ -50,7 +50,7 @@
   .rf-form label{display:block;margin:10px 0 4px;font-weight:600;font-size:14px}
   .rf-form select,.rf-form input,.rf-form textarea{width:100%;box-sizing:border-box;padding:11px;border:1px solid #ccc;border-radius:10px;font-size:16px;background:#fff}
   .rf-empty{text-align:center;color:#666;padding:30px 10px}
-  .rf-admin{margin-top:18px;border-top:2px solid #ccc;padding-top:12px}
+  .rf-admin{padding-top:2px}
   .rf-admin .rf-acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
   .rf-admin .rf-acts button{flex:1;padding:9px;border-radius:8px;border:1px solid #999;background:#fff}`;
   document.head.appendChild(st);
@@ -309,15 +309,12 @@
     let uid = null;
     try { uid = (await sb().auth.getUser()).data.user?.id; } catch (e) {}
     if (!uid || uid !== AASHAPURA_ADMIN_UID) return;
-    let host = $("adminRefunds");
-    if (!host) {
-      host = document.createElement("div"); host.id = "adminRefunds"; host.className = "rf-admin";
-      const logout = box.querySelector('button[onclick="adminLogout()"]');
-      logout ? box.insertBefore(host, logout) : box.appendChild(host);
-    }
-    host.innerHTML = "<h3>Refund Requests</h3><p>Loading…</p>";
+    const host = $("admSec-refunds");
+    if (!host) return;
+    host.classList.add("rf-admin");
+    host.innerHTML = "<p>Loading…</p>";
     const { data, error } = await sb().from("store_refunds").select("*").order("created_at", { ascending: false }).limit(50);
-    if (error) { host.innerHTML = `<h3>Refund Requests</h3><p>${esc(error.message)}</p>`; return; }
+    if (error) { host.innerHTML = `<p>${esc(error.message)}</p>`; return; }
     let orders = {};
     try {
       const ids = [...new Set(data.map(r => r.order_id))];
@@ -326,7 +323,9 @@
         (q.data || []).forEach(x => { orders[String(x.id)] = x; });
       }
     } catch (e) {}
-    host.innerHTML = `<div class="rf-row"><h3 style="margin:0">Refund Requests</h3><button type="button" id="rfReload">↻</button></div>`;
+    adminRefundsLoaded = true;
+    const open = data.filter(r => ["requested", "approved", "picked_up"].includes(r.status)).length;
+    host.innerHTML = `<div class="rf-row"><span class="adm-sub">${open} open · ${data.length} total</span><button type="button" id="rfReload" aria-label="Refresh">↻</button></div>`;
     host.querySelector("#rfReload").onclick = adminRefunds;
     if (!data.length) host.insertAdjacentHTML("beforeend", "<p>No refund requests.</p>");
     data.forEach(r => {
@@ -350,30 +349,33 @@
       btns.forEach(([s2, label]) => {
         const b = document.createElement("button"); b.type = "button"; b.textContent = label;
         b.onclick = async () => {
+          if (b.disabled) return;
           const now = new Date().toISOString(), ts = {};
           if (s2 === "approved") {
             ts.approved_at = now;
             if (!cType) {
               const def = new Date(Date.now() + 2 * 864e5).toISOString().slice(0, 10);
-              const d = window.prompt("Pickup by (date, YYYY-MM-DD):", def);
-              if (d === null) return;
-              if (!/^\d{4}-\d{2}-\d{2}$/.test(d.trim())) return toast("Date aise likho: 2026-10-14", "error");
-              ts.pickup_by = d.trim();
+              const d = await window.prompt("Pickup by (date, YYYY-MM-DD):", def);
+              if (d === null || d === undefined) return;
+              if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d).trim())) return toast("Date aise likho: 2026-10-14", "error");
+              ts.pickup_by = String(d).trim();
             }
           }
           if (s2 === "picked_up") ts.picked_up_at = now;
           if (s2 === "refunded") ts.refunded_at = now;
           if (s2 === "rejected") ts.rejected_at = now;
-          const note = window.prompt("Message for customer (optional):", r.admin_note || "");
-          if (note === null) return;
-          const base = { status: s2, admin_note: note.trim() || null, updated_at: now };
-          let up = await sb().from("store_refunds").update({ ...base, ...ts }).eq("id", r.id);
+          const note = await window.prompt(s2 === "rejected" ? "Reject reason (customer ko dikhega):" : "Message for customer (optional):", r.admin_note || "");
+          if (note === null || note === undefined) return;
+          const base = { status: s2, admin_note: String(note).trim() || null, updated_at: now };
+          b.disabled = true;
+          let up = await sb().from("store_refunds").update({ ...base, ...ts }).eq("id", r.id).select("id");
           if (up.error && /column|schema/i.test(up.error.message || "")) {
-            up = await sb().from("store_refunds").update(base).eq("id", r.id);
+            up = await sb().from("store_refunds").update(base).eq("id", r.id).select("id");
             if (!up.error) toast("Status save hua, par dates ke liye supabase_v12.sql chalao.", "error");
           }
-          if (up.error) return toast(up.error.message, "error");
-          toast("Updated"); adminRefunds();
+          if (up.error) { b.disabled = false; return toast(up.error.message, "error"); }
+          if (!up.data || !up.data.length) { b.disabled = false; return toast("Update nahi hua (permission). Admin se dobara login karo.", "error"); }
+          toast(s2 === "rejected" ? "Request rejected" : s2 === "approved" ? "Request approved" : "Updated"); adminRefunds();
         };
         acts.appendChild(b);
       });
@@ -381,9 +383,10 @@
     });
   }
 
+  let adminRefundsLoaded = false;
   const ab = $("adminProductBox");
   if (ab) {
-    new MutationObserver(() => { if (ab.style.display !== "none" && !$("adminRefunds")) adminRefunds(); }).observe(ab, { attributes: true, attributeFilter: ["style"] });
+    new MutationObserver(() => { if (ab.style.display !== "none" && !adminRefundsLoaded) adminRefunds(); }).observe(ab, { attributes: true, attributeFilter: ["style"] });
     setTimeout(adminRefunds, 1500);
   }
 })();

@@ -8,7 +8,7 @@
   <script src="i18n.js?v=2"></script>
   <script src="popup.js?v=2"></script>
   <link rel="stylesheet" href="styles.css?v=2">
-  <link rel="stylesheet" href="enhance.css?v=4">
+  <link rel="stylesheet" href="enhance.css?v=5">
   <link rel="stylesheet" href="home.css?v=6">
 </head>
 <body>
@@ -138,7 +138,12 @@
   </div>
 
   <div id="adminProductBox" style="display:none;">
-    <h3>➕ Add Product</h3>
+    <div class="adm-title" id="admTitle"></div>
+    <div class="adm-sec" id="admSec-overview"></div>
+    <div class="adm-sec" id="admSec-orders"></div>
+    <div class="adm-sec" id="admSec-refunds"></div>
+    <div class="adm-sec" id="admSec-alerts"></div>
+    <div class="adm-sec" id="admSec-add">
     <input id="pName" placeholder="Product Name" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
     <textarea id="pDescription" placeholder="Description" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;"></textarea>
     <input id="pPrice" type="number" min="0" step="0.01" placeholder="Price ₹" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
@@ -147,17 +152,27 @@
     <input id="pWeight" placeholder="Weight (e.g. 100 g)" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
     <input id="pStock" type="number" min="0" step="1" placeholder="Stock" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
     <input id="pVideo" type="url" placeholder="Video URL (optional)" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
+    <div style="margin:12px 0 4px;font-weight:700;color:#173d2e">🌿 Ayurveda Info <small style="font-weight:400;color:#5d7266">(optional – product page par tab me dikhegi; ek line = ek point)</small></div>
+    <textarea id="pAyIng" rows="2" placeholder="Ingredients (jaise: Ashwagandha root powder 100%)" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;"></textarea>
+    <textarea id="pAyBen" rows="2" placeholder="Benefits (fayde)" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;"></textarea>
+    <textarea id="pAyUse" rows="2" placeholder="Kaise use karein (How to use)" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;"></textarea>
+    <textarea id="pAyDose" rows="2" placeholder="Dose (matra)" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;"></textarea>
+    <textarea id="pAyCaut" rows="2" placeholder="Savdhaani (Precautions)" style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;"></textarea>
     <input id="pImages" type="file" accept="image/*,video/mp4,video/webm" multiple
 style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
     <small style="display:block;color:#5d7266;margin:2px 0 6px">Photos (max 10) + video (max 2, har ek 50 MB tak) ek saath select kar sakte ho.</small>
     <button type="button" onclick="addAdminProduct()" style="padding:12px;width:100%;">Save Product</button>
-    <div id="adminProductList" style="margin-top:18px;"></div>
-    <button type="button" onclick="adminLogout()" style="padding:12px;width:100%;margin-top:8px;">Logout</button>
+    </div>
+    <div class="adm-sec" id="admSec-products"><div id="adminProductList"></div></div>
+    <div class="adm-sec" id="admSec-look"><div id="apTheme"></div></div>
+    <div class="adm-sec" id="admSec-banners"><div id="apBanners"></div></div>
+    <div class="adm-sec" id="admSec-cats"><div id="apCatImgs"></div></div>
+    <button type="button" onclick="adminLogout()" id="admLogoutBtn" style="display:none">Logout</button>
   </div>
 </section>
-<script src="script.js?v=14"></script>
+<script src="script.js?v=15"></script>
 <script src="theme.js?v=2"></script>
-<script src="enhance.js?v=3"></script>
+<script src="enhance.js?v=5"></script>
 <script src="checkout.js?v=14"></script>
 <script src="delivery.js?v=1"></script>
 <script src="address.js?v=1"></script>
@@ -165,11 +180,14 @@ style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
 <script src="offers.js?v=1"></script>
 <script src="media.js?v=1"></script>
 <script src="reviews.js?v=6"></script>
-<script src="productpage.js?v=4"></script>
-<script src="home.js?v=8"></script>
-<script src="refunds.js?v=4"></script>
+<script src="productpage.js?v=5"></script>
+<script src="wishlist.js?v=2"></script>
+<script src="extras.js?v=1"></script>
+<script src="home.js?v=9"></script>
+<script src="refunds.js?v=5"></script>
 <script src="orders.js?v=8"></script>
-<script src="admin.js?v=7"></script>
-<script src="adminplus.js?v=3"></script>
+<script src="admin.js?v=8"></script>
+<script src="adminplus.js?v=5"></script>
+<script src="adminmenu.js?v=1"></script>
 </body>
 </html>

@@ -72,6 +72,12 @@
       <div><label>Weight</label><input data-f="weight" value="${esc(p.weight || "")}"></div></div>
       <label>Category</label><input data-f="category" value="${esc(p.category || "")}">
       <label>Video URL (optional link)</label><input data-f="video_url" type="url" value="${esc(p.video_url || "")}">
+      <label style="margin-top:16px;font-weight:700">🌿 Ayurveda Info <small style="font-weight:400">(optional · ek line = ek point)</small></label>
+      <label>Ingredients</label><textarea data-f="ay_ingredients" rows="2">${esc(p.ay_ingredients || "")}</textarea>
+      <label>Benefits (fayde)</label><textarea data-f="ay_benefits" rows="3">${esc(p.ay_benefits || "")}</textarea>
+      <label>Kaise use karein</label><textarea data-f="ay_usage" rows="3">${esc(p.ay_usage || "")}</textarea>
+      <label>Dose (matra)</label><textarea data-f="ay_dose" rows="2">${esc(p.ay_dose || "")}</textarea>
+      <label>Savdhaani (Precautions)</label><textarea data-f="ay_precautions" rows="3">${esc(p.ay_precautions || "")}</textarea>
       <label>Photos / Videos (✕ se hatao, ⭐ se main photo banao)</label>
       <div class="ap-media" id="apMedia"></div>
       <label>Naye photos/videos jodo</label>
@@ -94,10 +100,16 @@
         const photos = all.filter(u => !isVid(u)), vids = all.filter(isVid);
         const upd = {
           name, description: g("description"), price, stock, weight: g("weight"), category: g("category") || "herbal",
-          video_url: g("video_url"), image_url: photos[0] || "", images: JSON.stringify(photos.concat(vids)), mrp: mrp > 0 ? mrp : null
+          video_url: g("video_url"),
+          ay_ingredients: g("ay_ingredients"), ay_benefits: g("ay_benefits"), ay_usage: g("ay_usage"), ay_dose: g("ay_dose"), ay_precautions: g("ay_precautions"), image_url: photos[0] || "", images: JSON.stringify(photos.concat(vids)), mrp: mrp > 0 ? mrp : null
         };
         let { error } = await supabaseClient.from("products").update(upd).eq("id", p.id);
         if (error && /mrp/i.test(error.message)) { delete upd.mrp; ({ error } = await supabaseClient.from("products").update(upd).eq("id", p.id)); }
+        if (error && /ay_/i.test(error.message)) {
+          ["ay_ingredients", "ay_benefits", "ay_usage", "ay_dose", "ay_precautions"].forEach(k => delete upd[k]);
+          ({ error } = await supabaseClient.from("products").update(upd).eq("id", p.id));
+          if (!error) alert("Product save ho gaya, par Ayurveda info save nahi hui. Pehle supabase_v23.sql Supabase me run karo.");
+        }
         if (error) { alert("Save nahi hua: " + error.message + "\n\n(Agar 'policy' likha hai to supabase_v19.sql run karo.)"); return false; }
         toast("Product update ho gaya!");
         try { await loadProducts(); } catch (e) {}
@@ -259,11 +271,8 @@
   /* ---- mount sections into admin panel ---- */
   let mounted = false;
   async function mount() {
-    const list = $("adminProductList"); if (!list || mounted) return;
+    if (!$("adminProductList") || mounted) return;
     mounted = true;
-    const sec = document.createElement("div"); sec.className = "ap-sec";
-    sec.innerHTML = `<h3>🎨 Website Look (rang + top text)</h3><div id="apTheme"></div><h3 style="margin-top:22px">🖼️ Home Banners</h3><div id="apBanners"></div><h3 style="margin-top:22px">🔘 Category Photos (home ke gol icons)</h3><div id="apCatImgs"></div>`;
-    list.before(sec);
     const refresh = async () => {
       if (!(await isAdmin())) return;
       try { const { data } = await supabaseClient.from("products").select("id,name,category"); window.__apProducts = data || []; } catch (e) { window.__apProducts = []; }

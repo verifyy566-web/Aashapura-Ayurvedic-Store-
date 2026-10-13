@@ -105,7 +105,7 @@
       if (os === "pending") add("Confirm", () => setO(o, { order_status: "confirmed" }));
       if (["pending", "confirmed"].includes(os)) add("🚚 Shipped", () => setO(o, { order_status: "shipped" }));
       if (["confirmed", "shipped"].includes(os)) add("📦 Delivered", () => setO(o, { order_status: "delivered" }));
-      if (os !== "delivered") add("✕ Cancel", () => { const r = window.prompt("Cancel reason:", ""); if (r !== null) setO(o, { order_status: "cancelled", cancel_reason: r, cancelled_at: new Date().toISOString() }, "Cancelled"); });
+      if (os !== "delivered") add("✕ Cancel", async () => { const r = await window.prompt("Cancel reason:", ""); if (r !== null && r !== undefined) setO(o, { order_status: "cancelled", cancel_reason: String(r).trim(), cancelled_at: new Date().toISOString() }, "Cancelled"); });
     }
     const ph = String(o.phone || p.phone || "").replace(/\D/g, "").slice(-10);
     if (ph) add("💬 WhatsApp", () => window.open(`https://wa.me/91${ph}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", Aashapura Ayurveda order " + (o.order_no || o.id) + " (" + money(o.total) + "): ")}`, "_blank", "noopener"));
@@ -147,19 +147,23 @@
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + t], { type: "text/csv" })); a.download = "aashapura-orders.csv"; a.click();
   }
 
-  function paint(host) {
+  function paintOverview(h) {
+    h.innerHTML = `<div class="adm-bar"><span class="adm-sub">Live summary of your store</span><span><button type="button" id="adCsv">⬇ CSV</button> <button type="button" id="adReload" aria-label="Refresh">↻</button></span></div>
+      <div class="ad-stats">${stats()}</div><div id="adLow"></div>`;
+    h.querySelector("#adCsv").onclick = csv; h.querySelector("#adReload").onclick = load;
+    sb().from("products").select("name,weight,stock").lte("stock", 5).order("stock").limit(15).then(r => {
+      if (r.data && r.data.length) h.querySelector("#adLow").innerHTML = `<div class="ad-stat red" style="margin:6px 0"><small>⚠️ Low stock (≤5)</small>${r.data.map(p => `${esc(p.name)} ${esc(p.weight || "")}: <b>${p.stock}</b>`).join(" · ")}</div>`;
+    });
+  }
+  function paintOrders(h) {
     const tabs = [["all", "All"], ["utr", "Screenshot sent"], ["unpaid", "Payment pending"], ["confirmed", "Confirmed"], ["shipped", "Shipped"], ["delivered", "Delivered"], ["cancelled", "Cancelled"], ["returns", "Returns"]];
-    host.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">📊 Sales &amp; Orders</h3><span><button type="button" id="adCsv">⬇ CSV</button> <button type="button" id="adReload">↻</button></span></div>
-      <div class="ad-stats">${stats()}</div><div id="adLow"></div>
+    h.innerHTML = `<div class="adm-bar"><span class="adm-sub">${ORD.length} orders</span><button type="button" id="adReload2" aria-label="Refresh">↻</button></div>
       <input id="adSearch" placeholder="Search order no, name, phone, email…" value="${esc(q)}" style="width:100%;padding:10px;box-sizing:border-box;margin:6px 0">
       <div class="ad-tabs">${tabs.map(t => `<button type="button" data-t="${t[0]}" class="${tab === t[0] ? "on" : ""}">${t[1]}</button>`).join("")}</div><div id="adList"></div>`;
-    host.querySelector("#adCsv").onclick = csv; host.querySelector("#adReload").onclick = load;
-    host.querySelector(".ad-tabs").onclick = e => { const b = e.target.closest("[data-t]"); if (b) { tab = b.dataset.t; paint(host); } };
-    host.querySelector("#adSearch").oninput = e => { q = e.target.value.trim().toLowerCase(); fill(host); };
-    fill(host);
-    sb().from("products").select("name,weight,stock").lte("stock", 5).order("stock").limit(15).then(r => {
-      if (r.data && r.data.length) host.querySelector("#adLow").innerHTML = `<div class="ad-stat red" style="margin:6px 0"><small>⚠️ Low stock (≤5)</small>${r.data.map(p => `${esc(p.name)} ${esc(p.weight || "")}: <b>${p.stock}</b>`).join(" · ")}</div>`;
-    });
+    h.querySelector("#adReload2").onclick = load;
+    h.querySelector(".ad-tabs").onclick = e => { const b = e.target.closest("[data-t]"); if (b) { tab = b.dataset.t; paintOrders(h); } };
+    h.querySelector("#adSearch").oninput = e => { q = e.target.value.trim().toLowerCase(); fill(h); };
+    fill(h);
   }
   function fill(host) {
     const l = host.querySelector("#adList"); l.innerHTML = "";
@@ -172,23 +176,24 @@
     const box = $("adminProductBox"); if (!box || box.style.display === "none") return;
     let uid = null; try { uid = (await sb().auth.getUser()).data.user?.id; } catch (e) {}
     if (!uid || uid !== AASHAPURA_ADMIN_UID) return;
-    let host = $("adminOrders");
-    if (!host) { host = document.createElement("div"); host.id = "adminOrders"; host.style.marginBottom = "18px"; box.insertBefore(host, box.firstChild); }
+    const ovh = $("admSec-overview"), orh = $("admSec-orders");
+    if (!ovh || !orh) return;
     const [o, r] = await Promise.all([
       sb().from("store_orders").select("*").order("created_at", { ascending: false }).limit(500),
       sb().from("store_refunds").select("order_id,status,amount")
     ]);
-    if (o.error) { host.innerHTML = `<p>Orders load error: ${esc(o.error.message)}</p>`; return; }
+    if (o.error) { orh.innerHTML = `<p>Orders load error: ${esc(o.error.message)}</p>`; return; }
     ORD = o.data || []; REF = r.data || [];
     const ids = [...new Set(ORD.map(x => x.user_id).filter(Boolean))];
     PROF = {};
     if (ids.length) { const p = await sb().from("customer_profiles").select("user_id,full_name,phone,address").in("user_id", ids); (p.data || []).forEach(x => { PROF[x.user_id] = x; }); }
-    paint(host);
+    started = true; paintOverview(ovh); paintOrders(orh);
   }
 
+  let started = false;
   const ab = $("adminProductBox");
   if (ab) {
-    new MutationObserver(() => { if (ab.style.display !== "none" && !$("adminOrders")) load(); }).observe(ab, { attributes: true, attributeFilter: ["style"] });
+    new MutationObserver(() => { if (ab.style.display !== "none" && !started) load(); }).observe(ab, { attributes: true, attributeFilter: ["style"] });
     setTimeout(load, 1200);
   }
 })();

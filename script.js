@@ -26,7 +26,12 @@ function normalizeProduct(p) {
     image_url: p.image_url || "",
     images: p.images || "",
     video_url: p.video_url || "",
-    mrp: Number(p.mrp || 0)
+    mrp: Number(p.mrp || 0),
+    ay_ingredients: p.ay_ingredients || "",
+    ay_benefits: p.ay_benefits || "",
+    ay_usage: p.ay_usage || "",
+    ay_dose: p.ay_dose || "",
+    ay_precautions: p.ay_precautions || ""
   };
 }
 
@@ -508,12 +513,22 @@ images: JSON.stringify(imageUrls.concat(videoUrls)),
     is_active: true,
     ...(Number($("pMrp")?.value) > 0 ? { mrp: Number($("pMrp").value) } : {})
   };
+  const AY = { ay_ingredients: "pAyIng", ay_benefits: "pAyBen", ay_usage: "pAyUse", ay_dose: "pAyDose", ay_precautions: "pAyCaut" };
+  let ayFilled = false;
+  Object.keys(AY).forEach(k => { const v = ($(AY[k]) && $(AY[k]).value.trim()) || ""; if (v) { product[k] = v; ayFilled = true; } });
 
-  const { data, error } = await supabaseClient
+  let { data, error } = await supabaseClient
     .from("products")
     .insert(product)
     .select()
     .single();
+
+  /* Ayurveda columns missing (supabase_v23.sql not run yet): save the product without them */
+  if (error && /ay_/i.test(error.message || "")) {
+    Object.keys(AY).forEach(k => delete product[k]);
+    ({ data, error } = await supabaseClient.from("products").insert(product).select().single());
+    if (!error && ayFilled) alert("Product save ho gaya, par Ayurveda info save nahi hui. Pehle supabase_v23.sql Supabase me run karo, phir Edit se info daalo.");
+  }
 
   if (error) {
     alert("Product save नहीं हुआ: " + error.message);
@@ -528,6 +543,7 @@ images: JSON.stringify(imageUrls.concat(videoUrls)),
   $("pWeight").value = "";
   $("pStock").value = "";
   $("pVideo").value = "";
+  Object.values(AY).forEach(id => { if ($(id)) $(id).value = ""; });
 
   await loadProducts();
 }
@@ -960,13 +976,6 @@ function secureAdminVisibility() {
     panel.style.maxWidth = "760px";
     panel.style.margin = "24px auto";
     panel.style.display = "block";
-    const back = document.createElement("a");
-    back.href = window.location.pathname;
-    back.textContent = "← ग्राहक स्टोर";
-    back.className = "secondary-btn";
-    back.style.display = "inline-flex";
-    back.style.marginBottom = "18px";
-    panel.prepend(back);
   }
 }
 initCustomerAuth();

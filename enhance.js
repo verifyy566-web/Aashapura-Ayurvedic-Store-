@@ -12,6 +12,24 @@
   };
   let activeCat = "all", onlyWish = false, view = "grid";
 
+  /* Shared wishlist API (used by wishlist.js). Sizes of the same product count as one favourite. */
+  const wlisteners = [];
+  const grp = id => { const p = products.find(x => x.id === Number(id)); return p ? products.filter(x => norm(x) === norm(p)).map(x => x.id) : [Number(id)]; };
+  const wchanged = () => { saveWish(); try { renderStore(); } catch (e) {} window.dispatchEvent(new Event("aashapura-wish")); };
+  window.aashapuraWish = {
+    ids: () => wish.slice(),
+    has: id => grp(id).some(x => wish.includes(x)),
+    count: () => new Set(wish.map(x => window.primaryId(x))).size,
+    toggle(id) {
+      const g = grp(id), pid = window.primaryId(id); let on;
+      if (g.some(x => wish.includes(x))) { wish = wish.filter(x => !g.includes(x)); on = false; } else { wish = [...wish, pid]; on = true; }
+      wchanged(); wlisteners.forEach(f => { try { f(pid, on, g); } catch (e) {} }); return on;
+    },
+    set(arr) { wish = [...new Set((arr || []).map(Number).filter(Boolean))]; wchanged(); },
+    on(f) { wlisteners.push(f); }
+  };
+  const W = window.aashapuraWish;
+
   const grid = $("productGrid");
   const tools = document.querySelector(".shop-tools");
   if (!grid || !tools) return;
@@ -40,7 +58,7 @@
   }
 
   function card(p, n = 1, min = p.price) {
-    const liked = wish.includes(p.id);
+    const liked = W.has(p.id);
     const out = p.stock <= 0;
     const low = p.stock > 0 && p.stock <= 5;
     return `
@@ -57,7 +75,7 @@
         <div class="product-buy">
           <strong>${n > 1 ? "₹" + min + " से" : "₹" + p.price}${n === 1 && p.mrp > p.price ? ` <s class="card-mrp">₹${p.mrp}</s>` : ""}</strong>
           ${n > 1 ? `<button class="add-btn">साइज़ चुनें →</button>`
-            : out ? `<button class="add-btn" disabled>स्टॉक खत्म</button>`
+            : out ? `<button class="add-btn notify-btn" data-notify="${p.id}">🔔 ${window.AASHAPURA_LANG === "hi" ? "बताएँ" : "Notify me"}</button>`
                 : `<button class="add-btn" data-add="${p.id}">कार्ट में जोड़ें +</button>`}
         </div>
       </div>
@@ -76,7 +94,7 @@
         && (!q || p.name.toLowerCase().includes(q) || String(p.desc).toLowerCase().includes(q))
         && p.price >= min && p.price <= max
         && (!stockOnly || p.stock > 0)
-        && (!onlyWish || wish.includes(p.id));
+        && (!onlyWish || W.has(p.id));
     });
     const sort = $("sortFilter").value;
     if (sort === "low") list.sort((a, b) => a.price - b.price);
@@ -87,7 +105,7 @@
     const seen = new Set();
     list = list.filter(p => { const k = norm(p); if (seen.has(k)) return false; seen.add(k); return true; });
     grid.innerHTML = list.map(p => card(p, counts[norm(p)], mins[norm(p)])).join("") || "<p>कोई उत्पाद नहीं मिला।</p>";
-    $("wishCount").textContent = wish.length;
+    $("wishCount").textContent = W.count();
     $("wishToggle").classList.toggle("active", onlyWish);
     const note = document.querySelector(".demo-note");
     if (note) note.textContent = list.length + " उत्पाद";
@@ -100,9 +118,8 @@
     const add = e.target.closest("[data-add]");
     if (heart) {
       e.stopPropagation();
-      const id = Number(heart.dataset.wish);
-      wish = wish.includes(id) ? wish.filter(x => x !== id) : [...wish, id];
-      saveWish(); renderStore();
+      const now = W.toggle(Number(heart.dataset.wish));
+      const hi = window.AASHAPURA_LANG === "hi"; showStoreToast(now ? (hi ? "पसंदीदा में जोड़ा ❤" : "Added to wishlist ❤") : (hi ? "पसंदीदा से हटाया" : "Removed from wishlist"), now ? "success" : "info");
     } else if (add) {
       e.stopPropagation();
       const id = String(add.dataset.add);

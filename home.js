@@ -150,10 +150,11 @@
         item("📦", "My Orders", "Track and view your orders", () => $("openMyOrdersBtn").click()),
         item("↩️", "Returns & Refunds", "Return, cancel and track requests", () => (window.openRefunds ? window.openRefunds() : wa("Hello Aashapura Ayurveda, I need help with a refund for my order. Order ID: "))),
         item("📍", "Saved Address", "Delivery address", () => openAccountModal()),
+        item("❤️", "My Wishlist", "Products you saved", () => window.aashapuraWishlist && window.aashapuraWishlist.open()),
         item("🛒", "My Cart", "", () => $("cartOpen").click())
       );
     } else {
-      list.append(item("🔑", "Sign In", "To see your orders and write reviews", () => $("googleLoginBtn").click()));
+      list.append(item("🔑", "Sign In", "To see your orders and write reviews", () => $("googleLoginBtn").click()), item("❤️", "My Wishlist", "Products you saved", () => window.aashapuraWishlist && window.aashapuraWishlist.open()));
     }
     list.append(
       item("🌐", "Language", window.AASHAPURA_LANG === "hi" ? "हिन्दी" : "English", () => { const l = document.querySelector(".lang-btn"); if (l) l.click(); }),
