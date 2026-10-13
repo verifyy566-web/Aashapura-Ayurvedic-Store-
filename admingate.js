@@ -36,7 +36,7 @@
   .ag-lk{border:0;background:none;color:#14402b;text-decoration:underline;font:inherit;font-size:14px;cursor:pointer;margin-top:14px;align-self:center;padding:6px}
   .ag-ok{text-align:center;color:#166534;font-weight:600;font-size:14.5px;margin-top:14px;line-height:1.5}
   .ag-toast{position:fixed;left:50%;top:calc(72px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:100060;background:#fff;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:12px 14px;display:flex;align-items:center;gap:10px;font-size:14px;max-width:calc(100vw - 32px);width:max-content}
-  .ag-pill{position:fixed;left:12px;bottom:86px;z-index:9000;border:0;border-radius:999px;background:#14402b;color:#fff;font:inherit;font-weight:700;font-size:14px;padding:10px 16px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer}`;
+  .ag-pill{position:fixed;left:12px;bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:9000;border:0;border-radius:999px;background:#14402b;color:#fff;font:inherit;font-weight:700;font-size:14px;padding:10px 16px;box-shadow:0 4px 14px rgba(0,0,0,.25);cursor:pointer}`;
   document.head.appendChild(css);
 
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;

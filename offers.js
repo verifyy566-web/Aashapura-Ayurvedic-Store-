@@ -66,6 +66,13 @@
 
   /* opts: { sub, onDone } */
   function openOffers(opts) {
+    /* v51: coupon sirf Sign In ke baad */
+    let _su = null; try { _su = signedInUser; } catch (e) {}
+    if (!_su) {
+      toast(L("Please Sign In to use coupons.", "कूपन लगाने के लिए पहले Sign In करें।"), "error");
+      setTimeout(() => { try { startGoogleLogin(); } catch (e) {} }, 1200);
+      return;
+    }
     const sub = Number(opts.sub) || 0;
     const OV = window.aashapuraAddr && window.aashapuraAddr.ov;
     const pg = document.createElement("div"); pg.className = "of-pg";

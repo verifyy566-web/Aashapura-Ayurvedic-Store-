@@ -943,6 +943,7 @@ if ($("googleLogoutBtn")) $("googleLogoutBtn").addEventListener("click", async (
 async function validateStoreCoupon(code, subtotal) {
   const normalized = code.trim().toUpperCase();
   if (!normalized) return { ok: false, message: "कूपन कोड लिखें।" };
+  if (!signedInUser) { appliedCoupon = null; return { ok: false, message: "कूपन लगाने के लिए पहले Sign In करें।" }; }
   const { data, error } = await supabaseClient.from("coupons")
     .select("code, discount_percent, discount_amount, min_order, is_active, expires_at")
     .eq("code", normalized).eq("is_active", true).maybeSingle();

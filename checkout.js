@@ -48,6 +48,13 @@
   window.openPremiumCheckout = function () {
     const AD = window.aashapuraAddr;
     if (!AD) { showStoreToast(L("Please reload the page and try again.", "कृपया पेज रीलोड करके फिर कोशिश करें।"), "error"); return; }
+    /* v50: order ke liye Sign In zaroori - bina sign in aage nahi badhega */
+    let _su = null; try { _su = signedInUser; } catch (e) {}
+    if (!_su) {
+      showStoreToast(L("Please Sign In first to place your order.", "ऑर्डर करने के लिए पहले Sign In करें।"), "error");
+      setTimeout(() => { try { startGoogleLogin(); } catch (e) {} }, 1200);
+      return;
+    }
     if (window.aashapuraClampCart) window.aashapuraClampCart();
     const items = cartItems();
     if (!items.length) { showStoreToast("पहले कार्ट में उत्पाद जोड़ें।", "error"); return; }

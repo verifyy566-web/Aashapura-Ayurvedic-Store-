@@ -98,6 +98,7 @@
     ["WhatsApp पर ऑर्डर भेजें", "Send order on WhatsApp"],
     ["UPI ऐप से पेमेंट करें", "Pay with UPI app"],
     ["UPI ऐप खोलें", "Open UPI app"],
+    ["QR कोड स्कैन करें ↓", "Scan QR code ↓"],
     ["UPI ID कॉपी हो गई।", "UPI ID copied."],
     ["कॉपी नहीं हुई", "Could not copy"],
     ["(पेमेंट के बाद)", "(after payment)"],
