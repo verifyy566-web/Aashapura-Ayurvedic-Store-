@@ -61,7 +61,8 @@
     const q = s => m.querySelector(s);
     const close = () => AD.ov.close(m);
     q(".aa-bk").onclick = close;
-    const calc = () => { const d = appliedCoupon ? Math.min(Number(appliedCoupon.discount) || 0, subtotal) : 0; const after = Math.max(0, subtotal - d); const del = delFor(after); return { d, del, total: after + del }; };
+    const CBX = window.aashapuraCombos;
+    const calc = () => { const cb = CBX ? CBX.calc(items) : { discount: 0, names: "" }; const cmb = cb.discount; const d = appliedCoupon ? Math.min(Number(appliedCoupon.discount) || 0, subtotal - cmb) : 0; const after = Math.max(0, subtotal - cmb - d); const del = delFor(after); return { d, cmb, cnames: cb.names, del, total: after + del }; };
 
     let addr = null;
     const showAddr = async () => {
@@ -99,6 +100,7 @@
           close(); try { window.renderCart(); window.renderCartPage(true); } catch (e) {} return;
         }
       }
+      if (CBX) { try { await CBX.load(true); } catch (e) {} }
       const pin = a.pincode;
       const pr = await pinLookup(pin);
       if (!pr || !pr.ok) { reset(); return showStoreToast(pr && pr.msg ? pr.msg : L("Please check your pincode.", "कृपया पिनकोड जाँचें।"), "error"); }
@@ -112,7 +114,7 @@
       const stt = pr.state || a.state;
       const etaCols = (() => { try { const e = window.aashapuraEta(stt); return { delivery_state: stt || null, exp_min: e.min.toISOString().slice(0, 10), exp_max: e.max.toISOString().slice(0, 10) }; } catch (x) { return {}; } })();
       btn.textContent = L("Saving…", "सेव हो रहा है…");
-      const { d, del, total } = calc();
+      const { d, cmb, cnames, del, total } = calc();
       const cCode = appliedCoupon ? appliedCoupon.code : "";
       const orderItems = items.map(i => ({ id: i.id, name: i.name, weight: i.weight, price: i.price, qty: i.qty }));
       let orderId = null, orderNo = null, saveErr = "";
@@ -122,10 +124,16 @@
           subtotal, discount: d, total, coupon_code: cCode || null,
           payment_status: "pending", order_status: "pending"
         };
-        let { data, error } = await supabaseClient.from("store_orders").insert({ ...base, pincode: pin, delivery_charge: del, delivery_area: area || null, ...etaCols }).select("id,order_no").single();
-        if (error && /exp_min|exp_max|delivery_state/i.test(error.message || "")) ({ data, error } = await supabaseClient.from("store_orders").insert({ ...base, pincode: pin, delivery_charge: del, delivery_area: area || null }).select("id,order_no").single());
-        if (error && /pincode|delivery_charge|delivery_area|column/i.test(error.message || "")) {
-          ({ data, error } = await supabaseClient.from("store_orders").insert(base).select("id,order_no").single());
+        const optional = { pincode: pin, delivery_charge: del, delivery_area: area || null, ...etaCols,
+          address_type: a.address_type === "office" ? "office" : "home", open_sat: !!a.open_sat, open_sun: !!a.open_sun,
+          combo_discount: cmb || 0, combo_names: cnames || null };
+        let data = null, error = null;
+        for (let t = 0; t < 14; t++) {
+          ({ data, error } = await supabaseClient.from("store_orders").insert({ ...base, ...optional }).select("id,order_no").single());
+          if (!error || !/column|schema/i.test(error.message || "")) break;
+          const mm = (error.message || "").match(/'([a-z_]+)' column/i) || (error.message || "").match(/column \"([a-z_]+)\"/i);
+          if (mm && Object.prototype.hasOwnProperty.call(optional, mm[1])) delete optional[mm[1]];
+          else { for (const k of Object.keys(optional)) delete optional[k]; }
         }
         if (error && /PRICE_CHANGED|OUT_OF_STOCK|BAD_COUPON|BAD_PRODUCT|BAD_QTY|ORDER_RATE_LIMIT/.test(error.message || "")) {
           const m = error.message;
@@ -149,6 +157,7 @@
           : `<p class="small-note" style="color:#b42318">${signedInUser ? "ऑर्डर सेव नहीं हुआ: " + escapeHTML(saveErr) : "Sign In नहीं है, इसलिए ऑर्डर 'मेरे ऑर्डर' में सेव नहीं हुआ।"} WhatsApp से ऑर्डर भेज सकते हैं।</p>`}
         <div class="aa-bill" style="margin:10px 0"><h4>${L("Price Details", "प्राइस डिटेल")}</h4>
           <div><span>${L("Subtotal", "सबटोटल")}</span><span>${money(subtotal)}</span></div>
+          ${cmb ? `<div><span>${L("Combo offer", "कॉम्बो ऑफ़र")}</span><span class="g">−${money(cmb)}</span></div>` : ""}
           ${d ? `<div><span>${L("Coupon", "कूपन")} (${escapeHTML(cCode)})</span><span class="g">−${money(d)}</span></div>` : ""}
           <div><span>${L("Delivery", "डिलीवरी")}</span><span class="${del ? "" : "g"}">${del ? money(del) : L("FREE", "फ्री")}</span></div>
           <div class="t"><span>${L("Total to pay", "देय राशि")}</span><span>${money(total)}</span></div></div>
@@ -175,8 +184,8 @@
       s2.querySelector("#coWa").onclick = () => {
         const lines = items.map(i => `• ${i.name} (${i.weight || "standard"}) × ${i.qty} = ${money(i.price * i.qty)}`).join("\n");
         const msg = `नमस्ते Aashapura Ayurveda,\n${orderId ? "ऑर्डर #" + orderNo + "\n" : ""}${lines}\n` +
-          `सबटोटल: ${money(subtotal)}\n${d ? "छूट (" + cCode + "): −" + money(d) + "\n" : ""}${L("Delivery", "डिलीवरी")}: ${del ? money(del) : L("FREE", "फ्री")}\nकुल: ${money(total)}\n` +
-          `नाम: ${name}\nमोबाइल: ${phone}\nपता: ${fullAddress}\n${L("I have paid. My payment screenshot is below.", "मैंने पेमेंट कर दिया है। पेमेंट का स्क्रीनशॉट नीचे भेज रहा/रही हूँ।")}\n${L("Please confirm my order.", "कृपया ऑर्डर कन्फर्म करें।")}`;
+          `सबटोटल: ${money(subtotal)}\n${cmb ? "कॉम्बो ऑफ़र (" + cnames + "): −" + money(cmb) + "\n" : ""}${d ? "छूट (" + cCode + "): −" + money(d) + "\n" : ""}${L("Delivery", "डिलीवरी")}: ${del ? money(del) : L("FREE", "फ्री")}\nकुल: ${money(total)}\n` +
+          `नाम: ${name}\nमोबाइल: ${phone}\nपता: ${fullAddress}\n${a.address_type === "office" ? "Office" : "Home"}${a.address_type === "office" ? " · Weekend: " + ([a.open_sat ? "Sat" : "", a.open_sun ? "Sun" : ""].filter(Boolean).join("+") || "No") : " · Weekend: OK"}\n${L("I have paid. My payment screenshot is below.", "मैंने पेमेंट कर दिया है। पेमेंट का स्क्रीनशॉट नीचे भेज रहा/रही हूँ।")}\n${L("Please confirm my order.", "कृपया ऑर्डर कन्फर्म करें।")}`;
         const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
         if (!orderId) { clearCart(); appliedCoupon = null; }
         else { try { supabaseClient.rpc("submit_order_utr", { p_id: String(orderId), p_utr: "WA-SCREENSHOT" }); } catch (e) {} }

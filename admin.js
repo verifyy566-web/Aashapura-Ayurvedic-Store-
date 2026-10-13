@@ -17,6 +17,7 @@
   .ad-o .ad-in{padding:0 10px 10px;font-size:14px;line-height:1.5}.ad-o table{width:100%;border-collapse:collapse;margin:6px 0}.ad-o td,.ad-o th{border-bottom:1px solid #eee;padding:4px;text-align:left}
   .ad-b{padding:2px 8px;border-radius:99px;font-size:12px;font-weight:700;margin-left:4px}
   .ad-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.ad-acts button{padding:9px 12px;border-radius:8px;border:1px solid #888;background:#fff}
+  .ad-addr{background:#f6f9f4;border:1px solid #dfe8da;border-radius:10px;padding:8px 10px}.ad-al{font-size:15px;font-weight:600;margin:2px 0}.ad-wk{margin-top:4px;font-weight:700}.ad-wk.y{color:#166534}.ad-wk.n{color:#b42318}.ad-cp{margin-top:8px;padding:8px 12px;border-radius:8px;border:1px solid #888;background:#fff}
   .ad-grid{display:grid;grid-template-columns:1fr;gap:6px}@media(min-width:700px){.ad-grid{grid-template-columns:1fr 1fr}}`;
   document.head.appendChild(st);
 
@@ -78,6 +79,35 @@
     toast(okMsg || "Updated"); load();
   }
 
+  /* Address + Home/Office + weekend delivery (courier ke liye). Naye orders me order ke saath save hota hai; purane orders ke liye customer ki saved address se milaya jata hai. */
+  let ADDR = {};
+  function addrInfo(o) {
+    let type = o.address_type, sat = o.open_sat, sun = o.open_sun, from = "order";
+    if (!type) {
+      const list = ADDR[o.user_id] || [], txt = lc(o.address || o.delivery_address);
+      let m = list.filter(a => a.pincode && String(a.pincode) === String(o.pincode) && (!a.house || txt.includes(lc(a.house))));
+      if (!m.length) m = list.filter(a => a.pincode && String(a.pincode) === String(o.pincode));
+      if (m.length) { type = m[0].address_type || "home"; sat = m[0].open_sat; sun = m[0].open_sun; from = "saved"; }
+    }
+    if (!type) return null;
+    const office = type === "office";
+    const days = [sat ? "Saturday" : "", sun ? "Sunday" : ""].filter(Boolean);
+    const wk = !office ? { ok: true, txt: "Haan, weekend delivery chalegi (Home)" } : days.length ? { ok: true, txt: "Haan, " + days.join(" + ") + " chalegi (Office)" } : { ok: false, txt: "Nahi, office weekend par band hai - Mon-Fri hi bhejna" };
+    return { office, wk, from };
+  }
+  function addrHTML(o) {
+    const ai = addrInfo(o);
+    return `<div class="ad-addr"><b>📍 Delivery address</b><div class="ad-al">${esc(o.address || o.delivery_address || "—")}</div>
+      ${o.pincode ? `<div>PIN: <b style="font-size:16px">${esc(o.pincode)}</b>${o.delivery_area ? " · " + esc(o.delivery_area) : ""}</div>` : ""}
+      ${ai ? `<div><span class="ad-b" style="background:${ai.office ? "#fef3c7;color:#92400e" : "#dcfce7;color:#166534"};margin:0">${ai.office ? "🏢 OFFICE" : "🏠 HOME"}</span></div>
+      <div class="ad-wk ${ai.wk.ok ? "y" : "n"}">${ai.wk.ok ? "✅" : "⛔"} Weekend: ${esc(ai.wk.txt)}</div>${ai.from === "saved" ? `<small>(customer ki saved address se)</small>` : ""}` : `<div class="ad-wk">ℹ️ Home/Office info nahi mili (purana order)</div>`}
+      <button type="button" class="ad-cp">📋 Copy for courier</button></div>`;
+  }
+  function addrCopy(o) {
+    const ai = addrInfo(o);
+    return [`Name: ${o.customer_name || ""}`, `Phone: ${o.phone || ""}`, `Address: ${o.address || o.delivery_address || ""}`, o.pincode ? `Pincode: ${o.pincode}` : "", ai ? `Type: ${ai.office ? "Office" : "Home"}` : "", ai ? `Weekend delivery: ${ai.wk.ok ? "YES" : "NO"} (${ai.wk.txt})` : "", `Order: ${o.order_no || o.id}`].filter(Boolean).join("\n");
+  }
+
   function card(o) {
     const p = PROF[o.user_id] || {}, nOrd = ORD.filter(x => x.user_id === o.user_id).length;
     const items = Array.isArray(o.items) ? o.items : [];
@@ -85,15 +115,17 @@
     const d = document.createElement("details"); d.className = "ad-o";
     d.innerHTML = `<summary>${isNew(o) ? `<span class="ad-b" style="background:#b42318;color:#fff;margin:0 6px 0 0">NEW</span>` : ""}<b>#${num(o)}</b> · ${esc(o.customer_name || p.full_name || "Customer")} · <b>${money(o.total)}</b><br><small>${esc(dt(o.created_at))}</small> ${bd(o.order_status)} ${bd(isPaid(o) ? "paid" : "unpaid")}${!isPaid(o) && !isCan(o) && o.utr ? ` <span class="ad-b" style="background:#fff3cd;color:#8a5a00">📷 screenshot sent · check &amp; confirm</span>` : ""}${refs.length ? ` <span class="ad-b" style="background:#fee4e2;color:#b42318">return: ${esc(refs[0].status)}</span>` : ""}</summary>
       <div class="ad-in"><div class="ad-grid">
-        <div><b>Customer</b><br>${esc(o.customer_name || "")}<br>📞 ${esc(o.phone || "—")}<br>✉️ ${esc(o.customer_email || "—")}<br>📍 ${esc((o.address || o.delivery_address || "—"))}${o.pincode ? "<br>PIN: <b>" + esc(o.pincode) + "</b>" + (o.delivery_area ? " · " + esc(o.delivery_area) : "") : ""}</div>
+        <div><b>Customer</b><br>${esc(o.customer_name || "")}<br>📞 ${esc(o.phone || "—")}<br>✉️ ${esc(o.customer_email || "—")}</div>
+        ${addrHTML(o)}
         <div><b>Profile (login)</b><br>${p.full_name ? esc(p.full_name) + "<br>📞 " + esc(p.phone || "") + "<br>📍 " + esc(p.address || "") : "—"}<br><small>User ID: ${esc(o.user_id)}<br>Orders by this customer: ${nOrd}${nOrd > 1 ? " (repeat)" : ""}</small></div>
       </div>
       <table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>${items.map(i => `<tr><td>${esc(i.name)}${i.weight ? " (" + esc(i.weight) + ")" : ""}</td><td>${Number(i.qty || i.quantity || 1)}</td><td>${money(i.price)}</td><td>${money(i.price * (i.qty || i.quantity || 1))}</td></tr>`).join("")}</table>
-      <div>Subtotal ${money(o.subtotal)}${Number(o.discount) ? " · Discount −" + money(o.discount) + (o.coupon_code ? " (" + esc(o.coupon_code) + ")" : "") : ""} · Delivery ${Number(o.delivery_charge) ? money(o.delivery_charge) : "FREE"} · <b>Total ${money(o.total)}</b></div>
+      <div>Subtotal ${money(o.subtotal)}${Number(o.combo_discount) ? " · 🎁 Combo −" + money(o.combo_discount) + (o.combo_names ? " (" + esc(o.combo_names) + ")" : "") : ""}${Number(o.discount) ? " · Discount −" + money(o.discount) + (o.coupon_code ? " (" + esc(o.coupon_code) + ")" : "") : ""} · Delivery ${Number(o.delivery_charge) ? money(o.delivery_charge) : "FREE"} · <b>Total ${money(o.total)}</b></div>
       <div>${o.stock_deducted ? "📦 Stock kam ho chuka hai" : "Stock: confirm par kam hoga"}</div>
       <div>Order No: <b>${num(o)}</b> · DB ID: ${esc(o.id)} · Payment screenshot: <b>${o.utr ? "sent on WhatsApp (check chat)" : "not yet"}</b></div>
       ${o.cancel_reason ? `<div style="color:#b42318">Cancel reason: ${esc(o.cancel_reason)}</div>` : ""}
       <div class="ad-acts"></div></div>`;
+    const cpb = d.querySelector(".ad-cp"); if (cpb) cpb.onclick = async () => { try { await navigator.clipboard.writeText(addrCopy(o)); toast("Address copy ho gaya"); } catch (e) { window.prompt("Copy karo:", addrCopy(o)); } };
     const acts = d.querySelector(".ad-acts");
     const add = (t, fn) => { const b = document.createElement("button"); b.type = "button"; b.textContent = t; b.onclick = fn; acts.appendChild(b); };
     const os = lc(o.order_status) || "pending";
@@ -149,8 +181,8 @@
   }
 
   function csv() {
-    const h = ["Order No", "Date", "Customer", "Phone", "Email", "Address", "Items", "Subtotal", "Discount", "Coupon", "Delivery", "Pincode", "Total", "Payment", "Status", "Screenshot sent"];
-    const rows = ORD.map(o => [o.order_no || o.id, o.created_at, o.customer_name, o.phone, o.customer_email, (o.address || o.delivery_address), (o.items || []).map(i => `${i.name} x${i.qty || i.quantity || 1}`).join("; "), o.subtotal, o.discount, o.coupon_code, o.delivery_charge, o.pincode, o.total, o.payment_status, o.order_status, o.utr ? "yes" : ""]);
+    const h = ["Order No", "Date", "Customer", "Phone", "Email", "Address", "Items", "Subtotal", "Discount", "Coupon", "Delivery", "Pincode", "Address type", "Weekend delivery", "Combo discount", "Total", "Payment", "Status", "Screenshot sent"];
+    const rows = ORD.map(o => [o.order_no || o.id, o.created_at, o.customer_name, o.phone, o.customer_email, (o.address || o.delivery_address), (o.items || []).map(i => `${i.name} x${i.qty || i.quantity || 1}`).join("; "), o.subtotal, o.discount, o.coupon_code, o.delivery_charge, o.pincode, (addrInfo(o) ? (addrInfo(o).office ? "Office" : "Home") : ""), (addrInfo(o) ? (addrInfo(o).wk.ok ? "Yes" : "No") : ""), o.combo_discount || 0, o.total, o.payment_status, o.order_status, o.utr ? "yes" : ""]);
     const t = [h, ...rows].map(r => r.map(v => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`).join(",")).join("\n");
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + t], { type: "text/csv" })); a.download = "aashapura-orders.csv"; a.click();
   }
@@ -195,6 +227,8 @@
     const ids = [...new Set(ORD.map(x => x.user_id).filter(Boolean))];
     PROF = {};
     if (ids.length) { const p = await sb().from("customer_profiles").select("user_id,full_name,phone,address").in("user_id", ids); (p.data || []).forEach(x => { PROF[x.user_id] = x; }); }
+    ADDR = {};
+    if (ids.length) { try { const ad = await sb().from("customer_addresses").select("user_id,pincode,house,address_type,open_sat,open_sun").in("user_id", ids); (ad.data || []).forEach(x => { (ADDR[x.user_id] = ADDR[x.user_id] || []).push(x); }); } catch (e) {} }
     started = true; paintOverview(ovh); paintOrders(orh);
   }
 

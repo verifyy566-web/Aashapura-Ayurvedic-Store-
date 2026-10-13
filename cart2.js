@@ -70,7 +70,7 @@
   #cartFullPage{position:fixed!important;inset:0;z-index:99000;overflow-y:auto;background:#f3f6f2;color:#173d2e;font-family:inherit;-webkit-overflow-scrolling:touch;padding:0!important}
   .ct-in{max-width:640px;margin:0 auto;padding:0 12px 120px}
   .ct-head{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:14px 12px;margin:0 -12px 10px;background:#fff;border-bottom:1px solid #e3eadf}
-  .ct-head button{border:0;background:none;font-size:24px;line-height:1;padding:2px 8px;color:var(--green)}
+  .ct-head button{border:0;background:none;font-size:24px;line-height:1;padding:2px 8px;color:#123c2b}
   .ct-head b{font-size:18px}.ct-head small{color:#6b7f74;margin-left:auto}
   .ct-save{display:flex;gap:8px;align-items:center;background:#e4f4e8;color:#17653a;border-radius:12px;padding:11px 14px;font-weight:700;margin-bottom:10px}
   .ct-card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid #e6ece3}
@@ -83,7 +83,7 @@
   .ct-price{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin:6px 0}.ct-price b{font-size:18px}.ct-price s{color:#8a998f;font-size:14px}.ct-price em{font-style:normal;color:#17853f;font-weight:700;font-size:13px}
   .ct-x{position:absolute;top:-4px;right:-4px;border:0;background:none;font-size:20px;color:#6b7f74;padding:6px 8px}
   .ct-qty{display:inline-flex;align-items:center;border:1.5px solid #cfdacb;border-radius:10px;overflow:hidden;background:#fff}
-  .ct-qty button{width:38px;height:36px;border:0;background:#f3f7f1;font-size:20px;color:var(--green)}
+  .ct-qty button{width:38px;height:36px;border:0;background:#f3f7f1;font-size:20px;color:#123c2b}
   .ct-qty button:disabled{color:#b8c2bb;background:#f1f1f1}
   .ct-qty span{min-width:38px;text-align:center;font-weight:700}
   .ct-note{font-size:12.5px;margin-top:6px;font-weight:600}.ct-low{color:#b42318}.ct-max{color:#9a6a00}
@@ -93,13 +93,13 @@
   .ct-bar2{position:fixed;left:0;right:0;bottom:0;z-index:5;background:#fff;border-top:1px solid #dfe8dc;box-shadow:0 -6px 24px #123c2b1a}
   .ct-bar2 div{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px))}
   .ct-bar2 small{display:block;color:#6b7f74;font-size:12px}.ct-bar2 strong{font-size:21px}
-  .ct-bar2 button{flex:1;margin-left:auto;max-width:230px;padding:15px;border:0;border-radius:12px;background:var(--green);color:#fff;font-size:17px;font-weight:700}
+  .ct-bar2 button{flex:1;margin-left:auto;max-width:230px;padding:15px;border:0;border-radius:12px;background:#123c2b;color:#fff;font-size:17px;font-weight:700}
   .ct-oos{background:#fee4e2;color:#8a1c12;border-radius:12px;padding:11px 14px;margin-bottom:10px;font-weight:600;display:flex;gap:10px;align-items:center;justify-content:space-between}
   .ct-oos button{border:1px solid #b42318;background:#fff;color:#b42318;border-radius:8px;padding:6px 10px;font-weight:700;flex:none}
   .ct-item.out .ct-img img,.ct-item.out .ct-img{filter:grayscale(1);opacity:.55}.ct-item.out h3,.ct-item.out .ct-price{opacity:.55}
   .ct-tag{display:inline-block;background:#b42318;color:#fff;border-radius:6px;padding:3px 8px;font-size:12.5px;font-weight:700;margin-top:4px}
   .ct-bar2 button.off{background:#9aa8a0}
-  .ct-empty{text-align:center;padding:60px 20px}.ct-empty div{font-size:64px}.ct-empty button{margin-top:14px;padding:13px 26px;border:0;border-radius:12px;background:var(--green);color:#fff;font-size:16px;font-weight:700}`;
+  .ct-empty{text-align:center;padding:60px 20px}.ct-empty div{font-size:64px}.ct-empty button{margin-top:14px;padding:13px 26px;border:0;border-radius:12px;background:#123c2b;color:#fff;font-size:16px;font-weight:700}`;
   document.head.appendChild(st);
 
   const imgOf = p => {
@@ -121,8 +121,10 @@
     const sub = items.reduce((s, i) => s + i.price * i.qty, 0);
     const mrpTotal = items.reduce((s, i) => s + Math.max(Number(i.product.mrp) || 0, i.price) * i.qty, 0);
     const mrpOff = mrpTotal - sub;
-    const cpd = appliedCoupon && items.length ? Math.min(Number(appliedCoupon.discount) || 0, sub) : 0;
-    const after = Math.max(0, sub - cpd);
+    const CB = window.aashapuraCombos ? window.aashapuraCombos.calc(items) : { discount: 0 };
+    const cmb = items.length ? CB.discount : 0;
+    const cpd = appliedCoupon && items.length ? Math.min(Number(appliedCoupon.discount) || 0, sub - cmb) : 0;
+    const after = Math.max(0, sub - cmb - cpd);
     const del = items.length && after < D.freeAbove ? D.charge : 0;
     const total = after + del;
     const AD = window.aashapuraAddr;
@@ -167,13 +169,14 @@
       ${AD ? `<div style="margin:0 -12px 10px">${AD.stepper(1)}</div>` : ""}
       ${AD ? `<div class="ct-addr" id="ctAddr">${addrBar()}</div>` : ""}
       ${oos.length ? `<div class="ct-oos"><span>⚠️ ${L("Some items are out of stock. Remove them to place your order.", "कुछ आइटम स्टॉक में नहीं हैं। ऑर्डर के लिए उन्हें हटाएँ।")}</span><button type="button" id="ctRmOos">${L("Remove", "हटाएँ")}</button></div>` : ""}
-      ${mrpOff + cpd > 0 ? `<div class="ct-save">🎉 ${L("You're saving", "आप बचा रहे हैं")} ${rs(mrpOff + cpd)} ${L("on this order", "इस ऑर्डर पर")}</div>` : ""}
+      ${mrpOff + cpd + cmb > 0 ? `<div class="ct-save">🎉 ${L("You're saving", "आप बचा रहे हैं")} ${rs(mrpOff + cpd + cmb)} ${L("on this order", "इस ऑर्डर पर")}</div>` : ""}
       ${D.freeAbove ? `<div class="ct-card ct-free"><p>${del ? L(`Add ${rs(D.freeAbove - after)} more for FREE delivery`, `${rs(D.freeAbove - after)} और जोड़ें, डिलीवरी फ्री पाएँ`) : L("🎉 You get FREE delivery on this order", "🎉 इस ऑर्डर पर डिलीवरी फ्री है")}</p><div class="ct-bar"><i style="width:${pct}%"></i></div></div>` : ""}
       ${rows}
       ${items.length ? `<div class="ct-card ct-offers"><h4>${L("Offers & Benefits", "ऑफ़र और लाभ")}</h4><div class="of-row" id="ctOffers"><span class="of-ic">🏷️</span><div class="tx"><b>${appliedCoupon && cpd > 0 ? esc(appliedCoupon.code) + " " + L("applied", "लागू") : L("Apply Coupon", "कूपन लगाएँ")}</b><small class="${appliedCoupon && cpd > 0 ? "g" : ""}">${appliedCoupon && cpd > 0 ? L("You save", "आप बचा रहे हैं") + " " + rs(cpd) : L("Tap to see available offers", "उपलब्ध ऑफ़र देखें")}</small></div>${appliedCoupon && cpd > 0 ? `<button type="button" class="of-rm" id="ctCpRm">${L("Remove", "हटाएँ")}</button>` : `<span class="ar">›</span>`}</div></div>` : ""}
       ${items.length ? `<div class="ct-card ct-pd"><h4>${L("Price Details", "प्राइस डिटेल")} (${count} ${L(count === 1 ? "item" : "items", "आइटम")})</h4>
         <div class="ct-r"><span>${L("Total MRP", "कुल MRP")}</span><span>${rs(mrpTotal)}</span></div>
         ${mrpOff > 0 ? `<div class="ct-r"><span>${L("Discount on MRP", "MRP पर छूट")}</span><span class="g">−${rs(mrpOff)}</span></div>` : ""}
+        ${cmb > 0 ? `<div class="ct-r"><span>${L("Combo offer", "कॉम्बो ऑफ़र")}</span><span class="g">−${rs(cmb)}</span></div>` : ""}
         ${cpd > 0 ? `<div class="ct-r"><span>${L("Coupon discount", "कूपन छूट")} (${esc(appliedCoupon.code)})</span><span class="g">−${rs(cpd)}</span></div>` : ""}
         <div class="ct-r"><span>${L("Delivery fee", "डिलीवरी शुल्क")}</span><span class="${del ? "" : "g"}">${del ? rs(del) : L("FREE", "फ्री")}</span></div>
         <div class="ct-r t"><span>${L("Total Amount", "कुल राशि")}</span><span>${rs(total)}</span></div>
