@@ -8,7 +8,7 @@
   const wr = () => { try { localStorage.setItem(SEEN, String(Date.now())); } catch (e) {} };
   if (!rd()) wr();   // first ever visit: old orders are not "new"
   window.aashapuraAdminSeenAt = rd();   // orders newer than this get a NEW chip this session
-  let known = null, cur = "overview", need = { orders: 0, refunds: 0, shots: 0, fresh: 0 };
+  let known = null, cur = "overview", need = { orders: 0, refunds: 0, shots: 0, fresh: 0, reviews: 0 };
 
   const css = document.createElement("style");
   css.textContent = `.adm-alert{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:11px 13px;border-radius:12px;background:#fff1ef;border:1px solid #f3c6c0;color:#7a1d12;font-size:14px;line-height:1.4;cursor:pointer}
@@ -17,18 +17,19 @@
 
   function paint() {
     const A = window.aashapuraAdmin; if (!A || !A.setBadges) return;
-    A.setBadges({ orders: need.orders, refunds: need.refunds });
-    const t = need.orders + need.refunds, mt = $("menuToggle");
+    A.setBadges({ orders: need.orders, refunds: need.refunds, reviews: need.reviews });
+    const t = need.orders + need.refunds + need.reviews, mt = $("menuToggle");
     if (mt) { if (t > 0) mt.setAttribute("data-n", t > 99 ? "99+" : String(t)); else mt.removeAttribute("data-n"); }
     let el = $("admAlert");
     const lines = [];
     if (need.fresh) lines.push(`<b>${need.fresh}</b> naya order`);
     if (need.shots) lines.push(`<b>${need.shots}</b> payment screenshot check karna hai`);
     if (need.refunds) lines.push(`<b>${need.refunds}</b> refund/return request`);
+    if (need.reviews) lines.push(`<b>${need.reviews}</b> review approval baaki`);
     if (!lines.length || cur === "orders") { if (el) el.remove(); return; }
     if (!el) { el = document.createElement("div"); el.id = "admAlert"; el.className = "adm-alert"; const tt = $("admTitle"); if (tt) tt.insertAdjacentElement("afterend", el); else return; }
     el.innerHTML = `<span style="font-size:20px">🔔</span><span>${lines.join(" · ")}</span><span class="go">Dekho ›</span>`;
-    el.onclick = () => { if (need.orders || !need.refunds) A.go("orders"); else A.go("refunds"); };
+    el.onclick = () => { if (need.orders) A.go("orders"); else if (need.refunds) A.go("refunds"); else A.go("reviews"); };
   }
 
   async function check() {
@@ -47,6 +48,10 @@
       const f = await supabaseClient.from("store_refunds").select("id", { count: "exact", head: true }).eq("status", "requested");
       need.refunds = f.error ? 0 : (f.count || 0);
     } catch (e) { need.refunds = 0; }
+    try {
+      const v = await supabaseClient.from("reviews").select("id", { count: "exact", head: true }).eq("approved", false);
+      need.reviews = v.error ? 0 : (v.count || 0);
+    } catch (e) { need.reviews = 0; }
     if (known) {
       const nu = rows.filter(o => !known.has(o.id) && lc(o.order_status) !== "cancelled");
       if (nu.length) {

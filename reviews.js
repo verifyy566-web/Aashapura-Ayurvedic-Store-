@@ -6,7 +6,8 @@
   const grid = $("productGrid");
 
   async function loadAgg() {
-    const { data, error } = await supabaseClient.from("reviews").select("product_id,rating");
+    let { data, error } = await supabaseClient.from("reviews").select("product_id,rating").eq("approved", true);
+    if (error) ({ data, error } = await supabaseClient.from("reviews").select("product_id,rating"));
     if (error) { console.warn("reviews:", error.message); return; }
     agg = {};
     (data || []).forEach(r => { const a = agg[r.product_id] || (agg[r.product_id] = { sum: 0, n: 0 }); a.sum += r.rating; a.n++; });
@@ -42,12 +43,21 @@
 
   async function render(box, pid) {
     box.innerHTML = "<p>रिव्यू लोड हो रहे हैं…</p>";
-    const { data, error } = await supabaseClient.from("reviews")
+    let res = await supabaseClient.from("reviews")
+      .select("id,user_id,user_name,rating,comment,created_at,media,approved,admin_reply")
+      .eq("product_id", pid).order("created_at", { ascending: false });
+    if (res.error) res = await supabaseClient.from("reviews")
       .select("id,user_id,user_name,rating,comment,created_at,media")
       .eq("product_id", pid).order("created_at", { ascending: false });
+    const { error } = res;
     if (error) { box.innerHTML = `<p class="small-note">रिव्यू लोड नहीं हुए: ${escapeHTML(error.message)}</p>`; return; }
-    const n = data.length, avg = n ? data.reduce((s, r) => s + r.rating, 0) / n : 0;
-    const mine = signedInUser && data.find(r => r.user_id === signedInUser.id);
+    const all = res.data || [];
+    const isOk = r => r.approved !== false;                       // older DB without the column = all visible
+    const mine = signedInUser && all.find(r => r.user_id === signedInUser.id);
+    const shown = all.filter(r => isOk(r) || (signedInUser && r.user_id === signedInUser.id));
+    const okOnly = all.filter(isOk);
+    const data = shown;
+    const n = okOnly.length, avg = n ? okOnly.reduce((s, r) => s + r.rating, 0) / n : 0;
     let pick = mine ? mine.rating : 0;
     box.innerHTML = `<h3>ग्राहक रिव्यू</h3>
       ${n ? `<p><span class="stars">${stars(avg)}</span> <strong>${avg.toFixed(1)}</strong> / 5 · ${n} रिव्यू</p>` : "<p>अभी कोई रिव्यू नहीं है।</p>"}
@@ -63,6 +73,8 @@
         ${r.comment ? `<p>${escapeHTML(r.comment)}</p>` : ""}
         ${Array.isArray(r.media) && r.media.length ? `<div class="md-row">${AashapuraMedia.thumbs(r.media)}</div>` : ""}
         <small>${new Date(r.created_at).toLocaleDateString("hi-IN")}</small>
+        ${!isOk(r) ? `<div style="margin-top:6px;font-size:12px;font-weight:700;color:#8a5a00;background:#fff4dc;border-radius:8px;padding:5px 9px;display:inline-block">⏳ Approval ke baad sabko dikhega</div>` : ""}
+        ${r.admin_reply ? `<div style="margin-top:8px;background:#eef5ea;border-left:3px solid #2f6b3a;border-radius:6px;padding:8px 10px;font-size:14px"><strong style="color:#14402b">Aashapura Ayurveda:</strong> ${escapeHTML(r.admin_reply)}</div>` : ""}
         ${signedInUser && (signedInUser.id === r.user_id || signedInUser.id === ADMIN) ? `<button type="button" class="rv-del" data-del="${r.id}">हटाएँ</button>` : ""}
       </article>`).join("")}</div>`;
     const rt = document.getElementById("ppRate");

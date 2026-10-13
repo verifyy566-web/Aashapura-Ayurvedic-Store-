@@ -6,8 +6,10 @@
   const SECS = [
     { id: "overview", icon: "📊", title: "Sales Overview", sub: "Sales, payments, low stock" },
     { id: "orders", icon: "🧾", title: "Orders", sub: "Search, confirm, ship, track" },
+    { id: "report", icon: "📈", title: "Sales Report", sub: "Best sellers, daily sale" },
     { id: "customers", icon: "👥", title: "Customers", sub: "Kaun kitna kharidta hai" },
     { id: "refunds", icon: "↩️", title: "Refund Requests", sub: "Approve or reject returns" },
+    { id: "reviews", icon: "⭐", title: "Reviews", sub: "Approve aur jawab do" },
     { id: "alerts", icon: "🔔", title: "Stock Alerts", sub: "Customers waiting for stock" },
     { id: "add", icon: "➕", title: "Add Product", sub: "New product with photos" },
     { id: "products", icon: "📦", title: "Products", sub: "Edit or delete products" },
