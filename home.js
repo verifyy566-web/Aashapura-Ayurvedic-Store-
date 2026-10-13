@@ -1,6 +1,6 @@
 (function () {
   const $ = id => document.getElementById(id);
-  const WA = "916367561630";
+  const WAN = () => (String((window.AASHAPURA_CONFIG && window.AASHAPURA_CONFIG.support) || "916367561630"));
   const go = q => {
     const s = $("searchInput");
     if ($("homeSearch")) $("homeSearch").value = q || "";
@@ -135,7 +135,7 @@
     b.onclick = () => { close(); fn(); };
     return b;
   };
-  const wa = t => window.open(`https://wa.me/${WA}?text=${encodeURIComponent(t)}`, "_blank", "noopener");
+  const wa = t => window.open(`https://wa.me/${WAN()}?text=${encodeURIComponent(t)}`, "_blank", "noopener");
 
   function openSide() {
     const u = user();

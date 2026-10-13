@@ -18,6 +18,7 @@
     { id: "cats", icon: "🔘", title: "Category Photos", sub: "Icons on the home page" },
     { id: "payment", icon: "💳", title: "Payment (UPI & QR)", sub: "Change UPI ID and QR code" },
     { id: "combos", icon: "🎁", title: "Combos", sub: "Do product ek saath sasta" },
+    { id: "siteinfo", icon: "📞", title: "Contact & Store Info", sub: "WhatsApp number, GST, address" },
     { id: "coupons", icon: "🏷️", title: "Coupons", sub: "Naya coupon, edit, on/off, delete" },
     { id: "log", icon: "📜", title: "Activity Log", sub: "Kisne kya badla, kab" },
     { id: "backup", icon: "💾", title: "Backup", sub: "Data download (CSV / JSON)" }

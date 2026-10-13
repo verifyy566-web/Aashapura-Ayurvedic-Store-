@@ -1,7 +1,7 @@
 /* Refunds: customer page (request + status) and admin refund manager. Table: store_refunds */
 (function () {
   const $ = id => document.getElementById(id);
-  const WA = "916367561630";
+  const WAN = () => (String((window.AASHAPURA_CONFIG && window.AASHAPURA_CONFIG.support) || "916367561630"));
   const T = (en, hi) => (window.AASHAPURA_LANG === "hi" ? hi : en);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const toast = (m, t) => { try { showStoreToast(m, t || "success"); } catch (e) { alert(m); } };
@@ -9,7 +9,7 @@
   const sb = () => { try { return supabaseClient; } catch (e) { return null; } };
   const money = n => "₹" + Number(n || 0).toFixed(2);
   const dt = d => d ? new Date(d).toLocaleDateString(window.AASHAPURA_LANG === "hi" ? "hi-IN" : "en-IN") : "";
-  const wa = t => window.open(`https://wa.me/${WA}?text=${encodeURIComponent(t)}`, "_blank", "noopener");
+  const wa = t => window.open(`https://wa.me/${WAN()}?text=${encodeURIComponent(t)}`, "_blank", "noopener");
 
   const STATUS = {
     requested: [T("Requested", "निवेदन भेजा"), "#b45309", "#fef3c7"],

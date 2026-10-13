@@ -1,28 +1,25 @@
 /* Professional site info: Footer + trust strip, policy pages (About, Contact, Shipping, Returns, Terms, Privacy, FAQ), floating WhatsApp button.
    >>> Apni details SIRF is CONFIG me badlo. Jo khali ("") hai wo website par dikhega hi nahi. <<< */
 (function () {
-  const CONFIG = {
-    brand: "Aashapura Ayurveda",
-    phone: "916367561630",          // WhatsApp / call number (91 ke saath)
-    email: "",                      // e.g. "aashapuraayurveda@gmail.com"  (khali = nahi dikhega)
-    address: "",                    // e.g. "Shop 1, Main Road, Pune, Maharashtra 411001" (khali = nahi dikhega)
-    hours: "10 AM – 7 PM (Mon–Sat)",
-    gst: "",                        // GST banne par yahan likho: "27ABCDE1234F1Z5"  -> footer me apne aap dikhega
-    fssai: "",                      // FSSAI license number (agar ho)
-    ayush: "",                      // AYUSH / Drug license number (agar ho)
-    returnDays: 7,                  // delivery ke baad kitne din me return request
-    instagram: "", facebook: "", youtube: ""   // poora link, e.g. "https://instagram.com/yourpage"
-  };
+  const DEFAULTS = { brand: "Aashapura Ayurveda", phone: "916367561630", email: "", address: "", hours: "10 AM – 7 PM (Mon–Sat)", gst: "", fssai: "", ayush: "", returnDays: 7, instagram: "", facebook: "", youtube: "" };
+  const CONFIG = Object.assign({}, DEFAULTS);
+  function fromInfo(x) {
+    if (!x) return;
+    if (x.support) CONFIG.phone = String(x.support);
+    ["email", "address", "hours", "gst", "fssai", "ayush", "instagram", "facebook", "youtube"].forEach(k => { if (x[k] !== undefined && x[k] !== null) CONFIG[k] = x[k] === "" && k === "hours" ? DEFAULTS.hours : x[k]; });
+    const rd = Number(x.returnDays || x.return_days); if (rd > 0) CONFIG.returnDays = rd;
+  }
+  fromInfo(window.AASHAPURA_CONFIG);
   window.AASHAPURA_SITE = CONFIG;
   const L = (en, hi) => (window.AASHAPURA_LANG === "hi" ? hi : en);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const D = () => window.AASHAPURA_DELIVERY || { charge: 49, freeAbove: 499 };
   const wa = txt => `https://wa.me/${CONFIG.phone}${txt ? "?text=" + encodeURIComponent(txt) : ""}`;
-  const ph = "+" + CONFIG.phone.replace(/^(\d{2})(\d{5})(\d{5})$/, "$1 $2 $3");
+  const PH = () => "+" + CONFIG.phone.replace(/^(\d{2})(\d{5})(\d{5})$/, "$1 $2 $3");
 
   const css = document.createElement("style");
   css.textContent = `
-  footer.sf-wrap{max-width:none;margin:0;padding:0;display:block;background:#0f3322;color:#cfe0d4;font-size:14px}
+  footer.sf-wrap{max-width:none;margin:0;padding:0 0 86px;display:block;background:#0f3322;color:#cfe0d4;font-size:14px}
   .sf-in{max-width:1100px;margin:0 auto;padding:34px 20px 20px}
   .sf-trust{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:18px 20px;background:#f3f8ef;border-top:1px solid #e0e9da;color:#173d2e;text-align:center;font-size:13px;font-weight:600}
   .sf-trust div{display:flex;flex-direction:column;gap:4px;align-items:center}.sf-trust b{font-size:26px;font-weight:400}
@@ -35,6 +32,7 @@
   .sf-soc{display:flex;gap:12px;margin-top:6px}.sf-soc a{display:inline;padding:0;text-decoration:underline}
   @media(max-width:700px){.sf-trust{grid-template-columns:1fr 1fr}.sf-cols{grid-template-columns:1fr 1fr}.sf-cols>div:first-child{grid-column:1/-1}}
   .wa-fab{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:9000;width:56px;height:56px;border-radius:50%;background:#25d366;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,.28);text-decoration:none}
+  body:has(.m-bnav) .wa-fab{bottom:calc(84px + env(safe-area-inset-bottom,0px));width:52px;height:52px}
   .wa-fab svg{width:32px;height:32px;fill:#fff}
   body:has(#cartFullPage) .wa-fab,body:has(#productFullPage) .wa-fab,body:has(.aa-page) .wa-fab,body:has(.aa-ov) .wa-fab,body:has(#profilePage:not([hidden])) .wa-fab,body:has(#myOrdersPage:not([hidden])) .wa-fab,body:has(#siPage) .wa-fab,body.adm-mode .wa-fab{display:none!important}
   #siPage{position:fixed;inset:0;z-index:99500;background:#f6f8f4;overflow-y:auto;color:#173d2e;-webkit-overflow-scrolling:touch}
@@ -63,7 +61,7 @@
     contact: () => ({
       title: L("Contact Us", "संपर्क करें"),
       html: `<div class="si-card"><b>${esc(CONFIG.brand)}</b><p>${L("Order help, product questions, payment or delivery – message us anytime.", "ऑर्डर, प्रोडक्ट, पेमेंट या डिलीवरी – कभी भी मैसेज करें।")}</p>
-        <a class="si-btn g" href="${wa("Hello Aashapura Ayurveda, I need help.")}" target="_blank" rel="noopener">💬 WhatsApp</a><a class="si-btn d" href="tel:+${CONFIG.phone}">📞 ${L("Call", "कॉल")} ${esc(ph)}</a></div>
+        <a class="si-btn g" href="${wa("Hello Aashapura Ayurveda, I need help.")}" target="_blank" rel="noopener">💬 WhatsApp</a><a class="si-btn d" href="tel:+${CONFIG.phone}">📞 ${L("Call", "कॉल")} ${esc(PH())}</a></div>
         <div class="si-card"><p>🕘 <b>${L("Support hours", "सपोर्ट समय")}:</b> ${esc(CONFIG.hours)}</p>${CONFIG.email ? `<p>✉️ <b>Email:</b> <a href="mailto:${esc(CONFIG.email)}">${esc(CONFIG.email)}</a></p>` : ""}${CONFIG.address ? `<p>📍 <b>${L("Address", "पता")}:</b> ${esc(CONFIG.address)}</p>` : ""}
         <p>${L("For order issues, please send your Order No. (like AA261012-0006) so we can help faster.", "ऑर्डर की समस्या में अपना ऑर्डर नंबर (जैसे AA261012-0006) भेजें, ताकि जल्दी मदद हो सके।")}</p></div>`
     }),
@@ -90,7 +88,7 @@
       <h2>3. ${L("Offers", "ऑफ़र")}</h2><p>${L("Coupons and combo offers are valid as shown at checkout and cannot be exchanged for cash.", "कूपन और कॉम्बो ऑफ़र चेकआउट में दिखाए अनुसार मान्य हैं, नकद में नहीं बदले जा सकते।")}</p>
       <h2>4. ${L("Health", "स्वास्थ्य")}</h2><p>${L("Our products are Ayurvedic/herbal wellness products and are not medicines for any disease. Read the usage and precautions on the product page. Consult a doctor if you are pregnant, nursing, on medication or have a medical condition.", "हमारे प्रोडक्ट आयुर्वेदिक/हर्बल वेलनेस प्रोडक्ट हैं, किसी बीमारी की दवा नहीं। प्रोडक्ट पेज पर उपयोग और सावधानियाँ पढ़ें। गर्भावस्था, दवा या बीमारी में डॉक्टर से सलाह लें।")}</p>
       <h2>5. ${L("Shipping, returns, privacy", "शिपिंग, रिटर्न, प्राइवेसी")}</h2><p>${L("Please read our Shipping Policy, Returns & Refunds and Privacy Policy – they are part of these terms.", "कृपया हमारी शिपिंग पॉलिसी, रिटर्न और रिफंड तथा प्राइवेसी पॉलिसी पढ़ें – ये इन शर्तों का हिस्सा हैं।")}</p>
-      <h2>6. ${L("Contact", "संपर्क")}</h2><p>${L("Questions? WhatsApp us at", "सवाल? WhatsApp करें:")} ${esc(ph)}.</p>`
+      <h2>6. ${L("Contact", "संपर्क")}</h2><p>${L("Questions? WhatsApp us at", "सवाल? WhatsApp करें:")} ${esc(PH())}.</p>`
     }),
     faq: () => {
       const q = [
@@ -137,7 +135,7 @@
     f.innerHTML = `<div class="sf-trust"><div><b>🌿</b>${L("100% Ayurvedic", "100% आयुर्वेदिक")}</div><div><b>🚚</b>${L("Free delivery above", "फ्री डिलीवरी")} ₹${D().freeAbove}</div><div><b>🔒</b>${L("Secure UPI payment", "सुरक्षित UPI पेमेंट")}</div><div><b>↩️</b>${L("Easy returns", "आसान रिटर्न")}</div></div>
     <div class="sf"><div class="sf-in"><div class="sf-cols">
       <div><div class="br"><span>✿</span><span><strong>Aashapura</strong><small>AYURVEDA</small></span></div><p>${L("Pure Ayurvedic products for everyday wellness.", "रोज़ की सेहत के लिए शुद्ध आयुर्वेदिक प्रोडक्ट।")}</p>
-        <p>💬 <a style="display:inline" href="${wa()}" target="_blank" rel="noopener">${esc(ph)}</a>${CONFIG.email ? `<br>✉️ <a style="display:inline" href="mailto:${esc(CONFIG.email)}">${esc(CONFIG.email)}</a>` : ""}${CONFIG.address ? `<br>📍 ${esc(CONFIG.address)}` : ""}<br>🕘 ${esc(CONFIG.hours)}</p>
+        <p>💬 <a style="display:inline" href="${wa()}" target="_blank" rel="noopener">${esc(PH())}</a>${CONFIG.email ? `<br>✉️ <a style="display:inline" href="mailto:${esc(CONFIG.email)}">${esc(CONFIG.email)}</a>` : ""}${CONFIG.address ? `<br>📍 ${esc(CONFIG.address)}` : ""}<br>🕘 ${esc(CONFIG.hours)}</p>
         ${soc.length ? `<div class="sf-soc">${soc.map(s => `<a href="${esc(s[1])}" target="_blank" rel="noopener">${s[0]}</a>`).join("")}</div>` : ""}</div>
       <div><h4>${L("Help", "मदद")}</h4><button class="lk" data-si="contact">${L("Contact Us", "संपर्क करें")}</button><button class="lk" data-si="faq">FAQ</button><button class="lk" data-si="shipping">${L("Shipping Policy", "शिपिंग पॉलिसी")}</button><button class="lk" data-si="returns">${L("Returns & Refunds", "रिटर्न और रिफंड")}</button></div>
       <div><h4>${L("Company", "कंपनी")}</h4><button class="lk" data-si="about">${L("About Us", "हमारे बारे में")}</button><button class="lk" data-si="terms">${L("Terms & Conditions", "नियम और शर्तें")}</button><button class="lk" data-si="privacy">${L("Privacy Policy", "प्राइवेसी पॉलिसी")}</button></div>
@@ -160,7 +158,26 @@
     a.innerHTML = `<svg viewBox="0 0 32 32"><path d="M16.04 3C9.4 3 4 8.38 4 15.02c0 2.12.55 4.19 1.6 6.01L4 29l8.18-1.57a12 12 0 0 0 3.86.63C22.68 28.06 28 22.68 28 16.04 28 9.4 22.68 3 16.04 3zm0 22.04c-1.2 0-2.38-.2-3.5-.6l-.5-.18-4.86.93.95-4.73-.2-.5a9.95 9.95 0 0 1-1.6-5.4c0-5.5 4.5-9.97 10.05-9.97 5.5 0 10 4.47 10 9.97 0 5.5-4.5 10.48-10.34 10.48zm5.55-7.4c-.3-.16-1.8-.9-2.08-1-.28-.1-.48-.15-.68.15s-.78 1-.96 1.2c-.18.2-.35.22-.65.07-.3-.15-1.28-.47-2.44-1.5a9.2 9.2 0 0 1-1.7-2.1c-.18-.3 0-.47.13-.62.14-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.38-.02-.53-.08-.15-.68-1.65-.93-2.25-.25-.58-.5-.5-.68-.5h-.58c-.2 0-.53.08-.8.38s-1.05 1.03-1.05 2.5 1.08 2.9 1.23 3.1c.15.2 2.1 3.2 5.1 4.5.7.3 1.27.5 1.7.62.72.23 1.37.2 1.88.12.57-.08 1.8-.74 2.05-1.45.25-.7.25-1.3.18-1.43-.08-.12-.28-.2-.58-.35z"/></svg>`;
     document.body.appendChild(a);
   }
-  function init() { buildFooter(); fab(); }
+  /* admin ne jo number/info save ki hai wo yahan lagti hai */
+  function applyInfo(row) {
+    if (!row) return;
+    const c = window.AASHAPURA_CONFIG = window.AASHAPURA_CONFIG || {};
+    if (row.support) c.support = String(row.support);
+    ["email", "address", "hours", "gst", "fssai", "ayush", "instagram", "facebook", "youtube"].forEach(k => { c[k] = row[k] || ""; });
+    if (row.return_days || row.returnDays) c.returnDays = Number(row.return_days || row.returnDays);
+    fromInfo(c);
+    try { WHATSAPP_NUMBER = CONFIG.phone; } catch (e) {}
+    try { localStorage.setItem("aashapura_info", JSON.stringify(c)); } catch (e) {}
+    buildFooter();
+    const f = document.querySelector(".wa-fab"); if (f) f.href = wa("Hello Aashapura Ayurveda, I have a question.");
+    document.querySelectorAll(".js-sup-link").forEach(a => { a.href = "https://wa.me/" + CONFIG.phone; });
+    document.querySelectorAll(".js-sup-num").forEach(e => { e.textContent = PH(); });
+  }
+  window.aashapuraApplyInfo = applyInfo;
+  async function fetchInfo() {
+    try { const r = await supabaseClient.from("store_info").select("*").eq("id", 1).maybeSingle(); if (r && r.data) applyInfo(r.data); } catch (e) {}
+  }
+  function init() { buildFooter(); fab(); fetchInfo(); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
   setTimeout(() => { if (D().freeAbove) buildFooter(); }, 1800);   // refresh after server delivery rules load
 })();

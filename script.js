@@ -3,7 +3,7 @@ const SUPABASE_KEY = "sb_publishable_KF9seUu_5VZWQVhhR27dYw_kyB_ewVY";
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const WHATSAPP_NUMBER = "916367561630";
+let WHATSAPP_NUMBER = String((window.AASHAPURA_CONFIG && window.AASHAPURA_CONFIG.support) || "916367561630");
 let UPI_ID = "6367561630@fam";
 let UPI_NAME = "Aashapura Ayurveda";
 window.AASHAPURA_QR = "";
