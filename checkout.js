@@ -20,6 +20,8 @@
   };
   const delFor = amt => (amt >= DELIVERY.freeAbove ? 0 : DELIVERY.charge);
   window.AASHAPURA_DELIVERY = DELIVERY;
+  /* server rules (table store_rules, supabase_v34_security.sql) override the numbers above so UI and server always match */
+  try { supabaseClient.from("store_rules").select("delivery_charge,free_above").eq("id", 1).maybeSingle().then(r => { if (r && r.data) { const c = Number(r.data.delivery_charge), f = Number(r.data.free_above); if (isFinite(c)) DELIVERY.charge = c; if (isFinite(f)) DELIVERY.freeAbove = f; } }).catch(() => {}); } catch (e) {}
   const pinLookup = async pin => {
     if (DELIVERY.blocked.includes(pin) || DELIVERY.blockedPrefix.some(x => pin.startsWith(x))) return { ok: false, msg: L("Sorry, we can't deliver to this pincode yet.", "माफ़ कीजिए, इस पिनकोड पर अभी डिलीवरी नहीं होती।") };
     try {
@@ -124,6 +126,14 @@
         if (error && /exp_min|exp_max|delivery_state/i.test(error.message || "")) ({ data, error } = await supabaseClient.from("store_orders").insert({ ...base, pincode: pin, delivery_charge: del, delivery_area: area || null }).select("id,order_no").single());
         if (error && /pincode|delivery_charge|delivery_area|column/i.test(error.message || "")) {
           ({ data, error } = await supabaseClient.from("store_orders").insert(base).select("id,order_no").single());
+        }
+        if (error && /PRICE_CHANGED|OUT_OF_STOCK|BAD_COUPON|BAD_PRODUCT|BAD_QTY|ORDER_RATE_LIMIT/.test(error.message || "")) {
+          const m = error.message;
+          showStoreToast(/ORDER_RATE_LIMIT/.test(m) ? L("Too many orders in a short time. Please try again after some time.", "थोड़े समय में बहुत ऑर्डर हुए। कुछ देर बाद कोशिश करें।")
+            : /OUT_OF_STOCK/.test(m) ? L("An item just went out of stock. Please check your bag.", "कोई आइटम अभी स्टॉक से बाहर हो गया। कार्ट देखें।")
+            : /BAD_COUPON/.test(m) ? L("Coupon is not valid any more. Please check your bag.", "कूपन अब मान्य नहीं है। कार्ट देखें।")
+            : L("Prices have changed. Please refresh and check your bag.", "कीमतें बदल गई हैं। पेज रिफ्रेश करके कार्ट देखें।"), "error");
+          reset(); try { appliedCoupon = null; window.renderCartPage(true); } catch (e) {} return;
         }
         if (error) { console.warn(error.message); saveErr = error.message; showStoreToast("ऑर्डर सेव नहीं हुआ; WhatsApp से भेज सकते हैं।", "error"); }
         else { orderId = data.id; orderNo = data.order_no || String(data.id); clearCart(); appliedCoupon = null; }
