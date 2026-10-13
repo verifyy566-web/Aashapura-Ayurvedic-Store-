@@ -4,7 +4,22 @@ const SUPABASE_KEY = "sb_publishable_KF9seUu_5VZWQVhhR27dYw_kyB_ewVY";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const WHATSAPP_NUMBER = "916367561630";
-const UPI_ID = "6367561630@fam";
+let UPI_ID = "6367561630@fam";
+let UPI_NAME = "Aashapura Ayurveda";
+window.AASHAPURA_QR = "";
+/* Admin-editable UPI/QR (table payment_settings, supabase_v28.sql). Falls back to the values above. */
+window.aashapuraApplyPay = function (c) {
+  if (!c) return;
+  if (c.upi_id && /^[A-Za-z0-9._\-]{2,}@[A-Za-z][A-Za-z0-9]+$/.test(c.upi_id)) UPI_ID = c.upi_id;
+  if (c.payee_name) UPI_NAME = c.payee_name;
+  window.AASHAPURA_QR = c.qr_url || "";
+};
+try { window.aashapuraApplyPay(JSON.parse(localStorage.getItem("aashapura_pay") || "null")); } catch (e) {}
+try {
+  supabaseClient.from("payment_settings").select("upi_id,payee_name,qr_url").eq("id", 1).maybeSingle().then(r => {
+    if (r && r.data) { window.aashapuraApplyPay(r.data); try { localStorage.setItem("aashapura_pay", JSON.stringify(r.data)); } catch (e) {} }
+  }).catch(() => {});
+} catch (e) {}
 
 let products = [];
 let cart = {};
@@ -942,7 +957,7 @@ async function validateStoreCoupon(code, subtotal) {
 /* Dynamic UPI payment link builder. Payment is not automatically verified; admin must verify UTR. */
 function buildDynamicUpiLink(amount, orderNote="Aashapura order") {
   const params = new URLSearchParams({
-    pa: UPI_ID, pn: "Aashapura Ayurveda", am: Number(amount).toFixed(2),
+    pa: UPI_ID, pn: UPI_NAME, am: Number(amount).toFixed(2),
     cu: "INR", tn: orderNote
   });
   return "upi://pay?" + params.toString();

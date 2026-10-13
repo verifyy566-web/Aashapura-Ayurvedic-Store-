@@ -131,11 +131,6 @@
   
 <section id="adminPanel" style="display:none;width:100%;max-width:500px;margin:20px auto;padding:20px;border:1px solid #ccc;border-radius:12px;box-sizing:border-box;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;">
 
-  <div id="adminLoginBox">
-    <input id="adminEmail" type="email" placeholder="Admin Email" style="width:100%;padding:10px;margin:6px 0;box-sizing:border-box;">
-    <input id="adminPassword" type="password" placeholder="Password" style="width:100%;padding:10px;margin:6px 0;box-sizing:border-box;">
-    <button type="button" onclick="adminLogin()" style="padding:12px;width:100%;">Login</button>
-  </div>
 
   <div id="adminProductBox" style="display:none;">
     <div class="adm-title" id="admTitle"></div>
@@ -167,13 +162,14 @@ style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
     <div class="adm-sec" id="admSec-look"><div id="apTheme"></div></div>
     <div class="adm-sec" id="admSec-banners"><div id="apBanners"></div></div>
     <div class="adm-sec" id="admSec-cats"><div id="apCatImgs"></div></div>
+    <div class="adm-sec" id="admSec-payment"><div id="apPay"></div></div>
     <button type="button" onclick="adminLogout()" id="admLogoutBtn" style="display:none">Logout</button>
   </div>
 </section>
-<script src="script.js?v=15"></script>
+<script src="script.js?v=16"></script>
 <script src="theme.js?v=2"></script>
 <script src="enhance.js?v=5"></script>
-<script src="checkout.js?v=14"></script>
+<script src="checkout.js?v=15"></script>
 <script src="delivery.js?v=1"></script>
 <script src="address.js?v=1"></script>
 <script src="cart2.js?v=5"></script>
@@ -188,6 +184,8 @@ style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
 <script src="orders.js?v=8"></script>
 <script src="admin.js?v=8"></script>
 <script src="adminplus.js?v=5"></script>
-<script src="adminmenu.js?v=1"></script>
+<script src="adminmenu.js?v=3"></script>
+<script src="adminpay.js?v=1"></script>
+<script src="admingate.js?v=1"></script>
 </body>
 </html>

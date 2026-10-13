@@ -12,7 +12,8 @@
     { id: "products", icon: "📦", title: "Products", sub: "Edit or delete products" },
     { id: "look", icon: "🎨", title: "Website Look", sub: "Colours and top text" },
     { id: "banners", icon: "🖼️", title: "Home Banners", sub: "Slides on the home page" },
-    { id: "cats", icon: "🔘", title: "Category Photos", sub: "Icons on the home page" }
+    { id: "cats", icon: "🔘", title: "Category Photos", sub: "Icons on the home page" },
+    { id: "payment", icon: "💳", title: "Payment (UPI & QR)", sub: "Change UPI ID and QR code" }
   ];
   window.aashapuraAdmin = { sections: SECS, active: () => false };
   if (!isRoute) return;
@@ -87,8 +88,8 @@
     const sp = document.createElement("div"); sp.className = "sp"; list.appendChild(sp);
     const cs = document.createElement("button"); cs.type = "button";
     cs.innerHTML = `<span style="font-size:20px">🏬</span><span>Customer Store<small>View the shop</small></span>`;
-    cs.onclick = () => { location.href = location.pathname; }; list.appendChild(cs);
-    dr.querySelector(".adm-df button").onclick = () => { shut(); if (window.adminLogout) window.adminLogout(); };
+    cs.onclick = () => { try { sessionStorage.setItem("aashapura_store_view", "1"); } catch (e) {} location.href = location.pathname; }; list.appendChild(cs);
+    dr.querySelector(".adm-df button").onclick = async () => { shut(); try { if (window.adminLogout) await window.adminLogout(); } catch (e) {} try { sessionStorage.removeItem("aashapura_store_view"); } catch (e) {} location.replace(location.pathname); };
     back.classList.add("open"); dr.classList.add("open");
   }
 

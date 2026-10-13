@@ -132,7 +132,7 @@
       q("#coTitle").textContent = L("PAYMENT", "पेमेंट"); q("#coSteps").innerHTML = AD.stepper(3);
       const s2 = q("#coStep2"); s2.hidden = false; s2.className = "aa-pay";
       const note = orderNo || "Aashapura";
-      const qs = `pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent("Aashapura Ayurveda")}&am=${total.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}`;
+      const qs = `pa=${encodeURIComponent(UPI_ID)}&pn=${encodeURIComponent(UPI_NAME)}&am=${total.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}`;
       const isAndroid = /android/i.test(navigator.userAgent);
       const upiLink = pkg => isAndroid ? `intent://pay?${qs}#Intent;scheme=upi;${pkg ? "package=" + pkg + ";" : ""}end` : `upi://pay?${qs}`;
       s2.innerHTML = `${orderId ? `<p style="margin:12px 4px 0">${L("Order", "ऑर्डर")} #${escapeHTML(String(orderNo))} ${L("saved.", "सेव हो गया।")}</p>`
@@ -148,7 +148,7 @@
         <div style="display:flex;gap:6px;margin:8px 0;flex-wrap:wrap"><button type="button" class="secondary-btn" data-pkg="com.google.android.apps.nbu.paisa.user" style="flex:1">GPay</button><button type="button" class="secondary-btn" data-pkg="com.phonepe.app" style="flex:1">PhonePe</button><button type="button" class="secondary-btn" data-pkg="net.one97.paytm" style="flex:1">Paytm</button></div>
         <p class="small-note">ऐप न खुले तो UPI ID कॉपी करके अपने UPI ऐप में खुद पेमेंट करें, या नीचे का QR स्कैन करें।</p>
         <p><strong>${escapeHTML(UPI_ID)}</strong> <button type="button" id="coCopy" class="secondary-btn">कॉपी करें</button></p>
-        <img src="upi-qr.jpg" alt="UPI QR" style="width:min(100%,240px);border-radius:12px;display:block;margin:8px 0">
+        <img src="${escapeHTML(window.AASHAPURA_QR || "upi-qr.jpg")}" alt="UPI QR" style="width:min(100%,240px);border-radius:12px;display:block;margin:8px 0">
         <button type="button" id="coWa" class="premium-checkout-submit">${L("Send order & payment screenshot on WhatsApp", "WhatsApp पर ऑर्डर और पेमेंट स्क्रीनशॉट भेजें")}</button>
         <p class="premium-help">${L("After paying, tap the button below and send your payment screenshot in the WhatsApp chat. ⏳ Verification will take a few minutes. Your order will be confirmed after we check the payment. Status shows in My Orders.", "पेमेंट के बाद नीचे बटन दबाकर WhatsApp चैट में पेमेंट का स्क्रीनशॉट भेजें। ⏳ वेरिफिकेशन में कुछ मिनट लगेंगे। पेमेंट जाँचकर ऑर्डर कन्फर्म होगा। स्टेटस 'मेरे ऑर्डर' में दिखेगा।")}</p>`;
       m.scrollTop = 0;
