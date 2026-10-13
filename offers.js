@@ -12,7 +12,7 @@
   .of-row{display:flex;align-items:center;gap:12px;cursor:pointer}
   .of-ic{width:40px;height:40px;border-radius:50%;background:#e7f3ea;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
   .of-row .tx{flex:1;min-width:0}.of-row .tx b{display:block;font-size:16px}.of-row .tx small{display:block;color:#2f5d8a;margin-top:2px;font-size:13.5px}.of-row .tx small.g{color:#166534;font-weight:700}
-  .of-row .ar{font-size:22px;color:var(--green);font-weight:800}
+  .of-row .ar{font-size:22px;color:#123c2b;font-weight:800}
   .of-row .of-rm{border:1px solid #b42318;background:#fff;color:#b42318;border-radius:8px;padding:6px 10px;font-weight:700;cursor:pointer}
   .of-pg{position:fixed;inset:0;z-index:100030;background:#fff;display:flex;flex-direction:column;color:#173d2e;font-family:inherit}
   .of-hd{display:flex;align-items:center;gap:14px;padding:14px 14px;background:#fff;border-bottom:1px solid #eef1ec}
@@ -49,14 +49,17 @@
   const isOk = (c, sub) => { const exp = c.expires_at && new Date(c.expires_at) < new Date(); return !exp && sub >= Number(c.min_order || 0); };
   const saving = (c, sub) => Math.min(sub, c.discount_amount ? Number(c.discount_amount) : sub * Number(c.discount_percent || 0) / 100);
   const descOf = c => {
+    if (c.description && String(c.description).trim()) return String(c.description).trim();
     const min = Number(c.min_order || 0);
     const base = c.discount_amount ? L(`Flat ${rs(c.discount_amount)} off`, `${rs(c.discount_amount)} की फ्लैट छूट`) : L(`${Number(c.discount_percent || 0)}% off`, `${Number(c.discount_percent || 0)}% छूट`);
     return base + (min > 0 ? L(` on minimum purchase of Rs. ${min}`, ` कम से कम Rs. ${min} की खरीद पर`) : "");
   };
 
   async function fetchCoupons() {
-    const { data, error } = await supabaseClient.from("coupons")
-      .select("code, discount_percent, discount_amount, min_order, is_active, expires_at").eq("is_active", true);
+    let { data, error } = await supabaseClient.from("coupons")
+      .select("code, discount_percent, discount_amount, min_order, is_active, expires_at, description").eq("is_active", true);
+    if (error) ({ data, error } = await supabaseClient.from("coupons")
+      .select("code, discount_percent, discount_amount, min_order, is_active, expires_at").eq("is_active", true));
     if (error) throw error;
     return data || [];
   }

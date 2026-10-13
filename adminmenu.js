@@ -14,6 +14,7 @@
     { id: "banners", icon: "🖼️", title: "Home Banners", sub: "Slides on the home page" },
     { id: "cats", icon: "🔘", title: "Category Photos", sub: "Icons on the home page" },
     { id: "payment", icon: "💳", title: "Payment (UPI & QR)", sub: "Change UPI ID and QR code" },
+    { id: "coupons", icon: "🏷️", title: "Coupons", sub: "Naya coupon, edit, on/off, delete" },
     { id: "log", icon: "📜", title: "Activity Log", sub: "Kisne kya badla, kab" },
     { id: "backup", icon: "💾", title: "Backup", sub: "Data download (CSV / JSON)" }
   ];
