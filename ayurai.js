@@ -54,6 +54,7 @@
     const hi = w.filter(x => /^(ka|ki|ke|ko|me|mein|hai|hain|kya|kaise|kyun|nahi|nahin|ilaaj|upay|dawai|bimari|aur|se|par|ho|hoga|karo|batao|bataiye|mujhe|mera|meri|liye|wala|wali|kaun|kab|kitna|kitni|lun|lu|lena|lein|chahiye|rahta|rehta|aati|aata)$/.test(x)).length;
     return en >= 2 && en > hi ? "en" : "hing";
   }
+  const SP = {}; /* Hinglish jawab -> usi ka Devanagari rup, sirf bolne ke liye (Hindi voice ke liye) */
   async function answer(q) {
     if (ENDPOINT) {
       try {
@@ -61,7 +62,7 @@
         let key = ""; try { key = SUPABASE_KEY; } catch (e) { }
         const r = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", apikey: key, Authorization: "Bearer " + key }, body: JSON.stringify({ messages: msgs.slice(-6).map(m => ({ role: m.r, content: m.t })), products: ps, lang: detectLang(q) }) });
         const j = await r.json();
-        if (j && j.reply) return clean(j.reply);
+        if (j && j.reply) { const c = clean(j.reply); if (j.speech) SP[c] = clean(j.speech); return c; }
       } catch (e) { }
     }
     return local(q);
@@ -76,6 +77,7 @@
     return hi.find(v => /google/i.test(v.name)) || hi.find(v => /female|lekha|kalpana|swara|neerja/i.test(v.name)) || hi[0] || null;
   }
   function speak(t) {
+    t = SP[t] || t;
     if (!window.speechSynthesis) return alert("इस फ़ोन में बोलने की सुविधा नहीं है।");
     speechSynthesis.cancel(); loadV();
     const en = !/[\u0900-\u097F]/.test(String(t)); const v = bestVoice(en);
