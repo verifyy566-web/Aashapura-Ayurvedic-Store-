@@ -177,16 +177,17 @@
         const body = { messages: msgs.slice(-12).map(m => ({ role: m.r, content: m.t })), products: ps, kb: kbFor(q), lang: LC.c };
         if (LC.sc) { body.langName = LC.n; body.script = LC.sc; }
         if (img) body.image = { mime: img.mime, data: img.data };
-        const r = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", apikey: key, Authorization: "Bearer " + key }, body: JSON.stringify(body) });
+        const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), img ? 60000 : 40000);
+        let r; try { r = await fetch(ENDPOINT, { method: "POST", signal: ctl.signal, headers: { "Content-Type": "application/json", apikey: key, Authorization: "Bearer " + key }, body: JSON.stringify(body) }); } finally { clearTimeout(tm); }
         const rawT = await r.text(); let j = null;
         try { j = JSON.parse(rawT); } catch (e) { dbg = "HTTP " + r.status + " " + rawT.slice(0, 100); }
         if (j && j.reply) { const c = clean(j.reply); if (j.speech) SP[c] = clean(j.speech); LG[c] = LC.c === "hing" ? "hi" : LC.c; return c; }
         err = (j && j.error) || "fail";
         if (j && !dbg) dbg = j.detail || j.message || (r.ok ? "" : "HTTP " + r.status);
-      } catch (e) { err = "fail"; dbg = "net: " + String(e && e.message || e).slice(0, 80); }
+      } catch (e) { err = "fail"; dbg = e && e.name === "AbortError" ? "AI ne 40 second me jawab nahi diya (timeout)" : "net: " + String(e && e.message || e).slice(0, 80); }
     }
     if (img) return "📷 फोटो समझने के लिए AI चाहिए। " + busyMsg(err || "fail") + (dbg && err !== "quota" ? "\n\n(तकनीकी कारण: " + String(dbg).slice(0, 300) + ")" : "");
-    return local(q, err);
+    return local(q, err) + (err === "fail" && dbg ? "\n\n(तकनीकी कारण: " + String(dbg).slice(0, 220) + ")" : "");
   }
   /* Photo chhoti karo (max 1024px JPEG) taaki upload tez ho aur AI quota kam lage */
   function shrink(file) {

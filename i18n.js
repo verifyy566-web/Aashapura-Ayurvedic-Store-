@@ -252,8 +252,10 @@
   ["alert", "confirm", "prompt"].forEach(n => { const f = window[n]; window[n] = (m, ...r) => f.call(window, t(String(m)), ...r); });
 
   const ATTRS = ["placeholder", "aria-label", "alt", "title"];
+  /* Ayurveda AI chat Hindi me hi rehta hai: dictionary yahan na lage (warna "AI से" -> "AI onwards" ban jata tha) */
+  const inAi = n => { const e = n && (n.nodeType === 3 ? n.parentElement : n); return !!(e && e.closest && e.closest("#aaiPg")); };
   function walk(root) {
-    if (!root) return;
+    if (!root || inAi(root)) return;
     if (root.nodeType === 3) { const v = t(root.nodeValue); if (v !== root.nodeValue) root.nodeValue = v; return; }
     if (root.nodeType !== 1 || /^(SCRIPT|STYLE)$/.test(root.tagName)) return;
     ATTRS.forEach(a => { if (root.hasAttribute(a)) { const o = root.getAttribute(a), v = t(o); if (v !== o) root.setAttribute(a, v); } });
