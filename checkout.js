@@ -14,7 +14,7 @@
   /* ===== DELIVERY SETTINGS (yahin se badlo) ===== */
   const DELIVERY = {
     charge: 49,          // delivery charge (₹) jab order chhota ho
-    freeAbove: 499,      // is amount ya usse upar ka order (coupon ke baad) = FREE delivery
+    freeAbove: 199,      // is amount ya usse upar ka order (coupon ke baad) = FREE delivery
     blocked: [],         // jin pincode par delivery nahi: e.g. ["190001", "682001"]
     blockedPrefix: []    // jin pincode ke shuruaat par delivery nahi: e.g. ["19"] (Kashmir) 
   };

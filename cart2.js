@@ -172,6 +172,14 @@
       ${mrpOff + cpd + cmb > 0 ? `<div class="ct-save">🎉 ${L("You're saving", "आप बचा रहे हैं")} ${rs(mrpOff + cpd + cmb)} ${L("on this order", "इस ऑर्डर पर")}</div>` : ""}
       ${D.freeAbove ? `<div class="ct-card ct-free"><p>${del ? L(`Add ${rs(D.freeAbove - after)} more for FREE delivery`, `${rs(D.freeAbove - after)} और जोड़ें, डिलीवरी फ्री पाएँ`) : L("🎉 You get FREE delivery on this order", "🎉 इस ऑर्डर पर डिलीवरी फ्री है")}</p><div class="ct-bar"><i style="width:${pct}%"></i></div></div>` : ""}
       ${rows}
+      ${(() => {
+        if (!del || !D.freeAbove) return "";
+        const gap = Math.ceil(D.freeAbove - after), inBag = new Set(all.map(i => String(i.product.name).trim().toLowerCase())), seen = new Set();
+        const pool = products.filter(p => p.stock > 0 && p.price > 0 && !inBag.has(String(p.name).trim().toLowerCase()) && !cart[p.id] && (k => (seen.has(k) ? false : (seen.add(k), true)))(String(p.name).trim().toLowerCase()));
+        const hit = pool.filter(p => p.price >= gap).sort((a, b) => a.price - b.price), low = pool.filter(p => p.price < gap).sort((a, b) => b.price - a.price);
+        const list = hit.slice(0, 4).concat(low).slice(0, 8); if (!list.length) return "";
+        return `<div class="ct-card ct-sug"><h4>${L(`Add ${rs(gap)} more to get FREE delivery`, `${rs(gap)} और जोड़ें और फ्री डिलीवरी पाएँ`)}</h4><div class="ct-sug-row">${list.map(p => { const im = imgOf(p); return `<div class="ct-sug-c"><div class="im">${im ? `<img src="${esc(im)}" alt="" loading="lazy">` : esc(p.emoji || "🌿")}</div><b>${esc(p.name)}${p.weight ? " · " + esc(p.weight) : ""}</b><span>${rs(p.price)}</span>${p.price >= gap ? `<em>${L("Free delivery", "फ्री डिलीवरी")}</em>` : ""}<button type="button" data-sadd="${p.id}">+ ${L("Add", "जोड़ें")}</button></div>`; }).join("")}</div></div>`;
+      })()}
       ${items.length ? `<div class="ct-card ct-offers"><h4>${L("Offers & Benefits", "ऑफ़र और लाभ")}</h4><div class="of-row" id="ctOffers"><span class="of-ic">🏷️</span><div class="tx"><b>${appliedCoupon && cpd > 0 ? esc(appliedCoupon.code) + " " + L("applied", "लागू") : L("Apply Coupon", "कूपन लगाएँ")}</b><small class="${appliedCoupon && cpd > 0 ? "g" : ""}">${appliedCoupon && cpd > 0 ? L("You save", "आप बचा रहे हैं") + " " + rs(cpd) : L("Tap to see available offers", "उपलब्ध ऑफ़र देखें")}</small></div>${appliedCoupon && cpd > 0 ? `<button type="button" class="of-rm" id="ctCpRm">${L("Remove", "हटाएँ")}</button>` : `<span class="ar">›</span>`}</div></div>` : ""}
       ${items.length ? `<div class="ct-card ct-pd"><h4>${L("Price Details", "प्राइस डिटेल")} (${count} ${L(count === 1 ? "item" : "items", "आइटम")})</h4>
         <div class="ct-r"><span>${L("Total MRP", "कुल MRP")}</span><span>${rs(mrpTotal)}</span></div>
@@ -197,6 +205,11 @@
     page.querySelector("#ctBack").onclick = closeCart;
     const rmOos = page.querySelector("#ctRmOos"); if (rmOos) rmOos.onclick = () => { oos.forEach(i => delete cart[i.id]); refresh(); };
     page.querySelector("#ctPlace").onclick = () => { if (oos.length || !items.length) return toast(L("Please remove out-of-stock items first.", "पहले स्टॉक खत्म वाले आइटम हटाएँ।"), "error"); if (window.aashapuraClampCart && window.aashapuraClampCart().length) return renderCartPage(); openPremiumCheckout(); };
+    page.querySelectorAll("[data-sadd]").forEach(b => b.onclick = () => {
+      const id = b.dataset.sadd, p = products.find(x => String(x.id) === id); if (!p) return;
+      if ((Number(cart[id]) || 0) >= p.stock) return toast(L(`Only ${p.stock} available in stock`, `स्टॉक में सिर्फ़ ${p.stock} उपलब्ध`), "error");
+      cart[id] = (Number(cart[id]) || 0) + 1; toast(L(`${p.name} added to bag`, `${p.name} कार्ट में जोड़ा`), "success"); refresh();
+    });
     page.querySelectorAll("[data-inc]").forEach(b => b.onclick = () => {
       const id = b.dataset.inc, p = products.find(x => String(x.id) === id);
       if (p && (Number(cart[id]) || 0) >= p.stock) return toast(L(`Only ${p.stock} available in stock`, `स्टॉक में सिर्फ़ ${p.stock} उपलब्ध`), "error");

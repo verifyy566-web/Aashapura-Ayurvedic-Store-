@@ -13,7 +13,7 @@
   window.AASHAPURA_SITE = CONFIG;
   const L = (en, hi) => (window.AASHAPURA_LANG === "hi" ? hi : en);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const D = () => window.AASHAPURA_DELIVERY || { charge: 49, freeAbove: 499 };
+  const D = () => window.AASHAPURA_DELIVERY || { charge: 49, freeAbove: 199 };
   const wa = txt => `https://wa.me/${CONFIG.phone}${txt ? "?text=" + encodeURIComponent(txt) : ""}`;
   const PH = () => "+" + CONFIG.phone.replace(/^(\d{2})(\d{5})(\d{5})$/, "$1 $2 $3");
 
