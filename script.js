@@ -42,6 +42,7 @@ function normalizeProduct(p) {
     images: p.images || "",
     video_url: p.video_url || "",
     mrp: Number(p.mrp || 0),
+    cod_available: p.cod_available !== false,
     ay_ingredients: p.ay_ingredients || "",
     ay_benefits: p.ay_benefits || "",
     ay_usage: p.ay_usage || "",

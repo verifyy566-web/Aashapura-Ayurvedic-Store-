@@ -25,6 +25,7 @@
   const COL = { pending: "#b45309:#fef3c7", confirmed: "#1d4ed8:#dbeafe", shipped: "#6d28d9:#ede9fe", delivered: "#166534:#dcfce7", cancelled: "#b42318:#fee4e2", paid: "#166534:#dcfce7" };
   const bd = v => { const [c, b] = (COL[lc(v)] || "#555:#eee").split(":"); return `<span class="ad-b" style="color:${c};background:${b}">${esc(v || "pending")}</span>`; };
   const isPaid = o => lc(o.payment_status) === "paid";
+  const isCod = o => lc(o.payment_method) === "cod";
   const isCan = o => lc(o.order_status) === "cancelled";
   const num = o => esc(o.order_no || o.id);
   const isNew = o => !isCan(o) && new Date(o.created_at).getTime() > (Number(window.aashapuraAdminSeenAt) || Infinity);
@@ -50,6 +51,7 @@
     if (tab === "utr" && !(!isPaid(o) && !isCan(o) && o.utr)) return false;
     if (tab === "unpaid" && !(!isPaid(o) && !isCan(o))) return false;
     if (["confirmed", "shipped", "delivered", "cancelled"].includes(tab) && os !== tab) return false;
+    if (tab === "cod" && !isCod(o)) return false;
     if (tab === "returns" && !REF.some(r => String(r.order_id) === String(o.id))) return false;
     if (q) { const p = PROF[o.user_id] || {}; const hay = [o.order_no, o.id, o.customer_name, o.phone, o.customer_email, o.address, p.full_name, p.phone].join(" ").toLowerCase(); if (!hay.includes(q)) return false; }
     return true;
@@ -113,7 +115,7 @@
     const items = Array.isArray(o.items) ? o.items : [];
     const refs = REF.filter(r => String(r.order_id) === String(o.id));
     const d = document.createElement("details"); d.className = "ad-o";
-    d.innerHTML = `<summary>${isNew(o) ? `<span class="ad-b" style="background:#b42318;color:#fff;margin:0 6px 0 0">NEW</span>` : ""}<b>#${num(o)}</b> · ${esc(o.customer_name || p.full_name || "Customer")} · <b>${money(o.total)}</b><br><small>${esc(dt(o.created_at))}</small> ${bd(o.order_status)} ${bd(isPaid(o) ? "paid" : "unpaid")}${!isPaid(o) && !isCan(o) && o.utr ? ` <span class="ad-b" style="background:#fff3cd;color:#8a5a00">📷 screenshot sent · check &amp; confirm</span>` : ""}${refs.length ? ` <span class="ad-b" style="background:#fee4e2;color:#b42318">return: ${esc(refs[0].status)}</span>` : ""}</summary>
+    d.innerHTML = `<summary>${isNew(o) ? `<span class="ad-b" style="background:#b42318;color:#fff;margin:0 6px 0 0">NEW</span>` : ""}<b>#${num(o)}</b> · ${esc(o.customer_name || p.full_name || "Customer")} · <b>${money(o.total)}</b><br><small>${esc(dt(o.created_at))}</small> ${bd(o.order_status)} ${bd(isPaid(o) ? "paid" : "unpaid")}${isCod(o) ? ` <span class="ad-b" style="background:#fff3cd;color:#8a5a00">💵 Cash On Delivery ${money(o.total)}</span>` : ""}${!isPaid(o) && !isCan(o) && o.utr ? ` <span class="ad-b" style="background:#fff3cd;color:#8a5a00">📷 screenshot sent · check &amp; confirm</span>` : ""}${refs.length ? ` <span class="ad-b" style="background:#fee4e2;color:#b42318">return: ${esc(refs[0].status)}</span>` : ""}</summary>
       <div class="ad-in"><div class="ad-grid">
         <div><b>Customer</b><br>${esc(o.customer_name || "")}<br>📞 ${esc(o.phone || "—")}<br>✉️ ${esc(o.customer_email || "—")}</div>
         ${addrHTML(o)}
@@ -121,6 +123,7 @@
       </div>
       <table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr>${items.map(i => `<tr><td>${esc(i.name)}${i.weight ? " (" + esc(i.weight) + ")" : ""}</td><td>${Number(i.qty || i.quantity || 1)}</td><td>${money(i.price)}</td><td>${money(i.price * (i.qty || i.quantity || 1))}</td></tr>`).join("")}</table>
       <div>Subtotal ${money(o.subtotal)}${Number(o.combo_discount) ? " · 🎁 Combo −" + money(o.combo_discount) + (o.combo_names ? " (" + esc(o.combo_names) + ")" : "") : ""}${Number(o.discount) ? " · Discount −" + money(o.discount) + (o.coupon_code ? " (" + esc(o.coupon_code) + ")" : "") : ""} · Delivery ${Number(o.delivery_charge) ? money(o.delivery_charge) : "FREE"} · <b>Total ${money(o.total)}</b></div>
+      ${isCod(o) ? `<div style="background:#fff8e1;border:1px solid #f1d98a;border-radius:8px;padding:8px 10px;margin:6px 0">💵 <b>Cash on Delivery</b> · Cash On Delivery fee ${money(o.cod_fee || 0)} · Delivery par <b>${money(o.total)}</b> collect karna hai${isPaid(o) ? " · <b style=\"color:#166534\">Cash mil gaya ✓</b>" : ""}</div>` : ""}
       <div>${o.stock_deducted ? "📦 Stock kam ho chuka hai" : "Stock: confirm par kam hoga"}</div>
       <div>Order No: <b>${num(o)}</b> · DB ID: ${esc(o.id)} · Payment screenshot: <b>${o.utr ? "sent on WhatsApp (check chat)" : "not yet"}</b></div>
       ${o.cancel_reason ? `<div style="color:#b42318">Cancel reason: ${esc(o.cancel_reason)}</div>` : ""}
@@ -130,14 +133,22 @@
     const add = (t, fn) => { const b = document.createElement("button"); b.type = "button"; b.textContent = t; b.onclick = fn; acts.appendChild(b); };
     const os = lc(o.order_status) || "pending";
     if (!isCan(o)) {
-      if (!isPaid(o)) add("✅ Payment mila – Confirm Order", async () => {
+      if (isCod(o) && os === "pending") add("✅ Confirm Cash On Delivery Order", async () => {
+        await setO(o, { order_status: "confirmed" }, "Cash On Delivery order confirmed");
+        const ph2 = String(o.phone || "").replace(/\D/g, "").slice(-10);
+        if (ph2 && await confirm("Customer ko WhatsApp par confirmation bhejein?")) window.open(`https://wa.me/91${ph2}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", aapka Cash on Delivery order " + (o.order_no || o.id) + " confirm ho gaya hai. Delivery par " + money(o.total) + " cash dena hoga. Dhanyavaad - Aashapura Ayurveda")}`, "_blank", "noopener");
+      });
+      if (!isPaid(o) && !isCod(o)) add("✅ Payment mila – Confirm Order", async () => {
         await setO(o, { payment_status: "paid", order_status: os === "pending" ? "confirmed" : o.order_status }, "Order confirmed");
         const ph2 = String(o.phone || "").replace(/\D/g, "").slice(-10);
         if (ph2 && await confirm("Customer ko WhatsApp par confirmation bhejein?")) window.open(`https://wa.me/91${ph2}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", aapka payment mil gaya. Aapka order " + (o.order_no || o.id) + " (" + money(o.total) + ") confirm ho gaya hai. Dhanyavaad - Aashapura Ayurveda")}`, "_blank", "noopener");
       });
       if (os === "pending") add("Confirm", () => setO(o, { order_status: "confirmed" }));
       if (["pending", "confirmed"].includes(os)) add("🚚 Shipped", () => setO(o, { order_status: "shipped" }));
-      if (["confirmed", "shipped"].includes(os)) add("📦 Delivered", () => setO(o, { order_status: "delivered" }));
+      if (["confirmed", "shipped"].includes(os)) add(isCod(o) && !isPaid(o) ? "📦 Delivered + Cash mila" : "📦 Delivered", async () => {
+        if (isCod(o) && !isPaid(o)) { if (!(await confirm("Delivery ho gayi aur " + money(o.total) + " cash mil gaya?"))) return; await setO(o, { order_status: "delivered", payment_status: "paid" }, "Delivered, cash received"); }
+        else await setO(o, { order_status: "delivered" });
+      });
       if (os !== "delivered") add("✕ Cancel", async () => { const r = await window.prompt("Cancel reason:", ""); if (r !== null && r !== undefined) setO(o, { order_status: "cancelled", cancel_reason: String(r).trim(), cancelled_at: new Date().toISOString() }, "Cancelled"); });
     }
     const ph = String(o.phone || p.phone || "").replace(/\D/g, "").slice(-10);
@@ -181,8 +192,8 @@
   }
 
   function csv() {
-    const h = ["Order No", "Date", "Customer", "Phone", "Email", "Address", "Items", "Subtotal", "Discount", "Coupon", "Delivery", "Pincode", "Address type", "Weekend delivery", "Combo discount", "Total", "Payment", "Status", "Screenshot sent"];
-    const rows = ORD.map(o => [o.order_no || o.id, o.created_at, o.customer_name, o.phone, o.customer_email, (o.address || o.delivery_address), (o.items || []).map(i => `${i.name} x${i.qty || i.quantity || 1}`).join("; "), o.subtotal, o.discount, o.coupon_code, o.delivery_charge, o.pincode, (addrInfo(o) ? (addrInfo(o).office ? "Office" : "Home") : ""), (addrInfo(o) ? (addrInfo(o).wk.ok ? "Yes" : "No") : ""), o.combo_discount || 0, o.total, o.payment_status, o.order_status, o.utr ? "yes" : ""]);
+    const h = ["Order No", "Date", "Customer", "Phone", "Email", "Address", "Items", "Subtotal", "Discount", "Coupon", "Delivery", "Pincode", "Address type", "Weekend delivery", "Combo discount", "Total", "Payment", "Method", "Cash On Delivery fee", "Status", "Screenshot sent"];
+    const rows = ORD.map(o => [o.order_no || o.id, o.created_at, o.customer_name, o.phone, o.customer_email, (o.address || o.delivery_address), (o.items || []).map(i => `${i.name} x${i.qty || i.quantity || 1}`).join("; "), o.subtotal, o.discount, o.coupon_code, o.delivery_charge, o.pincode, (addrInfo(o) ? (addrInfo(o).office ? "Office" : "Home") : ""), (addrInfo(o) ? (addrInfo(o).wk.ok ? "Yes" : "No") : ""), o.combo_discount || 0, o.total, o.payment_status, o.payment_method || "upi", o.cod_fee || 0, o.order_status, o.utr ? "yes" : ""]);
     const t = [h, ...rows].map(r => r.map(v => `"${String(v == null ? "" : v).replace(/"/g, '""')}"`).join(",")).join("\n");
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + t], { type: "text/csv" })); a.download = "aashapura-orders.csv"; a.click();
   }
@@ -196,7 +207,7 @@
     });
   }
   function paintOrders(h) {
-    const tabs = [["all", "All"], ["utr", "Screenshot sent"], ["unpaid", "Payment pending"], ["confirmed", "Confirmed"], ["shipped", "Shipped"], ["delivered", "Delivered"], ["cancelled", "Cancelled"], ["returns", "Returns"]];
+    const tabs = [["all", "All"], ["utr", "Screenshot sent"], ["unpaid", "Payment pending"], ["confirmed", "Confirmed"], ["shipped", "Shipped"], ["delivered", "Delivered"], ["cancelled", "Cancelled"], ["returns", "Returns"], ["cod", "Cash On Delivery"]];
     h.innerHTML = `<div class="adm-bar"><span class="adm-sub">${ORD.length} orders</span><button type="button" id="adReload2" aria-label="Refresh">↻</button></div>
       <input id="adSearch" placeholder="Search order no, name, phone, email…" value="${esc(q)}" style="width:100%;padding:10px;box-sizing:border-box;margin:6px 0">
       <div class="ad-tabs">${tabs.map(t => `<button type="button" data-t="${t[0]}" class="${tab === t[0] ? "on" : ""}">${t[1]}</button>`).join("")}</div><div id="adList"></div>`;

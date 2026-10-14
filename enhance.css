@@ -86,3 +86,14 @@ em.ok,.pp-stock.ok{color:#18794e}em.low,.pp-stock.low{color:#b45309}em.out,.pp-s
 .pp-ay-body{padding:6px 2px 2px;line-height:1.7;font-size:15px}.pp-ay-body p{margin:0}.pp-ay-body ul{margin:0;padding-left:20px}.pp-ay-body li{margin:3px 0}
 .pp-ay-note{display:block;margin-top:10px;color:#6a7d70;font-size:12px;line-height:1.5}
 .pp-wrap>*,.pp-info{min-width:0}.pp-ay{min-width:0;max-width:100%;box-sizing:border-box;overflow:hidden}.pp-ay-tabs{max-width:100%}
+
+/* v58 COD */
+.co-pm{margin:0 12px 6px;display:flex;flex-direction:column;gap:8px}
+.co-pm label{display:flex;gap:12px;align-items:flex-start;border:1.5px solid #dfe8e2;border-radius:12px;padding:12px 14px;background:#fff;cursor:pointer}
+.co-pm label:has(input:checked){border-color:#2f6b3a;background:#f1f7ee}
+.co-pm label.off{opacity:.55;cursor:not-allowed}
+.co-pm input{margin-top:3px;width:18px;height:18px;accent-color:#2f6b3a;flex:none}
+.co-pm b{display:block;font-size:15px}.co-pm small{display:block;color:#5d7266;font-size:12.5px;margin-top:2px;line-height:1.4}
+.co-sum{background:#fff;border:1px dashed #cfd9cb;border-radius:12px;padding:8px 14px}
+.co-sum div{display:flex;justify-content:space-between;padding:4px 0;font-size:14px}.co-sum .t{font-weight:800;border-top:1px solid #e6ece3;margin-top:4px;padding-top:8px;font-size:15px}
+.cod-chip{display:inline-block;background:#fff3cd;color:#8a5a00;border-radius:99px;padding:2px 9px;font-size:12px;font-weight:700}

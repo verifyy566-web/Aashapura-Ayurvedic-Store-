@@ -22,6 +22,9 @@
   window.AASHAPURA_DELIVERY = DELIVERY;
   /* server rules (table store_rules, supabase_v34_security.sql) override the numbers above so UI and server always match */
   try { supabaseClient.from("store_rules").select("delivery_charge,free_above").eq("id", 1).maybeSingle().then(r => { if (r && r.data) { const c = Number(r.data.delivery_charge), f = Number(r.data.free_above); if (isFinite(c)) DELIVERY.charge = c; if (isFinite(f)) DELIVERY.freeAbove = f; } }).catch(() => {}); } catch (e) {}
+  /* v58: Cash on Delivery. Fee + on/off come from store_rules (supabase_v58_cod.sql); stays OFF until that SQL is run. */
+  const COD = window.AASHAPURA_COD = { enabled: false, fee: 99 };
+  try { supabaseClient.from("store_rules").select("cod_fee,cod_enabled").eq("id", 1).maybeSingle().then(r => { if (r && r.data && r.data.cod_enabled !== undefined) { COD.enabled = r.data.cod_enabled !== false; const f = Number(r.data.cod_fee); if (isFinite(f) && f >= 0) COD.fee = f; } }).catch(() => {}); } catch (e) {}
   const pinLookup = async pin => {
     if (DELIVERY.blocked.includes(pin) || DELIVERY.blockedPrefix.some(x => pin.startsWith(x))) return { ok: false, msg: L("Sorry, we can't deliver to this pincode yet.", "माफ़ कीजिए, इस पिनकोड पर अभी डिलीवरी नहीं होती।") };
     try {
@@ -69,7 +72,10 @@
     const close = () => AD.ov.close(m);
     q(".aa-bk").onclick = close;
     const CBX = window.aashapuraCombos;
-    const calc = () => { const cb = CBX ? CBX.calc(items) : { discount: 0, names: "" }; const cmb = cb.discount; const d = appliedCoupon ? Math.min(Number(appliedCoupon.discount) || 0, subtotal - cmb) : 0; const after = Math.max(0, subtotal - cmb - d); const del = delFor(after); return { d, cmb, cnames: cb.names, del, total: after + del }; };
+    let method = "upi";
+    const noCod = items.filter(i => i.product.cod_available === false);
+    const codOk = COD.enabled && !noCod.length;
+    const calc = () => { const cb = CBX ? CBX.calc(items) : { discount: 0, names: "" }; const cmb = cb.discount; const d = appliedCoupon ? Math.min(Number(appliedCoupon.discount) || 0, subtotal - cmb) : 0; const after = Math.max(0, subtotal - cmb - d); const cod = method === "cod" && codOk ? COD.fee : 0; const del = cod ? 0 : delFor(after); return { d, cmb, cnames: cb.names, del, cod, total: after + del + cod }; };
 
     let addr = null;
     const showAddr = async () => {
@@ -89,7 +95,15 @@
         <div class="aa-lbl">${L("DELIVERY ESTIMATES", "डिलीवरी अनुमान")}</div>
         <div class="aa-est"><span class="th">${th}</span><span style="margin-left:10px">${L("Delivery between", "डिलीवरी")} <b>${escapeHTML(AD.estimate(addr.state))}</b></span></div>
         <p class="small-note" style="padding:12px 16px;margin:0">${signedInUser ? L("Your order will be saved in 'My Orders'. Payment options come next.", "ऑर्डर 'मेरे ऑर्डर' में सेव होगा। अगले स्टेप में पेमेंट दिखेगा।") : L("Sign In to see this order in 'My Orders'. Payment options come next.", "'मेरे ऑर्डर' में दिखाने के लिए Sign In करें। अगले स्टेप में पेमेंट दिखेगा।")}</p>
+        ${COD.enabled ? `<div class="aa-lbl">${L("PAYMENT METHOD", "पेमेंट का तरीका")}</div>
+        <div class="co-pm"><label><input type="radio" name="coPm" value="upi" checked><span><b>${L("Pay online (UPI)", "ऑनलाइन पेमेंट (UPI)")}</b><small>${L("GPay, PhonePe, Paytm or any UPI app", "GPay, PhonePe, Paytm या कोई भी UPI ऐप")}</small></span></label>
+          <label class="${codOk ? "" : "off"}"><input type="radio" name="coPm" value="cod"${codOk ? "" : " disabled"}><span><b>${L("Cash on Delivery", "कैश ऑन डिलीवरी")}</b><small>${codOk ? L(`+ ${money(COD.fee)} Cash On Delivery fee. Pay cash when the order arrives.`, `+ ${money(COD.fee)} कैश ऑन डिलीवरी शुल्क। ऑर्डर मिलने पर कैश दें।`) : L("Not available for: ", "इनके लिए उपलब्ध नहीं: ") + escapeHTML(noCod.map(i => i.name).join(", "))}</small></span></label>
+          <div class="co-sum" id="coSum"></div></div>` : ""}
         <div class="aa-cta"><button type="button" id="coGo">${L("CONTINUE", "आगे बढ़ें")}</button></div>`;
+      const paintSum = () => { const el = q("#coSum"); if (!el) return; const c = calc(); el.innerHTML = `<div><span>${L("Order total", "ऑर्डर कुल")}</span><span>${money(c.total - c.cod)}</span></div>` + (c.cod ? `<div><span>${L("Cash On Delivery fee", "कैश ऑन डिलीवरी शुल्क")}</span><span>${money(c.cod)}</span></div>` : "") + `<div class="t"><span>${method === "cod" ? L("Pay on delivery", "डिलीवरी पर दें") : L("Total to pay", "देय राशि")}</span><span>${money(c.total)}</span></div>`; };
+      q("#coStep1").querySelectorAll('input[name="coPm"]').forEach(r => { r.onchange = () => { method = r.value; paintSum(); }; });
+      if (method === "cod" && codOk) { const r = q('input[name="coPm"][value="cod"]'); if (r) r.checked = true; }
+      paintSum();
       q("#coChange").onclick = async () => { await AD.openSelect(); showAddr(); };
       q("#coGo").onclick = place;
     };
@@ -121,7 +135,8 @@
       const stt = pr.state || a.state;
       const etaCols = (() => { try { const e = window.aashapuraEta(stt); return { delivery_state: stt || null, exp_min: e.min.toISOString().slice(0, 10), exp_max: e.max.toISOString().slice(0, 10) }; } catch (x) { return {}; } })();
       btn.textContent = L("Saving…", "सेव हो रहा है…");
-      const { d, cmb, cnames, del, total } = calc();
+      const { d, cmb, cnames, del, total, cod } = calc();
+      const isCod = method === "cod" && cod > 0;
       const cCode = appliedCoupon ? appliedCoupon.code : "";
       const orderItems = items.map(i => ({ id: i.id, name: i.name, weight: i.weight, price: i.price, qty: i.qty }));
       let orderId = null, orderNo = null, saveErr = "";
@@ -131,6 +146,7 @@
           subtotal, discount: d, total, coupon_code: cCode || null,
           payment_status: "pending", order_status: "pending"
         };
+        if (isCod) { base.payment_method = "cod"; base.cod_fee = cod; }
         const optional = { pincode: pin, delivery_charge: del, delivery_area: area || null, ...etaCols,
           address_type: a.address_type === "office" ? "office" : "home", open_sat: !!a.open_sat, open_sun: !!a.open_sun,
           combo_discount: cmb || 0, combo_names: cnames || null };
@@ -142,16 +158,46 @@
           if (mm && Object.prototype.hasOwnProperty.call(optional, mm[1])) delete optional[mm[1]];
           else { for (const k of Object.keys(optional)) delete optional[k]; }
         }
-        if (error && /PRICE_CHANGED|OUT_OF_STOCK|BAD_COUPON|BAD_PRODUCT|BAD_QTY|ORDER_RATE_LIMIT/.test(error.message || "")) {
+        if (error && /PRICE_CHANGED|OUT_OF_STOCK|BAD_COUPON|BAD_PRODUCT|BAD_QTY|ORDER_RATE_LIMIT|COD_NOT_ALLOWED/.test(error.message || "")) {
           const m = error.message;
           showStoreToast(/ORDER_RATE_LIMIT/.test(m) ? L("Too many orders in a short time. Please try again after some time.", "थोड़े समय में बहुत ऑर्डर हुए। कुछ देर बाद कोशिश करें।")
+            : /COD_NOT_ALLOWED/.test(m) ? L("Cash on Delivery is not available for this order. Please pay online.", "इस ऑर्डर के लिए कैश ऑन डिलीवरी उपलब्ध नहीं है। कृपया ऑनलाइन पेमेंट करें।")
             : /OUT_OF_STOCK/.test(m) ? L("An item just went out of stock. Please check your bag.", "कोई आइटम अभी स्टॉक से बाहर हो गया। कार्ट देखें।")
             : /BAD_COUPON/.test(m) ? L("Coupon is not valid any more. Please check your bag.", "कूपन अब मान्य नहीं है। कार्ट देखें।")
             : L("Prices have changed. Please refresh and check your bag.", "कीमतें बदल गई हैं। पेज रिफ्रेश करके कार्ट देखें।"), "error");
           reset(); try { appliedCoupon = null; window.renderCartPage(true); } catch (e) {} return;
         }
+        if (error && isCod) { console.warn(error.message); reset(); showStoreToast(L("Could not place the Cash On Delivery order: ", "कैश ऑन डिलीवरी ऑर्डर नहीं बन पाया: ") + error.message, "error"); return; }
         if (error) { console.warn(error.message); saveErr = error.message; showStoreToast("ऑर्डर सेव नहीं हुआ; WhatsApp से भेज सकते हैं।", "error"); }
         else { orderId = data.id; orderNo = data.order_no || String(data.id); clearCart(); appliedCoupon = null; }
+      }
+      if (isCod && orderId) {
+        q("#coStep1").hidden = true;
+        q("#coTitle").textContent = L("ORDER PLACED", "ऑर्डर हो गया"); q("#coSteps").innerHTML = AD.stepper(3);
+        const s3 = q("#coStep2"); s3.hidden = false; s3.className = "aa-pay";
+        s3.innerHTML = `<div style="text-align:center;padding:18px 6px 6px"><div style="width:64px;height:64px;border-radius:50%;background:#2f6b3a;color:#fff;font-size:34px;display:grid;place-items:center;margin:0 auto 10px">✓</div>
+          <h3 style="margin:0 0 4px">${L("Order placed!", "ऑर्डर हो गया!")}</h3><p style="margin:0;color:#5d7266">${L("Order", "ऑर्डर")} #${escapeHTML(String(orderNo))}</p></div>
+        <div class="aa-bill" style="margin:12px 0"><h4>${L("Price Details", "प्राइस डिटेल")}</h4>
+          <div><span>${L("Subtotal", "सबटोटल")}</span><span>${money(subtotal)}</span></div>
+          ${cmb ? `<div><span>${L("Combo offer", "कॉम्बो ऑफ़र")}</span><span class="g">−${money(cmb)}</span></div>` : ""}
+          ${d ? `<div><span>${L("Coupon", "कूपन")} (${escapeHTML(cCode)})</span><span class="g">−${money(d)}</span></div>` : ""}
+          <div><span>${L("Delivery", "डिलीवरी")}</span><span class="${del ? "" : "g"}">${del ? money(del) : L("FREE", "फ्री")}</span></div>
+          <div><span>${L("Cash On Delivery fee", "कैश ऑन डिलीवरी शुल्क")}</span><span>${money(cod)}</span></div>
+          <div class="t"><span>${L("Pay in cash on delivery", "डिलीवरी पर कैश दें")}</span><span>${money(total)}</span></div></div>
+        <div class="aa-card"><div class="aa-top"><b>${L("Delivering to", "डिलीवरी का पता")}: ${escapeHTML(name)}</b>${AD.chip(a)}</div>${AD.html(a)}<div class="aa-mob">${L("Mobile", "मोबाइल")}: ${escapeHTML(phone)}</div>
+          <div class="aa-mob">📦 ${L("Delivery between", "डिलीवरी")} <b>${escapeHTML(AD.estimate(stt))}</b></div></div>
+        <p class="small-note">${L("Please keep exact cash ready and pick up our call/message. We will confirm your order shortly. Status shows in My Orders.", "कृपया सही कैश तैयार रखें। हम जल्दी ऑर्डर कन्फर्म करेंगे। स्टेटस 'मेरे ऑर्डर' में दिखेगा।")}</p>
+        <button type="button" class="primary-btn" id="coMy" style="width:100%">${L("View My Orders", "मेरे ऑर्डर देखें")}</button>
+        <button type="button" class="secondary-btn" id="coWaC" style="width:100%;margin-top:8px">${L("Send order details on WhatsApp", "WhatsApp पर ऑर्डर विवरण भेजें")}</button>`;
+        m.scrollTop = 0;
+        s3.querySelector("#coMy").onclick = () => { AD.ov.closeAll(); closeCart(); try { const b = document.getElementById("openMyOrdersBtn"); if (b) b.click(); } catch (e) {} };
+        s3.querySelector("#coWaC").onclick = () => {
+          const lines = items.map(i => `• ${i.name} (${i.weight || "standard"}) × ${i.qty} = ${money(i.price * i.qty)}`).join("\n");
+          const msg = `नमस्ते Aashapura Ayurveda,\nऑर्डर #${orderNo} (Cash on Delivery)\n${lines}\nकैश ऑन डिलीवरी शुल्क: ${money(cod)}\nडिलीवरी पर देय: ${money(total)}\nनाम: ${name}\nमोबाइल: ${phone}\nपता: ${fullAddress}`;
+          const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+          if (!window.open(url, "_blank", "noopener")) window.location.href = url;
+        };
+        return;
       }
       q("#coStep1").hidden = true;
       q("#coTitle").textContent = L("PAYMENT", "पेमेंट"); q("#coSteps").innerHTML = AD.stepper(3);

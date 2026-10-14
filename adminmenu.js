@@ -17,6 +17,7 @@
     { id: "banners", icon: "🖼️", title: "Home Banners", sub: "Slides on the home page" },
     { id: "cats", icon: "🔘", title: "Category Photos", sub: "Icons on the home page" },
     { id: "payment", icon: "💳", title: "Payment (UPI & QR)", sub: "Change UPI ID and QR code" },
+    { id: "cod", icon: "💵", title: "Cash On Delivery Settings", sub: "Cash On Delivery fee, product-wise on/off" },
     { id: "combos", icon: "🎁", title: "Combos", sub: "Do product ek saath sasta" },
     { id: "siteinfo", icon: "📞", title: "Contact & Store Info", sub: "WhatsApp number, GST, address" },
     { id: "coupons", icon: "🏷️", title: "Coupons", sub: "Naya coupon, edit, on/off, delete" },
