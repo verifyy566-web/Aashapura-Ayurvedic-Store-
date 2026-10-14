@@ -1011,12 +1011,28 @@ function showStoreToast(message, type="success") {
   const toast = document.createElement("div");
   toast.className = `store-toast ${type === "error" ? "is-error" : "is-success"}`;
   toast.textContent = message;
+  // "added to cart" popup: show a VIEW CART button right inside it
+  const isAdd = type !== "error" && /added to (the )?(cart|bag)|कार्ट में जोड़ा/i.test(message) && !/wishlist|पसंदीदा/i.test(message);
+  if (isAdd && !document.getElementById("cartFullPage")) {
+    toast.classList.add("has-act");
+    const act = document.createElement("button");
+    act.type = "button"; act.className = "store-toast-act";
+    act.textContent = window.AASHAPURA_LANG === "hi" ? "कार्ट देखें" : "VIEW CART";
+    act.onclick = e => {
+      e.preventDefault(); e.stopPropagation();
+      toast.remove();
+      // product page / wishlist / categories screens sit above the cart: close them first
+      document.querySelectorAll(".pp, #productPage, .wl-ov, .m-allcats").forEach(el => el.remove());
+      try { openCart(); } catch (er) {}
+    };
+    toast.appendChild(act);
+  }
   host.appendChild(toast);
   requestAnimationFrame(() => toast.classList.add("show"));
   setTimeout(() => {
     toast.classList.remove("show");
     setTimeout(() => toast.remove(), 300);
-  }, 3000);
+  }, isAdd ? 4500 : 3000);
 }
 
 function openPremiumCheckout() {

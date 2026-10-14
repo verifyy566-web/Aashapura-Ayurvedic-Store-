@@ -210,12 +210,14 @@
       if ((Number(cart[id]) || 0) >= p.stock) return toast(L(`Only ${p.stock} available in stock`, `स्टॉक में सिर्फ़ ${p.stock} उपलब्ध`), "error");
       cart[id] = (Number(cart[id]) || 0) + 1; toast(L(`${p.name} added to bag`, `${p.name} कार्ट में जोड़ा`), "success"); refresh();
     });
-    page.querySelectorAll("[data-inc]").forEach(b => b.onclick = () => {
+    page.querySelectorAll("[data-inc]").forEach(b => b.onclick = e => {
+      e.preventDefault(); e.stopPropagation(); /* script.js ka global handler dobara +1 na kare */
       const id = b.dataset.inc, p = products.find(x => String(x.id) === id);
       if (p && (Number(cart[id]) || 0) >= p.stock) return toast(L(`Only ${p.stock} available in stock`, `स्टॉक में सिर्फ़ ${p.stock} उपलब्ध`), "error");
       cart[id] = (Number(cart[id]) || 0) + 1; refresh();
     });
-    page.querySelectorAll("[data-dec]").forEach(b => b.onclick = () => {
+    page.querySelectorAll("[data-dec]").forEach(b => b.onclick = e => {
+      e.preventDefault(); e.stopPropagation();
       const id = b.dataset.dec; cart[id] = (Number(cart[id]) || 0) - 1; if (cart[id] <= 0) delete cart[id]; refresh();
     });
     page.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { delete cart[b.dataset.rm]; refresh(); });

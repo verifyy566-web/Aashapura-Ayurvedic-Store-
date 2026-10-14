@@ -72,7 +72,8 @@
       el.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { W.toggle(b.dataset.rm); draw(); });
       el.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { shut(); setTimeout(() => showProduct(Number(b.dataset.open)), 50); });
       el.querySelectorAll("[data-nt]").forEach(b => b.onclick = () => window.aashapuraNotify && window.aashapuraNotify.open(products.find(x => String(x.id) === b.dataset.nt)));
-      el.querySelectorAll("[data-add]").forEach(b => b.onclick = () => {
+      el.querySelectorAll("[data-add]").forEach(b => b.onclick = e => {
+        e.preventDefault(); e.stopPropagation();
         const id = b.dataset.add, p = products.find(x => String(x.id) === id); if (!p) return;
         if ((Number(cart[id]) || 0) >= p.stock) return toast(L("That is all we have in stock.", "स्टॉक में इतना ही उपलब्ध है।"), "error");
         cart[id] = (Number(cart[id]) || 0) + 1; renderCart(); toast(`${p.name} ${L("added to cart", "कार्ट में जोड़ा गया")}`);
