@@ -14,6 +14,56 @@
     KB().forEach(e => { const m = e.k.filter(w => ql.includes(w)).sort((x, y) => y.length - x.length)[0]; if (m) hits.push({ e, s: m.length }); });
     return hits.sort((x, y) => y.s - x.s).slice(0, 2).map(x => x.e);
   }
+
+  /* ===== v54c: 500 rogon ka PDF manual (ayudb.js) - rog ke aam bol-chal naam, dawai ka upyog, matra ===== */
+  const cmp = s => String(s || "").toLowerCase().replace(/[^a-z]/g, "");
+  const RASA = /bhasma|\bras\b|rasa\b|parpati|makshik|suvarna|swarna|abhrak|lauha|mandur|vasant|kupi|sindoor|gunja|hingul|naga|vanga/i;
+  function keyHit(ql, k) {
+    if (/^[\u0900-\u097f ]+$/.test(k) && k.length < 3) return false;
+    if (/^[a-z0-9' \-]+$/.test(k) && k.length <= 4) return new RegExp("(^|[^a-z])" + k.replace(/[-']/g, "\\$&") + "([^a-z]|$)").test(ql);
+    return ql.includes(k);
+  }
+  function dbPick(q) {
+    const db = window.AYU_DB; if (!db) return [];
+    const ql = q.toLowerCase(), hits = [];
+    db.d.forEach(r => { let b = 0; for (const k of r.k) { if (k.length > b && keyHit(ql, k)) b = k.length; } if (b) hits.push({ r, s: b }); });
+    return hits.sort((x, y) => y.s - x.s).slice(0, 2).map(x => x.r);
+  }
+  function medPick(q) {
+    const db = window.AYU_DB; if (!db) return null;
+    const ql = q.toLowerCase(), qc = cmp(q); let key = null, bl = 0;
+    for (const h in db.h) { if (ql.includes(h) && h.length > bl) { key = db.h[h]; bl = h.length; } }
+    if (!key) { for (const k in db.m) { if (k.length >= 5 && qc.includes(k) && k.length > bl) { key = k; bl = k.length; } } }
+    if (!key || !db.m[key]) return null;
+    let vars = Object.keys(db.m[key].v); const nar = vars.filter(n => cmp(n) !== key && qc.includes(cmp(n))); if (nar.length) vars = nar;
+    const ids = [], doses = {};
+    vars.forEach(n => db.m[key].v[n].forEach(([i, d]) => { if (!ids.includes(i)) ids.push(i); if (d) doses[n] = d; }));
+    const names = ids.map(i => (db.d.find(r => r.i === i) || {}).e).filter(Boolean);
+    return { name: vars.length === 1 ? vars[0] : db.m[key].n.split(" ")[0], vars, ids, names, doses };
+  }
+  function dbText(r) {
+    const db = window.AYU_DB, ms = r.m.map(x => x[0] + (x[1] ? " (" + x[1] + ")" : ""));
+    let o = `🩺 ${r.e}${r.s ? " (" + r.s + ")" : ""}\n`;
+    if (r.y) o += `• लक्षण: ${r.y}\n`;
+    if (ms.length) o += `• आयुर्वेदिक दवाएं (मैनुअल के अनुसार): ${ms.join(", ")}\n• सामान्य मात्रा: ${db.g}; ऊपर कोष्ठक में मात्रा हो तो वही देखें\n`;
+    if (r.h) o += `• घरेलू उपाय: ${r.h}\n`;
+    if (r.p) o += `• पथ्य/सलाह: ${r.p}\n`;
+    if (r.m.some(x => RASA.test(x[0]))) o += "• भस्म/रस/लौह/मंडूर वाली दवाएं सिर्फ वैद्य की देखरेख में लें।\n";
+    if (r.z) o += "⚠️ इस रोग में डॉक्टर से जांच और इलाज ज़रूरी है; सिर्फ घरेलू/आयुर्वेदिक उपाय के भरोसे न रहें।\n";
+    return o + "\n";
+  }
+  function medText(m) {
+    const db = window.AYU_DB, show = m.names.slice(0, 12);
+    let o = `💊 ${m.name} - किन रोगों में उपयोग होती है (मैनुअल के अनुसार)\n• ${show.join("\n• ")}${m.names.length > 12 ? "\n• ... और " + (m.names.length - 12) + " रोग" : ""}\n`;
+    const ds = Object.entries(m.doses).slice(0, 4).map(([n, d]) => n + ": " + d);
+    o += `• मात्रा: ${ds.length ? ds.join("; ") + " (मैनुअल)" : db.g}\n• इसे डॉक्टर/वैद्य की सलाह और लेबल के अनुसार ही लें; बच्चों, गर्भावस्था और चल रही दवा में खुद से न दें।\n`;
+    if (m.vars.some(n => RASA.test(n))) o += "• यह रस/भस्म/लौह वर्ग की दवा है, सिर्फ वैद्य की देखरेख में।\n";
+    return o + "\n";
+  }
+  function kbFor(q) {
+    const ds = dbPick(q).map(r => ({ e: r.e, s: r.s, d: r.d, y: r.y, m: r.m.map(x => x[0] + (x[1] ? " (" + x[1] + ")" : "")), h: r.h, p: r.p, z: r.z })), m = medPick(q);
+    return ds.concat(m ? [{ medicine: m.name, used_in: m.names.slice(0, 20), doses: m.doses, rasa_vaidya_only: m.vars.some(n => RASA.test(n)) }] : []);
+  }
   function prods(q, herbs) {
     let list = [];
     try { list = products || []; } catch (e) { }
@@ -32,7 +82,10 @@
     if (RED.test(q)) return "⚠️ यह गंभीर हो सकता है। आयुर्वेदिक उपाय का इंतज़ार न करें, तुरंत डॉक्टर या इमरजेंसी (112) से संपर्क करें।";
     const herbs = pick(q), ps = prods(q, herbs);
     let out = "";
-    herbs.forEach(h => { out += `🌿 ${h.n}\n• जानकारी: ${h.b}\n• कैसे लें: ${h.u}\n• सावधानी: ${h.p}\n\n`; });
+    herbs.forEach(h => { out += `🌿 ${h.n}\n• जानकारी: ${h.b}\n• कैसे लें: ${h.u}\n` + (h.x && h.x.m ? `• दवा और मात्रा (वयस्क): ${h.x.m}\n` : "") + (h.x && h.x.a ? `• परहेज़/पथ्य: ${h.x.a}\n` : "") + (h.x && h.x.d ? `• डॉक्टर के पास कब जाएं: ${h.x.d}\n` : "") + `• सावधानी: ${h.p}\n` + (h.x && h.x.m ? "• मात्रा लेबल/वैद्य की सलाह के अनुसार ही लें; बच्चों और गर्भावस्था में खुद से न दें।\n" : "") + "\n"; });
+    const dbs = dbPick(q), med = medPick(q);
+    dbs.slice(0, herbs.length ? 1 : 2).forEach(r => { out += dbText(r); });
+    if (med) out += medText(med);
     ps.forEach(p => {
       const f = (v, n) => String(v).split("\n").slice(0, n).join(", ");
       const bits = [p.ay_benefits && "फ़ायदे: " + f(p.ay_benefits, 3), p.ay_usage && "उपयोग: " + f(p.ay_usage, 2), p.ay_dose && "मात्रा: " + f(p.ay_dose, 1), p.ay_precautions && "सावधानी: " + f(p.ay_precautions, 2)].filter(Boolean);
@@ -64,7 +117,7 @@
       try {
         const herbs = pick(q), ps = prods(q, herbs).map(p => ({ name: p.name, price: p.price, benefits: p.ay_benefits, usage: p.ay_usage, dose: p.ay_dose, precautions: p.ay_precautions, ingredients: p.ay_ingredients }));
         let key = ""; try { key = SUPABASE_KEY; } catch (e) { }
-        const body = { messages: msgs.slice(-6).map(m => ({ role: m.r, content: m.t })), products: ps, lang: detectLang(q) };
+        const body = { messages: msgs.slice(-12).map(m => ({ role: m.r, content: m.t })), products: ps, kb: kbFor(q), lang: detectLang(q) };
         if (img) body.image = { mime: img.mime, data: img.data };
         const r = await fetch(ENDPOINT, { method: "POST", headers: { "Content-Type": "application/json", apikey: key, Authorization: "Bearer " + key }, body: JSON.stringify(body) });
         const rawT = await r.text(); let j = null;
@@ -93,20 +146,24 @@
   let voices = [];
   const loadV = () => { voices = (window.speechSynthesis && speechSynthesis.getVoices()) || []; };
   if (window.speechSynthesis) { loadV(); speechSynthesis.onvoiceschanged = loadV; }
+  /* v56: sirf Indian awaaz. English -> en-IN, Hindi/Hinglish -> hi-IN. US/UK awaaz kabhi nahi (milti na ho to samjhakar chup rehta hai). */
+  const IND = (v, l) => new RegExp("^" + l + "[-_]?IN", "i").test(v.lang) || (l === "hi" && /hindi|हिन्दी|हिंदी/i.test(v.name)) || (l === "en" && /india|indian/i.test(v.name));
   function bestVoice(en) {
-    if (en) { const e = voices.filter(v => /^en[-_]IN/i.test(v.lang)), e2 = e.length ? e : voices.filter(v => /^en/i.test(v.lang)); return e2.find(v => /google/i.test(v.name)) || e2[0] || null; }
-
-    const hi = voices.filter(v => /^hi[-_]?IN/i.test(v.lang) || /hindi|हिन्दी|हिंदी/i.test(v.name));
-    return hi.find(v => /google/i.test(v.name)) || hi.find(v => /female|lekha|kalpana|swara|neerja/i.test(v.name)) || hi[0] || null;
+    const l = en ? "en" : "hi", pool = voices.filter(v => IND(v, l));
+    return pool.find(v => /google/i.test(v.name)) || pool.find(v => /female|lekha|kalpana|swara|neerja|heera|veena|rishi/i.test(v.name)) || pool[0] || null;
   }
+  let warned = false;
   function speak(t) {
     t = SP[t] || t;
     if (!window.speechSynthesis) return alert("इस फ़ोन में बोलने की सुविधा नहीं है।");
     speechSynthesis.cancel(); loadV();
     const en = !/[\u0900-\u097F]/.test(String(t)); const v = bestVoice(en);
-    if (!v && !en) alert("आपके फ़ोन में हिन्दी आवाज़ नहीं मिली। Settings → Language → Text-to-speech → Google → Voice data → Hindi (भारत) डाउनलोड करें।");
+    if (!v && voices.length) {
+      if (!warned) { warned = true; alert(en ? "आपके फ़ोन में भारतीय English आवाज़ नहीं मिली। Settings → Language → Text-to-speech → Google → Voice data → English (India) डाउनलोड करें। तब तक आवाज़ बंद रहेगी।" : "आपके फ़ोन में हिन्दी आवाज़ नहीं मिली। Settings → Language → Text-to-speech → Google → Voice data → Hindi (भारत) डाउनलोड करें। तब तक आवाज़ बंद रहेगी।"); }
+      return;
+    }
     const clean = String(t).replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF•]/gu, " ").replace(/\n+/g, "। ");
-    clean.match(/[^।.!?]+[।.!?]?/g).filter(x => x.trim()).forEach(part => {
+    (clean.match(/[^।.!?]+[।.!?]?/g) || []).filter(x => x.trim()).forEach(part => {
       const u = new SpeechSynthesisUtterance(part.trim()); u.lang = en ? "en-IN" : "hi-IN"; u.rate = .92; u.pitch = 1; if (v) u.voice = v; speechSynthesis.speak(u);
     });
   }
