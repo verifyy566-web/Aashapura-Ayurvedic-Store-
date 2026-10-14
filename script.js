@@ -1013,6 +1013,12 @@ function showStoreToast(message, type="success") {
   toast.textContent = message;
   // "added to cart" popup: show a VIEW CART button right inside it
   const isAdd = type !== "error" && /added to (the )?(cart|bag)|कार्ट में जोड़ा/i.test(message) && !/wishlist|पसंदीदा/i.test(message);
+  if (isAdd) {
+    // bounce the header cart icon + count badge so the customer sees it went in
+    const ci = document.getElementById("cartOpen");
+    if (ci) { ci.classList.remove("cart-bounce"); void ci.offsetWidth; ci.classList.add("cart-bounce"); setTimeout(() => ci.classList.remove("cart-bounce"), 900); }
+    try { if (navigator.vibrate) navigator.vibrate(15); } catch (er) {}
+  }
   if (isAdd && !document.getElementById("cartFullPage")) {
     toast.classList.add("has-act");
     const act = document.createElement("button");
