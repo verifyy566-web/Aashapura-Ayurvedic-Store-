@@ -1,4 +1,4 @@
-/* Admin > Season Theme: pick one of 7 background + colour + text combos. Tap a card = live preview on the page behind;
+/* Admin > Season Theme: pick one of 12 background + colour + text combos (7 seasons + Holi, Raksha Bandhan, Independence Day, Navratri, Republic Day). Tap a card = live preview on the page behind;
    "Save" = goes live for every visitor. Needs supabase_v66_season.sql (run once in Supabase SQL Editor). */
 (function () {
   const $ = id => document.getElementById(id);
@@ -12,7 +12,7 @@
   .sz-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
   .sz-card{position:relative;text-align:left;border:2px solid #e1e8de;border-radius:16px;background:#fff;padding:0;overflow:hidden;cursor:pointer;font:inherit;color:#173d2e}
   .sz-card.sel{border-color:#14402b;box-shadow:0 0 0 3px rgba(20,64,43,.15)}
-  .sz-sw{height:64px;display:flex;align-items:center;justify-content:center;font-size:30px}
+  .sz-sw{height:64px;display:flex;align-items:center;justify-content:center;font-size:30px;margin:6px;border-radius:12px}
   .sz-bd{padding:9px 11px 11px}.sz-bd b{display:block;font-size:14.5px}.sz-bd small{display:block;color:#5d6f64;font-size:11.5px;margin-top:2px;line-height:1.35}
   .sz-pill{position:absolute;top:7px;right:7px;background:#14402b;color:#fff;font-size:10px;font-weight:800;letter-spacing:.4px;border-radius:99px;padding:3px 8px}
   .sz-prev{margin:16px 0 4px;border:1px dashed #b9ccb6;border-radius:14px;padding:13px;background:#fff}
@@ -36,7 +36,7 @@
       '<div class="sz-grid">' + A.list.map(s =>
         '<button type="button" class="sz-card' + (s.id === sel ? " sel" : "") + '" data-id="' + s.id + '">' +
         (s.id === live ? '<span class="sz-pill">LIVE</span>' : "") +
-        '<div class="sz-sw" style="background:linear-gradient(135deg,' + s.tint[0].replace(/\.\d+\)/, ".55)") + ',' + s.tint[1].replace(/\.\d+\)/, ".45)") + ',rgb(' + s.c.halo + '))">' + s.emoji + '</div>' +
+        '<div class="sz-sw" style="background:linear-gradient(135deg,rgb(' + s.z.p1 + '),rgb(' + s.z.p2 + '));box-shadow:inset 0 0 0 2px ' + s.z.g1 + '">' + s.emoji + '</div>' +
         '<div class="sz-bd"><b>' + esc(s.name) + '</b><small>' + esc(s.note) + '</small></div></button>').join("") + '</div>' +
       '<div class="sz-prev"><small>Is season ka text</small><strong style="color:' + cur.c.ink + '">' + esc(cur.t.h) + ' <span style="display:inline;color:' + cur.c.accent + ';font-style:italic;font-size:inherit;margin:0">' + esc(cur.t.em) + '</span></strong><span>' + esc(cur.t.sub) + '</span></div>' +
       '<button type="button" class="sz-save" id="szSave"' + (sel === live || busy ? " disabled" : "") + '>' + (busy ? "Saving…" : sel === live ? "✅ Ye season abhi LIVE hai" : "✅ Save — " + esc(cur.name) + " ko LIVE karo") + '</button>' +
