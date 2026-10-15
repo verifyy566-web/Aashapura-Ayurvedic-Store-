@@ -42,7 +42,6 @@ function normalizeProduct(p) {
     images: p.images || "",
     video_url: p.video_url || "",
     mrp: Number(p.mrp || 0),
-    brand: String(p.brand || "").trim(),
     cod_available: p.cod_available !== false,
     ay_ingredients: p.ay_ingredients || "",
     ay_benefits: p.ay_benefits || "",
@@ -528,7 +527,6 @@ for (const file of imageFiles.concat(videoFiles)) {
     image_url: imageUrls[0] || "",
 images: JSON.stringify(imageUrls.concat(videoUrls)),
     is_active: true,
-    ...(($("pBrand") && $("pBrand").value.trim()) ? { brand: $("pBrand").value.trim() } : {}),
     ...(Number($("pMrp")?.value) > 0 ? { mrp: Number($("pMrp").value) } : {})
   };
   const AY = { ay_ingredients: "pAyIng", ay_benefits: "pAyBen", ay_usage: "pAyUse", ay_dose: "pAyDose", ay_precautions: "pAyCaut" };
@@ -540,13 +538,6 @@ images: JSON.stringify(imageUrls.concat(videoUrls)),
     .insert(product)
     .select()
     .single();
-
-  /* Brand column missing (supabase_v69_brand.sql not run yet): save the product without it */
-  if (error && /brand/i.test(error.message || "") && product.brand) {
-    const lostBrand = product.brand; delete product.brand;
-    ({ data, error } = await supabaseClient.from("products").insert(product).select().single());
-    if (!error) alert("Product save ho gaya, par Brand save nahi hua. Pehle supabase_v69_brand.sql Supabase me run karo, phir Edit se brand daalo (" + lostBrand + ").");
-  }
 
   /* Ayurveda columns missing (supabase_v23.sql not run yet): save the product without them */
   if (error && /ay_/i.test(error.message || "")) {
@@ -565,7 +556,6 @@ images: JSON.stringify(imageUrls.concat(videoUrls)),
   $("pDescription").value = "";
   $("pPrice").value = "";
   $("pCategory").value = "";
-  if ($("pBrand")) $("pBrand").value = "";
   $("pWeight").value = "";
   $("pStock").value = "";
   $("pVideo").value = "";

@@ -70,7 +70,6 @@
       <div><label>M.R.P. ₹ (optional)</label><input data-f="mrp" type="number" min="0" step="0.01" value="${p.mrp ? esc(p.mrp) : ""}"></div></div>
       <div class="ap-row"><div><label>Stock</label><input data-f="stock" type="number" min="0" step="1" value="${esc(p.stock == null ? 0 : p.stock)}"></div>
       <div><label>Weight</label><input data-f="weight" value="${esc(p.weight || "")}"></div></div>
-      <label>Brand</label><input data-f="brand" list="apBrandList" autocomplete="off" placeholder="Brand name (jaise: Dabur)" value="${esc(p.brand || "")}"><datalist id="apBrandList">${[...new Set((window.__apProducts || []).map(x => String(x.brand || "").trim()).filter(Boolean))].map(b => `<option value="${esc(b)}">`).join("")}</datalist>
       <label>Category</label><input data-f="category" value="${esc(p.category || "")}">
       <label>Video URL (optional link)</label><input data-f="video_url" type="url" value="${esc(p.video_url || "")}">
       <label style="margin-top:16px;font-weight:700">🌿 Ayurveda Info <small style="font-weight:400">(optional · ek line = ek point)</small></label>
@@ -100,13 +99,12 @@
         const all = media.concat(up);
         const photos = all.filter(u => !isVid(u)), vids = all.filter(isVid);
         const upd = {
-          name, description: g("description"), price, stock, weight: g("weight"), category: g("category") || "herbal", brand: g("brand") || null,
+          name, description: g("description"), price, stock, weight: g("weight"), category: g("category") || "herbal",
           video_url: g("video_url"),
           ay_ingredients: g("ay_ingredients"), ay_benefits: g("ay_benefits"), ay_usage: g("ay_usage"), ay_dose: g("ay_dose"), ay_precautions: g("ay_precautions"), image_url: photos[0] || "", images: JSON.stringify(photos.concat(vids)), mrp: mrp > 0 ? mrp : null
         };
         let { error } = await supabaseClient.from("products").update(upd).eq("id", p.id);
         if (error && /mrp/i.test(error.message)) { delete upd.mrp; ({ error } = await supabaseClient.from("products").update(upd).eq("id", p.id)); }
-        if (error && /brand/i.test(error.message)) { const hadB = upd.brand; delete upd.brand; ({ error } = await supabaseClient.from("products").update(upd).eq("id", p.id)); if (!error && hadB) alert("Product save ho gaya, par Brand save nahi hua. Pehle supabase_v69_brand.sql Supabase me run karo."); }
         if (error && /ay_/i.test(error.message)) {
           ["ay_ingredients", "ay_benefits", "ay_usage", "ay_dose", "ay_precautions"].forEach(k => delete upd[k]);
           ({ error } = await supabaseClient.from("products").update(upd).eq("id", p.id));
@@ -277,7 +275,7 @@
     mounted = true;
     const refresh = async () => {
       if (!(await isAdmin())) return;
-      try { let r = await supabaseClient.from("products").select("id,name,category,brand"); if (r.error) r = await supabaseClient.from("products").select("id,name,category"); window.__apProducts = r.data || []; } catch (e) { window.__apProducts = []; }
+      try { const { data } = await supabaseClient.from("products").select("id,name,category"); window.__apProducts = data || []; } catch (e) { window.__apProducts = []; }
       renderBanners($("apBanners")); renderCatImgs($("apCatImgs"));
       if (window.aashapuraTheme) window.aashapuraTheme.renderAdmin($("apTheme")); else $("apTheme").innerHTML = "<p style='color:#b42318'>theme.js GitHub par upload karo.</p>";
     };
