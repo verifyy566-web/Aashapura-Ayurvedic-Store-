@@ -183,15 +183,20 @@
   attachSuggest($("homeSearch")); attachSuggest($("searchInput"));
 
   /* ================= NOTIFY ME ================= */
-  const NK = "aashapura_notify";
-  const seenN = () => { try { return JSON.parse(localStorage.getItem(NK) || "[]"); } catch (e) { return []; } };
+  /* v73 privacy fix: name/number used to be saved once per PHONE and pre-filled for every account. Now saved per signed-in account only; guests are never pre-filled. */
+  try { localStorage.removeItem("aashapura_notify_c"); localStorage.removeItem("aashapura_notify"); } catch (e) {}   /* old shared copies */
+  const nid = () => { try { return (signedInUser && signedInUser.id) || "guest"; } catch (e) { return "guest"; } };
+  const NK = () => "aashapura_nt2_" + nid();
+  const hk = t => { let h = 5381; for (const c of String(t)) h = ((h << 5) + h + c.charCodeAt(0)) | 0; return (h >>> 0).toString(36); };
+  const seenN = () => { try { return JSON.parse(localStorage.getItem(NK()) || "[]"); } catch (e) { return []; } };
   function openNotify(p) {
     if (!p) return;
     document.querySelectorAll(".nt-back").forEach(x => x.remove());
     let nm = "", ph = "";
-    try { const c = JSON.parse(localStorage.getItem(NK + "_c") || "{}"); nm = c.n || ""; ph = c.p || ""; } catch (e) {}
-    nm = nm || ($("profileName") && $("profileName").value) || ($("customerName") && $("customerName").value) || "";
-    ph = ph || ($("profilePhone") && $("profilePhone").value) || "";
+    if (nid() !== "guest") {
+      try { const c = JSON.parse(localStorage.getItem(NK() + "_c") || "{}"); nm = c.n || ""; ph = c.p || ""; } catch (e) {}
+      try { const m = (signedInUser && signedInUser.user_metadata) || {}; nm = nm || m.full_name || m.name || ""; } catch (e) {}
+    }
     const el = document.createElement("div"); el.className = "nt-back";
     el.innerHTML = `<div class="nt-sheet" role="dialog"><div class="nt-prod"><span class="th">${imgOf(p) ? `<img src="${esc(imgOf(p))}" alt="">` : esc(p.emoji || "🌿")}</span><div><b>${esc(p.name)}</b><br><small>${esc(p.weight || "")}</small></div></div>
       <h3>🔔 ${L("Notify me when available", "स्टॉक आने पर बताएँ")}</h3><p>${L("Leave your name and WhatsApp number. We will message you as soon as this is back in stock.", "अपना नाम और WhatsApp नंबर दें। स्टॉक आते ही हम आपको मैसेज करेंगे।")}</p>
@@ -207,13 +212,13 @@
       const name = el.querySelector("#ntName").value.trim(), phone = el.querySelector("#ntPhone").value.replace(/\D/g, "").slice(-10);
       if (!name) return toast(L("Please enter your name.", "कृपया अपना नाम लिखें।"), "error");
       if (phone.length !== 10) return toast(L("Enter a valid 10-digit number.", "सही 10 अंकों का नंबर लिखें।"), "error");
-      const key = prim(p.id) + ":" + phone;
+      const key = prim(p.id) + ":" + hk(phone);
       if (seenN().includes(key)) { shut(); return toast(L("Already saved. We will message you when it is back.", "पहले से सेव है। स्टॉक आते ही बताएँगे।"), "info"); }
       go.disabled = true; go.textContent = "…";
       let uid = null; try { uid = signedInUser && signedInUser.id || null; } catch (e) {}
       const { error } = await sb().from("stock_alerts").insert({ product_id: prim(p.id), product_name: p.name + (p.weight ? " " + p.weight : ""), customer_name: name, phone, user_id: uid });
       if (error) { go.disabled = false; go.textContent = L("Notify me", "मुझे बताएँ"); return toast(/stock_alerts|relation|schema/i.test(error.message) ? L("Notify feature is not ready yet. Please try later.", "यह सुविधा अभी तैयार नहीं है, बाद में कोशिश करें।") : error.message, "error"); }
-      try { localStorage.setItem(NK, JSON.stringify([...seenN(), key])); localStorage.setItem(NK + "_c", JSON.stringify({ n: name, p: phone })); } catch (e) {}
+      try { localStorage.setItem(NK(), JSON.stringify([...seenN(), key])); if (nid() !== "guest") localStorage.setItem(NK() + "_c", JSON.stringify({ n: name, p: phone })); } catch (e) {}
       shut(); toast(L("Done! We will WhatsApp you when it is back in stock. 🔔", "ठीक है! स्टॉक आते ही WhatsApp करेंगे। 🔔") + (uid ? "" : L(" Sign in to also see it in your 🔔 bell.", " Sign In करेंगे तो 🔔 में भी दिखेगा।")));
     };
   }
