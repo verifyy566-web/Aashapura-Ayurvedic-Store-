@@ -1,9 +1,11 @@
-/* Herb animation hero (v2): 18 herbs, 3 depth layers, sparkles + mist. Safe: does nothing if .herb-hero is missing. */
+/* Herb animation (v3): FULL-PAGE fixed background (behind everything). 18 herbs, 3 depth layers, sparkles + mist. Never breaks the store. */
 (function () {
   try {
-    var hero = document.querySelector(".herb-hero");
-    if (!hero || hero.dataset.ready) return;
-    hero.dataset.ready = "1";
+    if (document.querySelector(".herb-bg")) return;
+    var hero = document.createElement("div");
+    hero.className = "herb-bg";
+    hero.setAttribute("aria-hidden", "true");
+    document.body.insertBefore(hero, document.body.firstChild);
     var S = function (id, body) { return '<symbol id="hh-' + id + '" viewBox="0 0 40 40">' + body + '</symbol>'; };
     var defs = '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>' +
       '<linearGradient id="hg-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9be08f"/><stop offset="1" stop-color="#2f8a46"/></linearGradient>' +
@@ -34,7 +36,7 @@
     /* weights: common herbs appear more often */
     var herbs = ["tulsi", "tulsi", "neem", "neem", "ashwagandha", "amla", "brahmi", "giloy", "aloe", "moringa", "haldi", "shatavari", "pudina", "pudina", "kamal", "gudhal", "gulab", "dalchini", "elaichi", "methi"];
     var small = window.innerWidth < 600;
-    var N = small ? 18 : 30;
+    var N = small ? 22 : 36;
     var r = function (a, b) { return a + Math.random() * (b - a); };
     var frag = document.createDocumentFragment();
 
@@ -56,9 +58,9 @@
     /* herbs: layer 0 far (small, blurry, slow), 1 mid, 2 near (big, fast, soft blur like depth of field) */
     for (var i = 0; i < N; i++) {
       var layer = i % 3, size, dur, blur, op;
-      if (layer === 0) { size = r(16, 24); dur = r(18, 26); blur = 1.4; op = .5; }
-      else if (layer === 1) { size = r(26, 38); dur = r(12, 17); blur = 0; op = .88; }
-      else { size = r(44, 66); dur = r(8, 12); blur = 2.2; op = .95; }
+      if (layer === 0) { size = r(16, 24); dur = r(20, 30); blur = 1.2; op = .5; }
+      else if (layer === 1) { size = r(26, 38); dur = r(14, 20); blur = 0; op = .92; }
+      else { size = r(46, 70); dur = r(10, 15); blur = 3; op = .4; }
       var d = document.createElement("div");
       d.className = "hh-item";
       d.style.cssText = "left:" + r(0, 100) + "%;width:" + size + "px;height:" + size + "px;opacity:" + op + ";" +
@@ -72,7 +74,7 @@
     hero.appendChild(frag);
 
     /* how far a herb falls = hero height (fixes short fall) */
-    var setFall = function () { hero.style.setProperty("--fall", Math.round(hero.offsetHeight * 1.3) + "px"); };
+    var setFall = function () { hero.style.setProperty("--fall", Math.round(window.innerHeight * 1.3) + "px"); };
     setFall();
     window.addEventListener("resize", setFall);
   } catch (e) { /* never break the store */ }

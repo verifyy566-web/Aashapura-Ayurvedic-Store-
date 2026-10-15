@@ -227,5 +227,5 @@
   }
   window.aashapuraOpenMenu = lmOpen;
   const tg = $("menuToggle");
-  if (tg) tg.addEventListener("click", e => { e.preventDefault(); e.stopImmediatePropagation(); lmOpen(); }, true);
+  if (tg) tg.addEventListener("click", e => { if (window.aashapuraAdmin && window.aashapuraAdmin.active && window.aashapuraAdmin.active()) return; /* admin panel: let adminmenu.js open the admin drawer */ e.preventDefault(); e.stopImmediatePropagation(); lmOpen(); }, true);
 })();
