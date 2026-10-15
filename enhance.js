@@ -69,6 +69,7 @@
         : p.emoji}</div>
       <div class="product-info">
         <span class="product-tag">${escapeHTML(p.weight)}</span>
+        ${p.brand ? `<small class="card-brand">${escapeHTML(p.brand)}</small>` : ""}
         <h3>${escapeHTML(p.name)}</h3>
         <p>${escapeHTML(p.desc)}</p>
         ${low && n === 1 ? `<span class="stock-note">सिर्फ़ ${p.stock} बचे!</span>` : ""}
