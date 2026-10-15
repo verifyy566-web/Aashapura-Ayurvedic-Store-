@@ -1,38 +1,46 @@
-/* Herb animation (v3): full-page background + transparent headline (no box) */
-.herb-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;
+/* Seasonal background (v6): full-page layer + headline. Colours come from --sz-* variables set by herbhero.js (season combos). */
+.herb-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;transition:opacity .45s ease;
   background:radial-gradient(70% 45% at 88% 0%,rgba(217,179,106,.30),transparent 70%),radial-gradient(60% 40% at 4% 100%,rgba(60,140,90,.20),transparent 70%),radial-gradient(50% 35% at 50% 50%,rgba(255,255,255,.35),transparent 70%)}
+.herb-bg.hh-swap{opacity:0}
 .herb-bg .hh-item{position:absolute;top:-22%;pointer-events:none;will-change:transform;animation:hhFall linear infinite,hhSway ease-in-out infinite}
 .herb-bg .hh-item svg{display:block;width:100%;height:100%;animation:hhSpin linear infinite}
-.herb-bg .hh-spark{position:absolute;border-radius:50%;background:#f3c85a;box-shadow:0 0 8px 2px rgba(230,180,70,.65);opacity:0;animation:hhSpark ease-in-out infinite}
-.herb-bg .hh-mist{position:absolute;left:-40%;width:180%;height:40%;background:radial-gradient(ellipse at center,rgba(120,180,140,.20),transparent 65%);filter:blur(16px);animation:hhMist linear infinite alternate}
-/* headline block: no box, sits on the animated page */
-.herb-hero{position:relative;text-align:center;padding:18px 12px 6px;color:var(--green,#123c2b)}
+.herb-bg .hh-spark{position:absolute;border-radius:50%;background:var(--sz-spark,#f3c85a);box-shadow:0 0 8px 2px var(--sz-sparkg,rgba(230,180,70,.65));opacity:0;pointer-events:none;z-index:1;animation:hhSpark ease-in-out infinite}
+.herb-bg .hh-mist{position:absolute;left:-40%;width:180%;height:40%;background:radial-gradient(ellipse at center,var(--sz-mist,rgba(120,180,140,.20)),transparent 65%);filter:blur(16px);animation:hhMist linear infinite alternate}
+.herb-bg .hh-rain{position:absolute;top:-12%;width:1.6px;rotate:12deg;border-radius:2px;background:linear-gradient(to bottom,rgba(90,140,180,0),rgba(70,120,170,.75));animation:hhRain linear infinite}
+.herb-bg .hh-snow{position:absolute;top:-6%;border-radius:50%;background:#fff;box-shadow:0 0 5px 1px rgba(110,140,190,.55);animation:hhFall linear infinite,hhSway ease-in-out infinite}
+.herb-bg .hh-rays{position:absolute;right:-45%;top:-45%;width:130vmax;height:130vmax;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(255,205,70,.26) 0 5deg,rgba(255,205,70,0) 5deg 15deg);-webkit-mask-image:radial-gradient(circle,#000 0%,transparent 60%);mask-image:radial-gradient(circle,#000 0%,transparent 60%);will-change:transform;animation:hhRays 120s linear infinite}
+
+/* headline block: no box, sits on the animated page; halo + glow keep it readable */
+.herb-hero{position:relative;text-align:center;padding:18px 12px 6px;color:var(--sz-ink,#123c2b)}
+.herb-hero::before{content:"";position:absolute;left:50%;top:48%;width:min(100%,620px);height:118%;transform:translate(-50%,-50%);background:radial-gradient(ellipse at center,rgba(var(--sz-halo,251,247,236),.95) 0%,rgba(var(--sz-halo,251,247,236),.82) 42%,rgba(var(--sz-halo,251,247,236),0) 72%);z-index:-1;pointer-events:none}
 .herb-hero .hh-copy{max-width:600px;margin:0 auto}
-.herb-hero .hh-eye{letter-spacing:.28em;font-size:11px;color:var(--gold,#b8893b);font-weight:700;margin:0 0 8px}
-.herb-hero h2{font-family:'Cormorant Garamond','Noto Serif Devanagari',serif;font-size:clamp(30px,8vw,54px);line-height:1.06;margin:0 0 8px;font-weight:700;color:var(--green,#123c2b)}
-.herb-hero h2 em{color:var(--gold,#b8893b);font-style:italic}
-.herb-hero .hh-sub{font-size:clamp(13px,3.4vw,16px);color:var(--muted,#6f7466);margin:0 0 14px}
-.herb-hero .hh-btn{display:inline-block;background:linear-gradient(135deg,var(--gold2,#d9b36a),var(--gold,#b8893b));color:#2b1d05;font-weight:700;padding:11px 24px;border-radius:999px;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.herb-hero .hh-eye{letter-spacing:.28em;font-size:11px;color:var(--sz-accent,#8f6a22);font-weight:800;margin:0 0 8px;text-shadow:0 0 8px rgba(var(--sz-halo,251,247,236),.95)}
+.herb-hero h2{font-family:'Cormorant Garamond','Noto Serif Devanagari',serif;font-size:clamp(30px,8vw,54px);line-height:1.06;margin:0 0 8px;font-weight:700;color:var(--sz-ink,#123c2b);letter-spacing:.2px;text-shadow:0 1px 0 rgba(255,255,255,.95),0 0 18px rgba(var(--sz-halo,251,247,236),1),0 0 6px rgba(var(--sz-halo,251,247,236),.95)}
+.herb-hero h2 em{color:var(--sz-accent,#8f6a22);font-style:italic}
+.herb-hero .hh-sub{font-size:clamp(13px,3.4vw,16px);color:var(--sz-sub,#3f4a40);font-weight:500;margin:0 0 14px;text-shadow:0 0 10px rgba(var(--sz-halo,251,247,236),1),0 0 4px rgba(var(--sz-halo,251,247,236),.95)}
+.herb-hero .hh-btn{display:inline-block;background:linear-gradient(135deg,var(--sz-b1,#d9b36a),var(--sz-b2,#b8893b));color:var(--sz-bi,#2b1d05);font-weight:700;padding:11px 24px;border-radius:999px;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.18)}
 .herb-hero .hh-names{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px}
-.herb-hero .hh-names span{font-size:11px;padding:4px 10px;border:1px solid var(--gold2,#d9b36a);border-radius:999px;background:rgba(255,255,255,.7);color:var(--green,#123c2b)}
+.herb-hero .hh-names span{font-size:11px;padding:4px 10px;border:1px solid var(--sz-chip,#c9a45a);border-radius:999px;background:rgba(255,255,255,.92);color:var(--sz-ink,#123c2b);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .herb-hero .hh-r{opacity:0;transform:translateY(20px);animation:hhRise .9s cubic-bezier(.2,.7,.2,1) forwards}
 .herb-hero .hh-r:nth-child(2){animation-delay:.15s}.herb-hero .hh-r:nth-child(3){animation-delay:.3s}.herb-hero .hh-r:nth-child(4){animation-delay:.45s}
+
+/* other home text: soft glow so it stays readable over the animation */
+html body .m-title,html body .shop-section .section-heading h2,html body .shop-section .eyebrow,html body .m-cat{text-shadow:0 0 10px rgba(var(--sz-halo,251,247,236),1),0 0 4px rgba(var(--sz-halo,251,247,236),.95)}
+html body .shop-section .eyebrow{color:var(--sz-accent,#8f6a22)}
+html body .shop-section .section-heading>p{color:#4a554a;font-weight:500;text-shadow:0 0 10px rgba(var(--sz-halo,251,247,236),1),0 0 4px rgba(var(--sz-halo,251,247,236),.95)}
+html body .m-concern small{color:#4a554a;font-weight:500}
+
 @keyframes hhFall{to{transform:translate3d(var(--dx),var(--fall,900px),0)}}
+@keyframes hhRain{to{transform:translate3d(var(--dx,-30px),var(--fall,900px),0)}}
 @keyframes hhSway{0%,100%{margin-left:-12px}50%{margin-left:12px}}
 @keyframes hhSpin{to{transform:rotate(var(--rot))}}
 @keyframes hhRise{to{opacity:1;transform:none}}
 @keyframes hhSpark{0%{opacity:0;transform:translateY(0) scale(.6)}30%{opacity:1}100%{opacity:0;transform:translateY(-70px) scale(1.2)}}
 @keyframes hhMist{from{transform:translateX(-8%)}to{transform:translateX(8%)}}
-@media(prefers-reduced-motion:reduce){.herb-bg .hh-item,.herb-bg .hh-item svg,.herb-bg .hh-spark,.herb-bg .hh-mist{animation:none!important}.herb-hero .hh-r{animation:none!important;opacity:1;transform:none}.herb-bg .hh-item{top:calc(var(--rt,10)*1%)}}
-
-/* v5: readability - soft ivory halo behind text + glow on text, darker accent colours */
-.herb-hero::before{content:"";position:absolute;left:50%;top:48%;width:min(100%,620px);height:118%;transform:translate(-50%,-50%);background:radial-gradient(ellipse at center,rgba(251,247,236,.95) 0%,rgba(251,247,236,.82) 42%,rgba(251,247,236,0) 72%);z-index:-1;pointer-events:none}
-.herb-hero .hh-eye{color:#8f6a22;font-weight:800;text-shadow:0 0 8px rgba(251,247,236,.95)}
-.herb-hero h2{text-shadow:0 1px 0 rgba(255,255,255,.95),0 0 18px rgba(251,247,236,1),0 0 6px rgba(251,247,236,.95);letter-spacing:.2px}
-.herb-hero h2 em{color:#8f6a22}
-.herb-hero .hh-sub{color:#3f4a40;font-weight:500;text-shadow:0 0 10px rgba(251,247,236,1),0 0 4px rgba(251,247,236,.95)}
-.herb-hero .hh-names span{background:rgba(255,255,255,.92);border-color:#c9a45a;color:#123c2b;font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-html body .m-title,html body .shop-section .section-heading h2,html body .shop-section .eyebrow,html body .m-cat{text-shadow:0 0 10px rgba(251,247,236,1),0 0 4px rgba(251,247,236,.95)}
-html body .shop-section .eyebrow{color:#8f6a22}
-html body .shop-section .section-heading>p{color:#4a554a;font-weight:500;text-shadow:0 0 10px rgba(251,247,236,1),0 0 4px rgba(251,247,236,.95)}
-html body .m-concern small{color:#4a554a;font-weight:500}
+@keyframes hhRays{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){
+  .herb-bg .hh-item,.herb-bg .hh-item svg,.herb-bg .hh-spark,.herb-bg .hh-mist,.herb-bg .hh-snow,.herb-bg .hh-rays{animation:none!important}
+  .herb-bg .hh-rain{display:none}
+  .herb-hero .hh-r{animation:none!important;opacity:1;transform:none}
+  .herb-bg .hh-item,.herb-bg .hh-snow{top:calc(var(--rt,10)*1%)}
+}
