@@ -117,7 +117,7 @@
         try {
           const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: i.value });
           if (error || !data || !data.user) { toast(L("Email or password is incorrect", "ईमेल या पासवर्ड गलत है")); return; }
-          if (data.user.id === ADMIN) { goAdmin(); return; }
+          if (data.user.id === ADMIN) { try { sessionStorage.setItem(FLAG, "1"); } catch (e) {} close(); location.replace(location.pathname); return; }   /* store first; Admin Panel button asks the 7-digit code */
           close(); location.replace(location.pathname);     /* any other account = customer store only */
         } catch (e) { oops(); }
         finally { busy = false; }
@@ -132,13 +132,76 @@
   const btn = document.getElementById("googleLoginBtn");
   if (btn) btn.addEventListener("click", e => { e.stopImmediatePropagation(); e.preventDefault(); openSheet(); }, true);
 
+  /* ---- v71: 7-digit admin code. Asked EVERY time the "Admin Panel" button is tapped. Admin picks the code on first use; only a salted hash is kept on this device. ---- */
+  const CK = "aashapura_adm_code", OK = "aashapura_adm_ok", LK = "aashapura_adm_lock", TK = "aashapura_adm_try";
+  const ls = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} }, del: k => { try { localStorage.removeItem(k); } catch (e) {} } };
+  const unlocked = () => { try { return Date.now() - Number(sessionStorage.getItem(OK) || 0) < 8 * 36e5; } catch (e) { return false; } };
+  const hashOf = async (salt, code) => {
+    const t = salt + ":" + code + ":" + ADMIN;
+    try { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join(""); }
+    catch (e) { let h = 5381; for (const c of t) h = ((h << 5) + h + c.charCodeAt(0)) | 0; return "f" + h; }
+  };
+  const cst = document.createElement("style");
+  cst.textContent = ".ag-code-pg .ag-fld input{text-align:center;font-size:24px;letter-spacing:.35em}.ag-code-pg .ag-fld input::placeholder{letter-spacing:.2em;font-size:18px}";
+  document.head.appendChild(cst);
+  function askCode() {
+    if (document.querySelector(".ag-code-pg")) return;
+    let rec = null; try { rec = JSON.parse(ls.get(CK) || "null"); } catch (e) {}
+    let mode = rec && rec.h ? "check" : "set", first = "", forgot = false;
+    const pg = document.createElement("div"); pg.className = "ag-pg ag-code-pg"; document.body.appendChild(pg);
+    const open = () => { try { sessionStorage.setItem(OK, String(Date.now())); } catch (e) {} pg.remove(); goAdmin(); };
+    const draw = note => {
+      const T = forgot ? [L("Forgot code?", "कोड भूल गए?"), L("Enter your admin password to set a new code.", "नया कोड बनाने के लिए एडमिन पासवर्ड डालें।")]
+        : mode === "check" ? [L("Enter admin code", "एडमिन कोड डालें"), L("Enter your 7-digit code to open the admin panel.", "एडमिन पैनल खोलने के लिए 7 अंकों का कोड डालें।")]
+        : mode === "set" ? [L("Create admin code", "एडमिन कोड बनाएँ"), L("Choose a 7-digit code. It will be asked every time you open the admin panel.", "7 अंकों का कोड चुनें। एडमिन पैनल खोलते समय हर बार यही पूछा जाएगा।")]
+        : [L("Confirm code", "कोड दोबारा डालें"), L("Type the same 7-digit code again.", "वही 7 अंकों का कोड फिर से डालें।")];
+      pg.innerHTML = `<button type="button" class="ag-x" aria-label="Close">×</button><div class="ag-in"><div class="ag-logo"><span>🔐</span><b>${T[0]}</b></div><p class="ag-tag">${T[1]}</p><div class="ag-fld"><input type="password" autocomplete="off" ${forgot ? `placeholder="${L("Password", "पासवर्ड")}"` : 'inputmode="numeric" maxlength="7" placeholder="• • • • • • •"'}></div><button type="button" class="ag-gb" data-go style="margin-top:16px">${L("Continue", "आगे बढ़ें")}</button>${mode === "check" && !forgot ? `<button type="button" class="ag-lk" data-f>${L("Forgot code?", "कोड भूल गए?")}</button>` : ""}<div class="ag-note" data-m>${note || ""}</div></div>`;
+      const inp = pg.querySelector("input"), msg = pg.querySelector("[data-m]"), say = t => { msg.textContent = t; };
+      pg.querySelector(".ag-x").onclick = () => pg.remove();
+      const f = pg.querySelector("[data-f]"); if (f) f.onclick = () => { forgot = true; draw(); };
+      inp.oninput = () => { if (!forgot) inp.value = inp.value.replace(/\D/g, "").slice(0, 7); };
+      let busy = false;
+      const go = async () => {
+        if (busy) return; const v = inp.value; busy = true;
+        try {
+          if (forgot) {
+            if (!v) return;
+            const ss = (await supabaseClient.auth.getSession()).data.session, em = ss && ss.user && ss.user.email;
+            const r = await supabaseClient.auth.signInWithPassword({ email: em, password: v });
+            if (r.error || !r.data || !r.data.user || r.data.user.id !== ADMIN) { say(L("Password is incorrect", "पासवर्ड गलत है")); return; }
+            ls.del(CK); ls.del(TK); ls.del(LK); forgot = false; mode = "set"; draw(); return;
+          }
+          if (!/^\d{7}$/.test(v)) { say(L("Enter all 7 digits", "पूरे 7 अंक डालें")); return; }
+          if (mode === "set") { if (/^(\d)\1{6}$/.test(v)) { say(L("Choose a harder code (not all same digits)", "ऐसा कोड चुनें जिसमें सारे अंक एक जैसे न हों")); return; } first = v; mode = "again"; draw(); return; }
+          if (mode === "again") {
+            if (v !== first) { mode = "set"; first = ""; draw(L("Codes did not match. Start again.", "कोड मेल नहीं खाए। फिर से बनाएँ।")); return; }
+            const salt = Math.random().toString(36).slice(2) + Date.now().toString(36);
+            ls.set(CK, JSON.stringify({ s: salt, h: await hashOf(salt, v) })); open(); return;
+          }
+          const lock = Number(ls.get(LK) || 0);
+          if (Date.now() < lock) { say(L("Too many wrong tries. Try again in ", "बहुत गलत कोशिशें। दोबारा कोशिश करें: ") + Math.ceil((lock - Date.now()) / 60000) + L(" min", " मिनट बाद")); return; }
+          if (await hashOf(rec.s, v) === rec.h) { ls.del(TK); open(); return; }
+          const n = Number(ls.get(TK) || 0) + 1;
+          if (n >= 5) { ls.set(LK, String(Date.now() + 10 * 6e4)); ls.del(TK); say(L("Too many wrong tries. Locked for 10 minutes.", "बहुत गलत कोशिशें। 10 मिनट के लिए बंद।")); }
+          else { ls.set(TK, String(n)); say(L("Wrong code. Tries left: ", "कोड गलत है। बचे मौके: ") + (5 - n)); }
+          inp.value = "";
+        } catch (e) { say(L("Something went wrong. Try again.", "कुछ गड़बड़ हुई। फिर कोशिश करें।")); }
+        finally { busy = false; }
+      };
+      pg.querySelector("[data-go]").onclick = go; inp.onkeydown = e => { if (e.key === "Enter") go(); };
+      setTimeout(() => { try { inp.focus(); } catch (e) {} }, 50);
+    };
+    draw();
+  }
+
   /* hide the admin panel until we know the visitor is the admin */
   if (isRoute) { const s = document.createElement("style"); s.id = "agHide"; s.textContent = "#adminPanel{visibility:hidden}"; document.head.appendChild(s); }
 
   function pill() {
+    try { sessionStorage.removeItem(OK); } catch (e) {}      /* back in the store = admin must enter the code again */
     if (document.querySelector(".ag-pill")) return;
     const p = document.createElement("button"); p.type = "button"; p.className = "ag-pill"; p.textContent = "⚙ " + L("Admin Panel", "एडमिन पैनल");
-    p.onclick = goAdmin; document.body.appendChild(p);
+    p.onclick = askCode; document.body.appendChild(p);
   }
 
   /* JWT "amr" lists how the session was created; admin is accepted only when it includes "password" */
@@ -158,12 +221,13 @@
     const isAdm = !!u && u.id === ADMIN;
     if (isRoute) {
       if (!isAdm) { goStore(); return; }
+      if (!unlocked()) { try { sessionStorage.setItem(FLAG, "1"); } catch (e) {} goStore(); return; }   /* direct ?page=admin without the code -> store */
       const h = document.getElementById("agHide"); if (h) h.remove();
       return;
     }
     if (isAdm) {
       let v = null; try { v = sessionStorage.getItem(FLAG); } catch (e) {}
-      if (!v) { goAdmin(); return; }
+      if (!v) { try { sessionStorage.setItem(FLAG, "1"); } catch (e) {} }
       pill();
     }
   })();
