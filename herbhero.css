@@ -1,90 +1,34 @@
-/* Seasonal background (v7): full-page layer + headline. Colours come from --sz-* variables set by herbhero.js (season combos). */
-.herb-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;transition:opacity .45s ease;
-  background:radial-gradient(70% 45% at 88% 0%,rgba(217,179,106,.30),transparent 70%),radial-gradient(60% 40% at 4% 100%,rgba(60,140,90,.20),transparent 70%),radial-gradient(50% 35% at 50% 50%,rgba(255,255,255,.35),transparent 70%)}
-.herb-bg.hh-swap{opacity:0}
-.herb-bg .hh-item{position:absolute;top:-22%;pointer-events:none;will-change:transform;animation:hhFall linear infinite,hhSway ease-in-out infinite}
-.herb-bg .hh-item svg{display:block;width:100%;height:100%;animation:hhSpin linear infinite}
-.herb-bg .hh-spark{position:absolute;border-radius:50%;background:var(--sz-spark,#f3c85a);box-shadow:0 0 8px 2px var(--sz-sparkg,rgba(230,180,70,.65));opacity:0;pointer-events:none;z-index:1;animation:hhSpark ease-in-out infinite}
-.herb-bg .hh-mist{position:absolute;left:-40%;width:180%;height:40%;background:radial-gradient(ellipse at center,var(--sz-mist,rgba(120,180,140,.20)),transparent 65%);filter:blur(16px);animation:hhMist linear infinite alternate}
-.herb-bg .hh-rain{position:absolute;top:-12%;width:1.6px;rotate:12deg;border-radius:2px;background:linear-gradient(to bottom,rgba(90,140,180,0),rgba(70,120,170,.75));animation:hhRain linear infinite}
-.herb-bg .hh-snow{position:absolute;top:-6%;border-radius:50%;background:#fff;box-shadow:0 0 5px 1px rgba(110,140,190,.55);animation:hhFall linear infinite,hhSway ease-in-out infinite}
-.herb-bg .hh-rays{position:absolute;right:-45%;top:-45%;width:130vmax;height:130vmax;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(255,205,70,.26) 0 5deg,rgba(255,205,70,0) 5deg 15deg);-webkit-mask-image:radial-gradient(circle,#000 0%,transparent 60%);mask-image:radial-gradient(circle,#000 0%,transparent 60%);will-change:transform;animation:hhRays 120s linear infinite}
+/* Aashapura background + home hero card (v9). ONE look - no themes, no seasons. */
+.herb-bg{position:fixed;left:0;top:0;width:100%;height:100%;z-index:-1;pointer-events:none;
+  background:radial-gradient(70% 45% at 90% 0%,rgba(217,179,106,.28),transparent 70%),radial-gradient(60% 40% at 0% 100%,rgba(60,140,90,.18),transparent 70%),linear-gradient(180deg,#fbf7ec,#f4efe0)}
 
-/* ===== premium hero card (v7): jewel panel + gold frame + medallion + mandala. Colours come from --hz-* (set per season by herbhero.js) ===== */
-.herb-hero{position:relative;text-align:center;padding:48px 12px 8px;color:var(--hz-ink,#fbf3d8)}
-.hh-card{position:relative;max-width:640px;margin:0 auto;padding:58px 22px 22px;border-radius:28px;
-  background:radial-gradient(120% 70% at 50% 0%,rgba(255,255,255,.16),transparent 62%),linear-gradient(158deg,rgba(var(--hz-p1,12,52,37),var(--hz-a,.95)),rgba(var(--hz-p2,24,84,58),var(--hz-a,.95)));
-  -webkit-backdrop-filter:blur(10px) saturate(1.15);backdrop-filter:blur(10px) saturate(1.15);
-  box-shadow:0 26px 48px -22px var(--hz-glow,rgba(201,149,47,.5)),0 12px 28px -14px rgba(20,16,10,.45),inset 0 1px 0 rgba(255,255,255,.32),inset 0 -22px 40px -28px rgba(0,0,0,.28)}
-.hh-card::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.6px;background:var(--hz-ln,linear-gradient(135deg,#f3d27a,#a87a22,#f3d27a));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);mask-composite:exclude;pointer-events:none}
-.hh-card::after{content:"";position:absolute;inset:9px;border-radius:20px;border:1px solid var(--hz-g1,#f3d27a);opacity:.42;pointer-events:none}
-.hh-dm{position:absolute;width:7px;height:7px;background:var(--hz-g1,#f3d27a);transform:rotate(45deg);box-shadow:0 0 8px var(--hz-glow,rgba(201,149,47,.5));z-index:2}
-.hh-dm.a{left:5.5px;top:5.5px}.hh-dm.b{right:5.5px;top:5.5px}.hh-dm.c{left:5.5px;bottom:5.5px}.hh-dm.d{right:5.5px;bottom:5.5px}
-.hh-mw{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none}
-.hh-mw svg{position:absolute;left:50%;top:50%;width:min(125%,520px);height:auto;aspect-ratio:1;color:var(--hz-g1,#f3d27a);opacity:.15;transform:translate(-50%,-50%);animation:hhMand 150s linear infinite}
-.hh-medal{position:absolute;left:50%;top:-38px;width:80px;height:80px;margin-left:-40px;border-radius:50%;display:grid;place-items:center;z-index:3;
-  background:radial-gradient(circle at 34% 26%,var(--hz-m2,#1d6b4a),var(--hz-m1,#0e3b2a) 72%);
-  box-shadow:0 0 0 2px var(--hz-g1,#f3d27a),0 0 0 5px var(--hz-m1,#0e3b2a),0 0 0 6.5px var(--hz-g2,#c9952f),0 12px 24px -6px rgba(0,0,0,.5),inset 0 2px 5px rgba(255,255,255,.28)}
-.hh-medal::before{content:"";position:absolute;inset:-12px;border-radius:50%;border:1.5px dashed var(--hz-g2,#c9952f);opacity:.8;animation:hhRing 60s linear infinite}
-.hh-medal svg{width:54px;height:54px;display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
-.hh-card .hh-copy,.hh-card .hh-names{position:relative;z-index:1}
-.hh-card .hh-copy{max-width:560px;margin:0 auto}
-.hh-card .hh-eye{display:flex;align-items:center;justify-content:center;gap:11px;letter-spacing:.26em;font-size:10.5px;color:var(--hz-g1,#f3d27a);font-weight:700;margin:0 0 12px;text-shadow:none}
-.hh-card .hh-eye::before,.hh-card .hh-eye::after{content:"";flex:0 1 38px;height:1px;background:linear-gradient(90deg,transparent,var(--hz-g1,#f3d27a))}
-.hh-card .hh-eye::after{transform:scaleX(-1)}
-.hh-card h2{font-family:'Cormorant Garamond','Noto Serif Devanagari',serif;font-size:clamp(30px,8.2vw,50px);line-height:1.04;margin:0 0 12px;font-weight:700;color:var(--hz-ink,#fbf3d8);letter-spacing:.2px;text-shadow:0 2px 14px rgba(0,0,0,.18)}
-.hh-card h2 em{display:inline-block;font-style:italic;font-weight:700;padding:0 2px 3px;color:var(--hz-g1,#f3d27a);text-shadow:none;
-  background:linear-gradient(100deg,transparent 42%,rgba(255,255,255,.95) 50%,transparent 58%) 0 0/250% 100% no-repeat,var(--hz-foil,linear-gradient(100deg,#f3d27a,#c9952f));
-  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.hh-card h2.hh-r em{animation:hhFoil 2.6s cubic-bezier(.3,.6,.3,1) .9s 1 both}
-.hh-card .hh-sub{font-size:clamp(13px,3.5vw,15.5px);line-height:1.55;color:var(--hz-sub,rgba(251,243,216,.86));font-weight:400;margin:0 auto 18px;max-width:46ch;text-shadow:none}
-.hh-card .hh-btn{position:relative;display:inline-block;overflow:hidden;background:linear-gradient(135deg,var(--sz-b1,#d9b36a),var(--sz-b2,#b8893b));color:var(--sz-bi,#2b1d05);font-weight:700;font-size:14.5px;letter-spacing:.3px;padding:13px 30px;border-radius:999px;text-decoration:none;
-  box-shadow:0 10px 22px -8px var(--hz-glow,rgba(0,0,0,.4)),0 0 0 1px rgba(255,255,255,.35) inset,0 -3px 8px rgba(0,0,0,.12) inset}
-.hh-card .hh-btn::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.65),transparent);transform:skewX(-18deg);transition:left .7s ease}
-.hh-card .hh-btn:hover::after,.hh-card .hh-btn:focus-visible::after,.hh-card .hh-btn:active::after{left:130%}
-.hh-card .hh-btn:focus-visible{outline:2px solid var(--hz-g1,#f3d27a);outline-offset:3px}
-.hh-card .hh-names{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:20px;padding-top:16px;border-top:1px solid transparent;border-image:linear-gradient(90deg,transparent,var(--hz-g1,#f3d27a),transparent) 1}
-.hh-card .hh-names span{font-size:11.5px;padding:5px 11px;border:1px solid var(--hz-cln,rgba(255,255,255,.3));border-radius:999px;background:var(--hz-cbg,rgba(255,255,255,.09));color:var(--hz-cink,#fbf3d8);font-weight:500;box-shadow:none;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
-.herb-hero .hh-r{opacity:0;transform:translateY(20px);animation:hhRise .9s cubic-bezier(.2,.7,.2,1) forwards}
-.herb-hero .hh-r:nth-child(2){animation-delay:.15s}.herb-hero .hh-r:nth-child(3){animation-delay:.3s}.herb-hero .hh-r:nth-child(4){animation-delay:.45s}
-.hh-card h2.hh-r{animation:hhRise .9s cubic-bezier(.2,.7,.2,1) .15s forwards}
-.hh-card h2.hh-r em{animation:hhFoil 2.6s cubic-bezier(.3,.6,.3,1) .9s 1 both}
+.herb-hero{position:relative;overflow:hidden;margin:14px 0 6px;padding:28px 22px 20px;border-radius:24px;color:#fff;
+  background:radial-gradient(120% 90% at 100% 0%,rgba(217,179,106,.30),transparent 60%),linear-gradient(135deg,#0f3324,#1f6a48);
+  border:1px solid rgba(217,179,106,.65);box-shadow:0 18px 40px -18px rgba(15,51,36,.6),inset 0 1px 0 rgba(255,255,255,.12)}
+.herb-hero::before{content:"";position:absolute;right:-60px;top:-60px;width:210px;height:210px;border-radius:50%;
+  border:1px solid rgba(217,179,106,.5);box-shadow:0 0 0 22px rgba(217,179,106,.09),0 0 0 48px rgba(217,179,106,.05);pointer-events:none}
+.herb-hero .hh-copy{position:relative;z-index:1;display:flex;flex-direction:column;align-items:flex-start;gap:12px;max-width:560px}
+.herb-hero .hh-eye{margin:0;font-size:11px;letter-spacing:3px;font-weight:700;color:var(--gold2,#d9b36a)}
+.herb-hero h2{margin:0;font-family:var(--serif,Georgia,serif);font-size:clamp(28px,8vw,44px);line-height:1.1;font-weight:700;color:#fff}
+.herb-hero h2 em{font-style:italic;color:#f1d38a}
+.herb-hero .hh-sub{margin:0;font-size:15px;line-height:1.5;color:rgba(255,255,255,.88)}
+.herb-hero .hh-btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 28px;border-radius:999px;margin-top:4px;
+  background:linear-gradient(135deg,#f1d38a,#c9a45a);color:#2b1d05;font-weight:700;text-decoration:none;box-shadow:0 8px 18px -8px rgba(0,0,0,.5)}
+.herb-hero .hh-names{position:relative;z-index:1;display:flex;gap:8px;margin-top:18px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.herb-hero .hh-names::-webkit-scrollbar{display:none}
+.herb-hero .hh-names span{flex:none;padding:7px 14px;border-radius:99px;font-size:13px;white-space:nowrap;color:#fff;
+  background:rgba(255,255,255,.10);border:1px solid rgba(217,179,106,.45)}
 
-/* occasion extras: colour clouds (Holi), giant faint Ashoka Chakra (Independence / Republic), kites rising */
-.herb-bg .hh-blob{position:absolute;width:72vmax;height:72vmax;border-radius:50%;filter:blur(34px);opacity:.9;will-change:transform;animation:hhBlob ease-in-out infinite alternate}
-.herb-bg .hh-bgch{position:absolute;left:50%;top:30%;width:min(150vw,920px);aspect-ratio:1;color:var(--sz-ink,#0a2a6b);opacity:.065;will-change:transform;animation:hhChakra 220s linear infinite}
-.herb-bg .hh-item.up{top:auto;bottom:-22%;animation-name:hhUp,hhSway}
-.herb-bg .hh-item.up svg{animation-duration:20s}
+.herb-hero .hh-r{animation:hhUp .7s ease both}
+.herb-hero .hh-copy>.hh-r:nth-child(2){animation-delay:.08s}
+.herb-hero .hh-copy>.hh-r:nth-child(3){animation-delay:.16s}
+.herb-hero .hh-copy>.hh-r:nth-child(4){animation-delay:.24s}
+@keyframes hhUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
-/* other home text: soft glow so it stays readable over the animation */
-html body .m-title,html body .shop-section .section-heading h2,html body .shop-section .eyebrow,html body .m-cat{text-shadow:0 0 10px rgba(var(--sz-halo,251,247,236),1),0 0 4px rgba(var(--sz-halo,251,247,236),.95)}
-html body .shop-section .eyebrow{color:var(--sz-accent,#8f6a22)}
-html body .shop-section .section-heading>p{color:#4a554a;font-weight:500;text-shadow:0 0 10px rgba(var(--sz-halo,251,247,236),1),0 0 4px rgba(var(--sz-halo,251,247,236),.95)}
-html body .m-concern small{color:#4a554a;font-weight:500}
+@media (min-width:760px){.herb-hero{margin:18px auto 8px;max-width:1100px;padding:44px 48px 28px}}
+@media (prefers-reduced-motion:reduce){.herb-hero .hh-r{animation:none}}
 
-@keyframes hhFall{to{transform:translate3d(var(--dx),var(--fall,900px),0)}}
-@keyframes hhRain{to{transform:translate3d(var(--dx,-30px),var(--fall,900px),0)}}
-@keyframes hhSway{0%,100%{margin-left:-12px}50%{margin-left:12px}}
-@keyframes hhSpin{to{transform:rotate(var(--rot))}}
-@keyframes hhRise{to{opacity:1;transform:none}}
-@keyframes hhSpark{0%{opacity:0;transform:translateY(0) scale(.6)}30%{opacity:1}100%{opacity:0;transform:translateY(-70px) scale(1.2)}}
-@keyframes hhMist{from{transform:translateX(-8%)}to{transform:translateX(8%)}}
-@keyframes hhRays{to{transform:rotate(360deg)}}
-@keyframes hhUp{to{transform:translate3d(var(--dx),calc(var(--fall,900px)*-1),0)}}
-@keyframes hhRing{to{transform:rotate(360deg)}}
-@keyframes hhMand{to{transform:translate(-50%,-50%) rotate(360deg)}}
-@keyframes hhFoil{from{background-position:130% 0,0 0}to{background-position:-40% 0,0 0}}
-@keyframes hhBlob{from{transform:translate(-6%,-4%) scale(.9)}to{transform:translate(8%,6%) scale(1.12)}}
-@keyframes hhChakra{from{transform:translate(-50%,-50%) rotate(0)}to{transform:translate(-50%,-50%) rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){
-  .herb-bg .hh-item,.herb-bg .hh-item svg,.herb-bg .hh-spark,.herb-bg .hh-mist,.herb-bg .hh-snow,.herb-bg .hh-rays,.herb-bg .hh-blob,.herb-bg .hh-bgch,.hh-mw svg,.hh-medal::before,.hh-card h2.hh-r em{animation:none!important}
-  .herb-bg .hh-item.up{bottom:auto}
-  .herb-bg .hh-rain{display:none}
-  .herb-hero .hh-r,.hh-card h2.hh-r{animation:none!important;opacity:1;transform:none}
-  .herb-bg .hh-item,.herb-bg .hh-snow{top:calc(var(--rt,10)*1%)}
-}
-
-/* v8: filter row (Category, Sort, Price...) - no white strip behind the pills; only the round pills stay, floating on the animated background */
+/* filter row (Category, Sort, Price...) - no white strip, only the round pills float on the background */
 html body .m-filters{background:transparent!important;box-shadow:none!important;border:0!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;padding:10px 6px 12px}
 html body .m-pill{background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-color:rgba(201,164,90,.55);box-shadow:0 4px 12px -4px rgba(60,48,20,.22),inset 0 1px 0 rgba(255,255,255,.9)}
 html body .m-pill.on{background:linear-gradient(135deg,var(--green2,#1f6a48),var(--green,#123c2b));border-color:var(--gold,#b8893b);color:#fff;box-shadow:0 6px 14px -5px rgba(18,60,43,.55)}

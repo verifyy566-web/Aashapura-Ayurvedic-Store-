@@ -13,8 +13,6 @@
     { id: "alerts", icon: "🔔", title: "Stock Alerts", sub: "Customers waiting for stock" },
     { id: "add", icon: "➕", title: "Add Product", sub: "New product with photos" },
     { id: "products", icon: "📦", title: "Products", sub: "Edit or delete products" },
-    { id: "look", icon: "🎨", title: "Website Look", sub: "Colours and top text" },
-    { id: "season", icon: "🍂", title: "Season Theme", sub: "Background animation, colours and text" },
     { id: "banners", icon: "🖼️", title: "Home Banners", sub: "Slides on the home page" },
     { id: "cats", icon: "🔘", title: "Category Photos", sub: "Icons on the home page" },
     { id: "payment", icon: "💳", title: "Payment (UPI & QR)", sub: "Change UPI ID and QR code" },

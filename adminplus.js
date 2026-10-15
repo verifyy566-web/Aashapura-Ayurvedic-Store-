@@ -277,7 +277,6 @@
       if (!(await isAdmin())) return;
       try { const { data } = await supabaseClient.from("products").select("id,name,category"); window.__apProducts = data || []; } catch (e) { window.__apProducts = []; }
       renderBanners($("apBanners")); renderCatImgs($("apCatImgs"));
-      if (window.aashapuraTheme) window.aashapuraTheme.renderAdmin($("apTheme")); else $("apTheme").innerHTML = "<p style='color:#b42318'>theme.js GitHub par upload karo.</p>";
     };
     window.__apRefreshBanners = refresh;
     refresh();
