@@ -213,6 +213,7 @@
       ["🏠", L("Home", "होम"), "", () => window.scrollTo({ top: 0, behavior: "smooth" })],
       ["🛍️", L("Shop all products", "सभी प्रोडक्ट"), "", () => scrollTo$("shop")],
       ["🔔", L("Notifications", "नोटिफ़िकेशन"), L("Order and stock updates", "ऑर्डर और स्टॉक अपडेट"), () => window.aashapuraNotifications && window.aashapuraNotifications.open()],
+      ...((window.matchMedia("(display-mode: standalone)").matches || navigator.standalone || !window.aashapuraInstall) ? [] : [["📲", L("Install App", "ऐप इंस्टॉल करें"), L("Free — open from your home screen", "फ्री — होम स्क्रीन से खोलें"), () => window.aashapuraInstall()]]),
       ["ℹ️", L("About Us", "हमारे बारे में"), "", () => scrollTo$("about")],
       ["📞", L("Contact Us", "संपर्क"), "", () => scrollTo$("contact")]
     ];

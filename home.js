@@ -167,6 +167,7 @@
       const un = window.aashapuraNotifications ? window.aashapuraNotifications.unread() : 0;
       list.prepend(item("🔔", "Notifications", un ? un + " new update" + (un > 1 ? "s" : "") : "Order and stock updates", () => window.aashapuraNotifications && window.aashapuraNotifications.open()));
     } catch (er) {}
+    try { if (!(window.matchMedia("(display-mode: standalone)").matches || navigator.standalone) && window.aashapuraInstall) list.prepend(item("📲", "Install App", "Free — open from your home screen", () => window.aashapuraInstall())); } catch (er) {}
     side.append(head, list);
     if (u) {
       const lo = document.createElement("div"); lo.className = "m-logout";
