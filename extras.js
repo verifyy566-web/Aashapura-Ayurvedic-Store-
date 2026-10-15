@@ -6,7 +6,7 @@
   const rs = n => "₹" + Number(n || 0).toLocaleString("en-IN");
   const toast = (m, t) => { try { showStoreToast(m, t || "success"); } catch (e) { alert(m); } };
   const sb = () => supabaseClient;
-  const ADMIN = "6eeb63cc-1cec-4ac5-bc4b-12a0e6f951c3", WA = "916367561630";
+  const ADMIN = "6eeb63cc-1cec-4ac5-bc4b-12a0e6f951c3", WA = String((window.AASHAPURA_CONFIG && window.AASHAPURA_CONFIG.support) || "916367561630");
   const norm = p => String(p.name || "").trim().toLowerCase().replace(/\s+/g, " ");
   const isVid = u => /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(String(u || ""));
   const imgOf = p => {
@@ -147,6 +147,19 @@
         if (s < 0) return; seen.add(k); hits.push({ p, s });
       });
       hits.sort((a, b) => a.s - b.s || a.p.name.localeCompare(b.p.name));
+      /* v65: related products for Hindi / Roman / health words (bawasir, pachan, hair fall ...) + spelling help */
+      let dym = "";
+      try {
+        const C = window.aashapuraConcern;
+        if (C) {
+          C.search(q).forEach(p => { const k = norm(p); if (seen.has(k)) return; seen.add(k); hits.push({ p, s: 3 }); });
+          if (!hits.length) dym = C.didYouMean(q);
+        }
+      } catch (e) {}
+      if (!hits.length && dym) {
+        box.innerHTML = `<button type="button" data-dym="${esc(dym)}"><span class="th">🔍</span><span class="tx"><b>${L("Did you mean", "क्या आपका मतलब है")}: ${esc(dym)}?</b><small>${L("Tap to search", "खोजने के लिए दबाएँ")}</small></span></button>`;
+        box.hidden = false; return;
+      }
       if (!hits.length) { box.innerHTML = `<button type="button" style="cursor:default"><span class="th">🔍</span><span class="tx"><b>${L("No product found", "कोई प्रोडक्ट नहीं मिला")}</b><small>${L("Try another word, e.g. ashwagandha, powder", "दूसरा शब्द आज़माएँ, जैसे ashwagandha, powder")}</small></span></button>`; box.hidden = false; return; }
       const top = hits.slice(0, 6);
       box.innerHTML = top.map(({ p }) => {
@@ -160,6 +173,7 @@
     box.addEventListener("mousedown", e => e.preventDefault());
     box.addEventListener("click", e => {
       const b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.dym) { input.value = b.dataset.dym; input.dispatchEvent(new Event("input", { bubbles: true })); return; }
       if (b.dataset.sg) { hide(); input.blur(); showProduct(Number(b.dataset.sg)); }
       else if (b.dataset.all) { hide(); input.blur(); const s = $("shop"); if (s) s.scrollIntoView({ behavior: "smooth" }); }
     });
@@ -200,7 +214,7 @@
       const { error } = await sb().from("stock_alerts").insert({ product_id: prim(p.id), product_name: p.name + (p.weight ? " " + p.weight : ""), customer_name: name, phone, user_id: uid });
       if (error) { go.disabled = false; go.textContent = L("Notify me", "मुझे बताएँ"); return toast(/stock_alerts|relation|schema/i.test(error.message) ? L("Notify feature is not ready yet. Please try later.", "यह सुविधा अभी तैयार नहीं है, बाद में कोशिश करें।") : error.message, "error"); }
       try { localStorage.setItem(NK, JSON.stringify([...seenN(), key])); localStorage.setItem(NK + "_c", JSON.stringify({ n: name, p: phone })); } catch (e) {}
-      shut(); toast(L("Done! We will WhatsApp you when it is back in stock. 🔔", "ठीक है! स्टॉक आते ही WhatsApp करेंगे। 🔔"));
+      shut(); toast(L("Done! We will WhatsApp you when it is back in stock. 🔔", "ठीक है! स्टॉक आते ही WhatsApp करेंगे। 🔔") + (uid ? "" : L(" Sign in to also see it in your 🔔 bell.", " Sign In करेंगे तो 🔔 में भी दिखेगा।")));
     };
   }
   window.aashapuraNotify = { open: openNotify };
@@ -214,6 +228,31 @@
     let mode = "wait", started = false;
     const adminOk = async () => { try { const { data: { user } } = await sb().auth.getUser(); return !!user && user.id === ADMIN; } catch (e) { return false; } };
     const dt = d => d ? new Date(d).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "";
+    const waMsg = u => `Namaste ${u.customer_name || ""}, Aashapura Ayurveda se: aapka wait kiya hua "${u.product_name || "product"}" ab stock mein aa gaya hai. Order karne ke liye store dekhein. Dhanyavaad!`;
+    /* v65: the same "back in stock" message also goes to the customer's Notification (bell) icon */
+    const bellFor = u => (window.aashapuraPush ? window.aashapuraPush({ user_id: u.user_id, phone: u.phone, kind: "stock", title: (u.product_name || "Product") + " ab stock me hai 🌿", body: "Aapka wait kiya hua \"" + (u.product_name || "product") + "\" ab stock mein aa gaya hai. Order karne ke liye dabayein.", link: "product:" + u.product_id, product_id: u.product_id, key: "alert" + u.id, daily: false }) : Promise.resolve(null));
+    /* one-by-one WhatsApp queue: tap once per customer (browser cannot open many chats at once) */
+    function runQueue(us) {
+      if (!us.length) return;
+      let i = 0;
+      const ov = document.createElement("div");
+      ov.style.cssText = "position:fixed;inset:0;z-index:100300;background:rgba(10,25,18,.6);display:flex;align-items:flex-end;justify-content:center";
+      const paint = () => {
+        if (i >= us.length) { ov.remove(); toast("Sabko message bhej diya ✅"); draw(); return; }
+        const u = us[i];
+        ov.innerHTML = `<div style="background:#fff;width:100%;max-width:520px;border-radius:22px 22px 0 0;padding:20px 18px 22px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:17px">📲 ${i + 1} / ${us.length}</b><button type="button" id="qX" style="border:0;background:none;font-size:24px">×</button></div>
+          <p style="margin:10px 0 4px"><b>${esc(u.customer_name || "Customer")}</b><br><small>📞 ${esc(u.phone)} · ${esc(u.product_name || "")}</small></p>
+          <p style="background:#f3f7f1;border-radius:12px;padding:10px;font-size:13px;color:#34493d">${esc(waMsg(u))}</p>
+          <div style="display:flex;gap:10px"><button type="button" id="qSkip" style="flex:1;padding:13px;border-radius:12px;border:1px solid #cdd8cf;background:#fff;font-weight:700">Skip</button><button type="button" id="qGo" style="flex:2;padding:13px;border-radius:12px;border:0;background:#25a244;color:#fff;font-weight:800">💬 WhatsApp kholo &amp; Done</button></div></div>`;
+        ov.querySelector("#qX").onclick = () => { ov.remove(); draw(); };
+        ov.querySelector("#qSkip").onclick = () => { i++; paint(); };
+        ov.querySelector("#qGo").onclick = () => {
+          window.open(`https://wa.me/91${String(u.phone).replace(/\D/g, "").slice(-10)}?text=${encodeURIComponent(waMsg(u))}`, "_blank", "noopener");
+          bellFor(u); sb().from("stock_alerts").update({ notified: true }).eq("id", u.id).then(() => {}); i++; paint();
+        };
+      };
+      document.body.appendChild(ov); paint();
+    }
     async function draw() {
       if (!(await adminOk())) return;
       started = true;
@@ -229,15 +268,23 @@
       host.innerHTML = `<div class="adm-bar"><span class="adm-sub">${waiting} customers waiting</span><span><button type="button" data-m="wait" style="${mode === "wait" ? "background:#2f6b3a;color:#fff" : ""}">Waiting</button> <button type="button" data-m="done" style="${mode === "done" ? "background:#2f6b3a;color:#fff" : ""}">Informed</button> <button type="button" id="alRe" aria-label="Refresh">↻</button></span></div>` +
         (list.length ? list.map(g => {
           const name = g.us[0].product_name || ("#" + g.pid), back = g.stock > 0;
-          return `<div class="al-p ${back ? "back" : ""}"><h4>${esc(name)}${back ? `<span class="al-bk">Back in stock (${g.stock})</span>` : ""}</h4><small>${g.us.length} ${mode === "wait" ? "waiting" : "informed"}${back ? "" : " · stock abhi 0"}</small>
+          return `<div class="al-p ${back ? "back" : ""}"><h4>${esc(name)}${back ? `<span class="al-bk">Back in stock (${g.stock})</span>` : ""}</h4><small>${g.us.length} ${mode === "wait" ? "waiting" : "informed"}${back ? "" : " · stock abhi 0"}</small>${back && mode === "wait" ? `<div class="al-bulk" style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px"><button type="button" data-bellall="${g.pid}" style="padding:9px 12px;border-radius:10px;border:1px solid #2f6b3a;background:#fff;color:#2f6b3a;font-weight:700">🔔 Sabko app notification (${g.us.length})</button><button type="button" data-queue="${g.pid}" style="padding:9px 12px;border-radius:10px;border:0;background:#2f6b3a;color:#fff;font-weight:700">📲 WhatsApp one-by-one</button></div>` : ""}
             ${g.us.map(u => `<div class="al-u"><div><b>${esc(u.customer_name || "Customer")}</b><br><small>📞 ${esc(u.phone)} · ${esc(dt(u.created_at))}</small></div><div style="display:flex;gap:6px;flex:none"><button type="button" class="wa" data-wa="${u.id}">💬 WhatsApp</button>${mode === "wait" ? `<button type="button" data-done="${u.id}">✓</button>` : ""}</div></div>`).join("")}</div>`;
         }).join("") : `<p>${mode === "wait" ? "Koi customer wait nahi kar raha." : "Abhi koi record nahi."}</p>`);
       host.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { mode = b.dataset.m; draw(); });
       host.querySelector("#alRe").onclick = draw;
+      host.querySelectorAll("[data-bellall]").forEach(b => b.onclick = async () => {
+        const us = rows.filter(x => String(x.product_id) === b.dataset.bellall); b.disabled = true;
+        const rs = await Promise.all(us.map(bellFor));
+        const n = rs.filter(r => r && r.ok).length;
+        toast(n ? "🔔 " + n + " customers ke Notification icon me bhej diya" : "Notification nahi gayi (supabase_v65_notifications.sql run kiya?)", n ? undefined : "error"); b.disabled = false;
+      });
+      host.querySelectorAll("[data-queue]").forEach(b => b.onclick = () => runQueue(rows.filter(x => String(x.product_id) === b.dataset.queue)));
       host.querySelectorAll("[data-wa]").forEach(b => b.onclick = async () => {
         const u = rows.find(x => String(x.id) === b.dataset.wa); if (!u) return;
         const msg = `Namaste ${u.customer_name || ""}, Aashapura Ayurveda se: aapka wait kiya hua "${u.product_name || "product"}" ab stock mein aa gaya hai. Order karne ke liye store dekhein. Dhanyavaad!`;
         window.open(`https://wa.me/91${String(u.phone).replace(/\D/g, "").slice(-10)}?text=${encodeURIComponent(msg)}`, "_blank", "noopener");
+        bellFor(u);
         if (mode === "wait" && await confirm("Message bhej diya? 'Informed' me daal dein?")) { const x = await sb().from("stock_alerts").update({ notified: true }).eq("id", u.id); if (x.error) toast(x.error.message, "error"); draw(); }
       });
       host.querySelectorAll("[data-done]").forEach(b => b.onclick = async () => { const x = await sb().from("stock_alerts").update({ notified: true }).eq("id", b.dataset.done); if (x.error) return toast(x.error.message, "error"); draw(); });

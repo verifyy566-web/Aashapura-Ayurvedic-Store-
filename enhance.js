@@ -91,7 +91,7 @@
     let list = products.filter(p => {
       const cat = String(p.category || "").trim().toLowerCase();
       return (activeCat === "all" || cat === activeCat)
-        && (!q || p.name.toLowerCase().includes(q) || String(p.desc).toLowerCase().includes(q))
+        && (!q || p.name.toLowerCase().includes(q) || String(p.desc).toLowerCase().includes(q) || (window.aashapuraConcern && window.aashapuraConcern.hit(p, q)))
         && p.price >= min && p.price <= max
         && (!stockOnly || p.stock > 0)
         && (!onlyWish || W.has(p.id));

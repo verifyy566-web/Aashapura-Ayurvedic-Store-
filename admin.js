@@ -136,12 +136,20 @@
       if (isCod(o) && os === "pending") add("✅ Confirm Cash On Delivery Order", async () => {
         await setO(o, { order_status: "confirmed" }, "Cash On Delivery order confirmed");
         const ph2 = String(o.phone || "").replace(/\D/g, "").slice(-10);
-        if (ph2 && await confirm("Customer ko WhatsApp par confirmation bhejein?")) window.open(`https://wa.me/91${ph2}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", aapka Cash on Delivery order " + (o.order_no || o.id) + " confirm ho gaya hai. Delivery par " + money(o.total) + " cash dena hoga. Dhanyavaad - Aashapura Ayurveda")}`, "_blank", "noopener");
+        if (ph2 && await confirm("Customer ko WhatsApp par confirmation bhejein?")) {
+          const no2 = o.order_no || o.id;
+          window.open(`https://wa.me/91${ph2}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", aapka Cash on Delivery order " + no2 + " confirm ho gaya hai. Delivery par " + money(o.total) + " cash dena hoga. Dhanyavaad - Aashapura Ayurveda")}`, "_blank", "noopener");
+          try { window.aashapuraPush && window.aashapuraPush({ user_id: o.user_id, phone: ph2, kind: "order", title: "Order confirm ho gaya ✅", body: "Aapka Cash on Delivery order " + no2 + " confirm ho gaya hai. Delivery par " + money(o.total) + " cash dena hoga.", link: "order:" + no2, order_id: no2, key: no2 + "|confirmed" }); } catch (e) {}
+        }
       });
       if (!isPaid(o) && !isCod(o)) add("✅ Payment mila – Confirm Order", async () => {
         await setO(o, { payment_status: "paid", order_status: os === "pending" ? "confirmed" : o.order_status }, "Order confirmed");
         const ph2 = String(o.phone || "").replace(/\D/g, "").slice(-10);
-        if (ph2 && await confirm("Customer ko WhatsApp par confirmation bhejein?")) window.open(`https://wa.me/91${ph2}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", aapka payment mil gaya. Aapka order " + (o.order_no || o.id) + " (" + money(o.total) + ") confirm ho gaya hai. Dhanyavaad - Aashapura Ayurveda")}`, "_blank", "noopener");
+        if (ph2 && await confirm("Customer ko WhatsApp par confirmation bhejein?")) {
+          const no2 = o.order_no || o.id;
+          window.open(`https://wa.me/91${ph2}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", aapka payment mil gaya. Aapka order " + no2 + " (" + money(o.total) + ") confirm ho gaya hai. Dhanyavaad - Aashapura Ayurveda")}`, "_blank", "noopener");
+          try { window.aashapuraPush && window.aashapuraPush({ user_id: o.user_id, phone: ph2, kind: "order", title: "Payment mil gaya, order confirm ✅", body: "Aapka payment mil gaya. Order " + no2 + " (" + money(o.total) + ") confirm ho gaya hai.", link: "order:" + no2, order_id: no2, key: no2 + "|confirmed" }); } catch (e) {}
+        }
       });
       if (os === "pending") add("Confirm", () => setO(o, { order_status: "confirmed" }));
       if (["pending", "confirmed"].includes(os)) add("🚚 Shipped", () => setO(o, { order_status: "shipped" }));
@@ -154,10 +162,13 @@
     const ph = String(o.phone || p.phone || "").replace(/\D/g, "").slice(-10);
     const wa = txt => window.open(`https://wa.me/91${ph}?text=${encodeURIComponent(txt)}`, "_blank", "noopener");
     const hi = "Namaste " + (o.customer_name || p.full_name || "") + ", ", no = o.order_no || o.id;
+    /* v65: same message also goes to the customer's Notification (bell) icon */
+    const bell = (kind, title, body, key) => { try { if (window.aashapuraPush) window.aashapuraPush({ user_id: o.user_id, phone: ph || o.phone, kind, title, body, link: "order:" + no, order_id: no, key: key ? no + "|" + key : null }).then(r => { if (r && r.ok && !r.dup) toast("🔔 Customer ke Notification icon me bhi gaya"); }); } catch (e) {} };
+    const trk = window.aashapuraTrackLink ? window.aashapuraTrackLink(o) : "";
     if (ph && !isCan(o) && ["confirmed", "shipped", "delivered"].includes(os)) {
-      if (os === "confirmed") add("📲 Confirm msg", () => wa(hi + "aapka order " + no + " (" + money(o.total) + ") confirm ho gaya hai. Hum jaldi hi ise ship karenge. Dhanyavaad - Aashapura Ayurveda"));
-      if (os === "shipped") add("📲 Shipped msg", () => wa(hi + "aapka order " + no + " ship ho gaya hai." + (o.courier ? " Courier: " + o.courier + "." : "") + (o.tracking_id ? " Tracking ID: " + o.tracking_id + "." : "") + " Jaldi pahunch jayega. - Aashapura Ayurveda"));
-      if (os === "delivered") add("📲 Delivered msg", () => wa(hi + "aapka order " + no + " deliver ho gaya hai. Product pasand aaye to website par review zaroor dein. Dhanyavaad - Aashapura Ayurveda"));
+      if (os === "confirmed") add("📲 Confirm msg", () => { wa(hi + "aapka order " + no + " (" + money(o.total) + ") confirm ho gaya hai. Hum jaldi hi ise ship karenge. Dhanyavaad - Aashapura Ayurveda"); bell("order", "Order confirm ho gaya ✅", "Aapka order " + no + " (" + money(o.total) + ") confirm ho gaya hai. Hum jaldi hi ise ship karenge.", "confirmed"); });
+      if (os === "shipped") add("📲 Shipped msg + tracking link", () => { wa(hi + "aapka order " + no + " ship ho gaya hai." + (o.courier ? " Courier: " + o.courier + "." : "") + (o.tracking_id ? " Tracking ID: " + o.tracking_id + "." : "") + (trk ? "\nLive tracking dekhein (Sign In karke): " + trk : "") + "\nJaldi pahunch jayega. - Aashapura Ayurveda"); bell("track", "Order ship ho gaya 🚚", "Aapka order " + no + " ship ho gaya hai." + (o.courier ? " Courier: " + o.courier + "." : "") + (o.tracking_id ? " Tracking ID: " + o.tracking_id + "." : "") + " Live tracking dekhne ke liye dabayein.", "shipped"); });
+      if (os === "delivered") add("📲 Delivered msg", () => { wa(hi + "aapka order " + no + " deliver ho gaya hai. Product pasand aaye to website par review zaroor dein. Dhanyavaad - Aashapura Ayurveda"); bell("order", "Order deliver ho gaya 📦", "Aapka order " + no + " deliver ho gaya hai. Product pasand aaye to review zaroor dein.", "delivered"); });
     }
     if (ph) add("💬 WhatsApp", () => window.open(`https://wa.me/91${ph}?text=${encodeURIComponent("Namaste " + (o.customer_name || "") + ", Aashapura Ayurveda order " + (o.order_no || o.id) + " (" + money(o.total) + "): ")}`, "_blank", "noopener"));
     if (["confirmed", "shipped"].includes(os)) {
@@ -181,6 +192,7 @@
         const r = await sb().from("order_events").insert({ order_id: String(o.id), message: m.slice(0, 200) });
         if (r.error) return toast(r.error.message, "error");
         box.querySelector(".tk-l").value = ""; toast("Location add ho gayi"); reload();
+        try { window.aashapuraPush && window.aashapuraPush({ user_id: o.user_id, phone: o.phone, kind: "track", title: "Order update 📍", body: "Order " + (o.order_no || o.id) + ": " + m, link: "order:" + (o.order_no || o.id), order_id: o.order_no || o.id }); } catch (e) {}
       };
       listEl.addEventListener("click", async e => { const b = e.target.closest("[data-del]"); if (!b) return; const r = await sb().from("order_events").delete().eq("id", b.dataset.del); if (r.error) return toast(r.error.message, "error"); reload(); });
       box.querySelector(".tk-s").onclick = async () => {

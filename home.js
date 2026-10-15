@@ -162,6 +162,13 @@
       item("ℹ️", "About Us", "", () => $("about").scrollIntoView({ behavior: "smooth" })),
       item("📞", "Contact Us", "", () => $("contact").scrollIntoView({ behavior: "smooth" }))
     );
+    /* v65: notifications + shop by health concern at the top of the right-side menu */
+    try {
+      const un = window.aashapuraNotifications ? window.aashapuraNotifications.unread() : 0;
+      list.prepend(item("🔔", "Notifications", un ? un + " new update" + (un > 1 ? "s" : "") : "Order and stock updates", () => window.aashapuraNotifications && window.aashapuraNotifications.open()));
+      if (window.aashapuraConcern) list.prepend(window.aashapuraConcern.drawerSection(close));
+      list.append(item("🏠", "Home", "", () => scrollTo({ top: 0, behavior: "smooth" })), item("🛍️", "Shop all products", "", () => go("")));
+    } catch (er) {}
     side.append(head, list);
     if (u) {
       const lo = document.createElement("div"); lo.className = "m-logout";
@@ -172,6 +179,7 @@
     back.classList.add("open"); side.classList.add("open");
   }
 
+  window.aashapuraOpenSide = openSide;
   const pb = $("profileBtn");
   if (pb) pb.addEventListener("click", e => { e.stopImmediatePropagation(); e.preventDefault(); openSide(); }, true);
 

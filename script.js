@@ -1028,7 +1028,7 @@ function showStoreToast(message, type="success") {
       e.preventDefault(); e.stopPropagation();
       toast.remove();
       // product page / wishlist / categories screens sit above the cart: close them first
-      document.querySelectorAll(".pp, #productPage, .wl-ov, .m-allcats").forEach(el => el.remove());
+      document.querySelectorAll(".pp, #productPage, .wl-ov, .m-allcats, .cn-ov, .nf-ov").forEach(el => el.remove());
       try { openCart(); } catch (er) {}
     };
     toast.appendChild(act);
