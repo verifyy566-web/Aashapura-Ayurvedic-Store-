@@ -131,15 +131,22 @@
   .cn-c button.nt{background:#8a5a00}
   .cn-empty{grid-column:1/-1;text-align:center;padding:50px 16px;color:#4d6455}.cn-empty div{font-size:48px}
   .cn-empty button{margin-top:12px;padding:11px 20px;border:0;border-radius:12px;background:#14402b;color:#fff;font:inherit;font-weight:700;cursor:pointer}
-  /* right-side menu block */
+  /* left-side menu (☰ at the left of the header) */
+  .lm-back{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100100;opacity:0;pointer-events:none;transition:opacity .25s}
+  .lm-back.open{opacity:1;pointer-events:auto}
+  .lm-side{position:fixed;top:0;left:0;bottom:0;width:min(86vw,330px);background:#fff;z-index:100101;transform:translateX(-100%);transition:transform .25s;display:flex;flex-direction:column;color:#173d2e}
+  .lm-side.open{transform:none}
+  .lm-head{padding:18px 16px;background:linear-gradient(120deg,#14402b,#2f6b3a);color:#fff;display:flex;align-items:center;gap:12px}
+  .lm-head b{flex:1;font-size:17px}.lm-head small{display:block;font-weight:400;opacity:.85}
+  .lm-head button{border:0;background:none;color:#fff;font-size:26px;line-height:1;cursor:pointer}
+  .lm-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
   .cn-sec{padding:14px 16px 6px;border-bottom:8px solid #f1f4ef}
   .cn-sec h5{margin:0 0 10px;font-size:13px;letter-spacing:.6px;text-transform:uppercase;color:#4d6455}
-  .m-side-list .cn-chips{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-bottom:10px}
-  .m-side-list .cn-chips button{display:flex;align-items:center;gap:8px;width:auto;padding:10px 10px;border:1px solid #dbe5d8;border-radius:12px;background:#f7faf6;font-size:13px;line-height:1.2;text-align:left;color:#14301f}
-  .m-side-list .cn-chips button span:first-child{font-size:18px;flex:none}
-  /* ≡ button on the right of the header */
-  #menuRight{position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:1px solid var(--line,#e3e3e3);background:#fff;border-radius:12px;color:#173d2e;cursor:pointer;font:inherit}
-  #menuRight svg{display:block}`;
+  .cn-chips{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-bottom:10px}
+  .cn-chips button{display:flex;align-items:center;gap:8px;padding:10px;border:1px solid #dbe5d8;border-radius:12px;background:#f7faf6;font:inherit;font-size:13px;line-height:1.2;text-align:left;color:#14301f;cursor:pointer}
+  .cn-chips button span:first-child{font-size:18px;flex:none}
+  .lm-links button{display:flex;width:100%;gap:14px;align-items:center;padding:15px 18px;border:0;border-bottom:1px solid #eee;background:#fff;font:inherit;text-align:left;color:#173d2e;cursor:pointer}
+  .lm-links small{display:block;color:#777;font-size:12px}`;
   document.head.appendChild(css);
 
   /* ---------- result page ---------- */
@@ -191,14 +198,34 @@
   }
   window.aashapuraConcern = { list: CONCERNS, products: productsFor, search, hit, didYouMean, open, drawerSection };
 
-  /* ≡ button at the right end of the header (opens the right-side menu) */
-  const BARS = `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg>`;
-  function addMenuBtn() {
-    if ($("menuRight")) return true;
-    const acts = document.querySelector(".header-actions"); if (!acts) return false;
-    const b = document.createElement("button"); b.type = "button"; b.id = "menuRight"; b.className = "hd-ic"; b.setAttribute("aria-label", L("Menu", "मेन्यू")); b.innerHTML = BARS;
-    b.onclick = () => { if (window.aashapuraOpenSide) window.aashapuraOpenSide(); };
-    acts.appendChild(b); return true;
+  /* ---------- left menu: ☰ (left of header) now opens this drawer ---------- */
+  let lmBack = null, lmSide = null;
+  const lmClose = () => { if (lmBack) lmBack.classList.remove("open"); if (lmSide) lmSide.classList.remove("open"); };
+  function lmOpen() {
+    if (!lmSide) {
+      lmBack = document.createElement("div"); lmBack.className = "lm-back"; lmBack.onclick = lmClose;
+      lmSide = document.createElement("aside"); lmSide.className = "lm-side"; lmSide.setAttribute("aria-label", "Menu");
+      document.body.append(lmBack, lmSide);
+    }
+    const go = fn => () => { lmClose(); setTimeout(fn, 150); };
+    const scrollTo$ = id => { const e = $(id); if (e) e.scrollIntoView({ behavior: "smooth" }); };
+    const links = [
+      ["🏠", L("Home", "होम"), "", () => window.scrollTo({ top: 0, behavior: "smooth" })],
+      ["🛍️", L("Shop all products", "सभी प्रोडक्ट"), "", () => scrollTo$("shop")],
+      ["🔔", L("Notifications", "नोटिफ़िकेशन"), L("Order and stock updates", "ऑर्डर और स्टॉक अपडेट"), () => window.aashapuraNotifications && window.aashapuraNotifications.open()],
+      ["ℹ️", L("About Us", "हमारे बारे में"), "", () => scrollTo$("about")],
+      ["📞", L("Contact Us", "संपर्क"), "", () => scrollTo$("contact")]
+    ];
+    lmSide.innerHTML = `<div class="lm-head"><b>Aashapura<small>${L("Ayurveda store menu", "आयुर्वेद स्टोर मेन्यू")}</small></b><button type="button" aria-label="${L("Close", "बंद")}">×</button></div><div class="lm-body"></div>`;
+    const body = lmSide.querySelector(".lm-body");
+    body.appendChild(drawerSection(lmClose));
+    const wrap = document.createElement("div"); wrap.className = "lm-links";
+    links.forEach(([ic, t, sub, fn]) => { const b = document.createElement("button"); b.type = "button"; b.innerHTML = `<span>${ic}</span><span>${esc(t)}${sub ? `<small>${esc(sub)}</small>` : ""}</span>`; b.onclick = go(fn); wrap.appendChild(b); });
+    body.appendChild(wrap);
+    lmSide.querySelector(".lm-head button").onclick = lmClose;
+    lmBack.classList.add("open"); lmSide.classList.add("open");
   }
-  addMenuBtn(); setTimeout(addMenuBtn, 500); setTimeout(addMenuBtn, 2000); window.addEventListener("load", addMenuBtn);
+  window.aashapuraOpenMenu = lmOpen;
+  const tg = $("menuToggle");
+  if (tg) tg.addEventListener("click", e => { e.preventDefault(); e.stopImmediatePropagation(); lmOpen(); }, true);
 })();

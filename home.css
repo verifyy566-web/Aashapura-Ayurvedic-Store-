@@ -36,12 +36,12 @@ body{padding-bottom:62px}
 body:has(#profilePage:not([hidden])) footer,body:has(#myOrdersPage:not([hidden])) footer,body:has(#cartFullPage:not([hidden])) footer{display:none!important}
 /* mobile header: menu on the left, brand in the centre, cart on the right */
 @media(max-width:760px){
-.header{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px;padding-left:12px;padding-right:12px}
-.header .menu-toggle{display:none!important}
-.header .brand{grid-column:1;grid-row:1;justify-self:start;min-width:0}
+.header{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:6px;padding-left:12px;padding-right:12px}
+.header .menu-toggle{grid-column:1;grid-row:1;margin:0;justify-self:start}
+.header .brand{grid-column:2;grid-row:1;justify-self:center;min-width:0}
 .header .brand strong{font-size:16px}.header .brand small{letter-spacing:2px}
-.header .header-actions{grid-column:2;grid-row:1;justify-self:end;display:flex;gap:6px}
-.header-actions .hd-ic{width:39px;height:39px;border-radius:11px}
+.header .header-actions{grid-column:3;grid-row:1;justify-self:end;display:flex;gap:6px}
+.header-actions .hd-ic,.header .menu-toggle{width:39px;height:39px;border-radius:11px}
 .header-actions .hd-ic svg{width:20px;height:20px}
 }
 
