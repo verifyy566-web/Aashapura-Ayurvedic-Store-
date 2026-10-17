@@ -11,8 +11,6 @@
     { id: "refunds", icon: "↩️", title: "Refund Requests", sub: "Approve or reject returns" },
     { id: "reviews", icon: "⭐", title: "Reviews", sub: "Approve aur jawab do" },
     { id: "alerts", icon: "🔔", title: "Stock Alerts", sub: "Customers waiting for stock" },
-    { id: "add", icon: "➕", title: "Add Product", sub: "New product with photos" },
-    { id: "products", icon: "📦", title: "Products", sub: "Edit or delete products" },
     { id: "banners", icon: "🖼️", title: "Home Banners", sub: "Slides on the home page" },
     { id: "cats", icon: "🔘", title: "Category Photos", sub: "Icons on the home page" },
     { id: "payment", icon: "💳", title: "Payment (UPI & QR)", sub: "Change UPI ID and QR code" },
@@ -36,7 +34,7 @@
   body.adm-mode .header{padding:12px 16px}
   body.adm-mode .header .menu-toggle{display:block!important;margin:0}
   body.adm-mode #adminPanel{border:0!important;border-radius:0!important;max-height:none!important;overflow:visible!important;padding:6px 14px 100px!important;margin:0 auto!important;max-width:760px!important}
-  .adm-sec{display:none}.adm-sec.on{display:block}
+  .adm-sec{display:none}.adm-sec.on{display:block}#admSec-add,#admSec-products{display:none!important}
   .adm-title{display:flex;align-items:center;gap:10px;margin:4px 0 14px;padding-bottom:12px;border-bottom:1px solid #e3eadf}
   .adm-title .ic{width:40px;height:40px;border-radius:12px;background:#e8f1e4;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
   .adm-title b{display:block;font-size:19px;color:#173d2e;line-height:1.2}.adm-title small{display:block;color:#6a7d70;font-size:12px;margin-top:2px}
