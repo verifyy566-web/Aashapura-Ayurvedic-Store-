@@ -23,7 +23,7 @@
   <script src="popup.js?v=2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;700&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Serif+Devanagari:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&family=Noto+Sans+Devanagari:wght@400;600&family=Noto+Serif+Devanagari:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=4">
   <link rel="stylesheet" href="enhance.css?v=7">
   <link rel="stylesheet" href="home.css?v=8">
@@ -44,41 +44,8 @@
   </header>
 
   <main>
-    <section class="m-home" id="home">
-      <div class="m-search"><input id="homeSearch" type="search" placeholder="Search Products" aria-label="Search products"></div>
-      <div class="m-cats">
-        <button class="m-cat" data-q=""><span>🌿</span>All</button>
-        <button class="m-cat" data-q="powder"><span>🥣</span>Powders</button>
-        <button class="m-cat" data-q="herbal"><span>🍃</span>Herbal</button>
-        <button class="m-cat" data-q="wellness"><span>💪</span>Wellness</button>
-        <button class="m-cat" data-q="hair"><span>💇</span>Hair Care</button>
-        <button class="m-cat" data-q="skin"><span>✨</span>Skin Care</button>
-        <button class="m-cat" data-q="immunity"><span>🛡️</span>Immunity</button>
-        <button class="m-cat" data-q="digest"><span>🍵</span>Digestion</button>
-      </div>
-      <div class="herb-hero" aria-label="Aashapura Ayurveda">
-        <div class="hh-copy">
-          <p class="hh-eye hh-r">AASHAPURA AYURVEDA</p>
-          <h2 class="hh-r">Nature's power,<br><em>Ayurveda's tradition</em></h2>
-          <p class="hh-sub hh-r">Tulsi, Neem, Ashwagandha, Amla &mdash; made from pure herbs.</p>
-          <a class="hh-btn hh-r" href="#shop">Shop Now</a>
-        </div>
-        <div class="hh-names"><span>🌿 Tulsi</span><span>🍃 Neem</span><span>🌱 Ashwagandha</span><span>🟡 Haldi</span><span>🌸 Rose</span><span>🪷 Lotus</span></div>
-      </div>
-      <div class="m-banners">
-        <div class="m-banner b1"><p>NEW COLLECTION</p><h2>Pure Ayurvedic Care</h2><p>Herbal products made for everyday wellness</p><a href="#shop">Shop Now</a></div>
-        <div class="m-banner b2"><p>FEATURED</p><h2>Natural Powders &amp; Herbs</h2><p>Moringa, Ashwagandha, Amla and more</p><a href="#shop">Explore</a></div>
-        <div class="m-banner b3"><p>EASY ORDERING</p><h2>Order on WhatsApp or UPI</h2><p>Simple, quick and secure checkout</p><a href="#shop">Start Shopping</a></div>
-      </div>
-      <h2 class="m-title">SHOP BY CONCERN</h2>
-      <div class="m-concerns">
-        <button class="m-concern" data-q="immunity">Immunity<small>Daily protection</small></button>
-        <button class="m-concern" data-q="hair">Hair Care<small>Strong &amp; healthy</small></button>
-        <button class="m-concern" data-q="skin">Skin Care<small>Natural glow</small></button>
-        <button class="m-concern" data-q="digest">Digestion<small>Gut wellness</small></button>
-      </div>
-      <div class="m-trust"><div>🌿<br>Natural &amp; Ayurvedic</div><div>🔒<br>Secure UPI payment</div><div>💬<br>WhatsApp support</div></div>
-    </section>
+    <section id="home" aria-label="Aashapura Ayurveda home"></section>
+    <div class="m-home" id="homeExtra"><div class="m-banners"></div></div>
 
     <section class="shop-section" id="shop">
       <div class="section-heading"><div><p class="eyebrow">हमारा कलेक्शन</p><h2>दुकान <em>से चुनें</em></h2></div><p>प्रोडक्ट खोजें, कार्ट में जोड़ें और ऑर्डर भेजें</p></div>
@@ -217,6 +184,7 @@ style="width:100%;padding:10px;margin:5px 0;box-sizing:border-box;">
 <script src="extras.js?v=4"></script>
 <script src="cartplus.js?v=3"></script>
 <script src="home.js?v=15"></script>
+<script src="newhome.js?v=1"></script>
 <script src="herbhero.js?v=8"></script>
 <script src="concern.js?v=5"></script>
 <script src="recent.js?v=1"></script>
